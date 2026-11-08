@@ -1,20 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter, Noto_Sans_Devanagari } from "next/font/google";
+// Fonts are self-hosted from npm (no network at build time, unlike next/font/google).
+import "@fontsource-variable/fraunces/wght.css";
+import "@fontsource-variable/inter/wght.css";
+import "@fontsource-variable/noto-sans-devanagari/wght.css";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { SiteHeader } from "@/components/site-header";
 import { SkipLink } from "@/components/skip-link";
 import { ConnectionBanner } from "@/components/connection-banner";
 import { PwaRegister } from "@/components/pwa-register";
-
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const deva = Noto_Sans_Devanagari({
-  subsets: ["devanagari"],
-  weight: ["400", "500", "600"],
-  variable: "--font-deva",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: { default: "Pramaan — Who's Who India, verified", template: "%s · Pramaan" },
@@ -34,7 +28,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${fraunces.variable} ${inter.variable} ${deva.variable}`}>
+    <html lang="en" suppressHydrationWarning>
       <body className="min-h-dvh">
         <Providers>
           <SkipLink />

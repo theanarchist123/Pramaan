@@ -4,6 +4,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+:root {
+  --font-fraunces: "Fraunces Variable";
+  --font-inter: "Inter Variable";
+  --font-deva: "Noto Sans Devanagari Variable";
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
