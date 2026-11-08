@@ -1,0 +1,10 @@
+import { chromium } from "playwright";
+const out = process.argv[2];
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 1360, height: 1250 } });
+await p.goto("http://localhost:3100/directory");
+await p.getByRole("tab", { name: "Network" }).click();
+await p.locator("canvas").first().waitFor();
+await p.waitForTimeout(4500);
+await p.screenshot({ path: out });
+await b.close();

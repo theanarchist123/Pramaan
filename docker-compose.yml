@@ -1,0 +1,69 @@
+# One command:  docker compose up --build      then open http://localhost:3000
+# For development, `docker compose up -d db` starts only the database (run the API and web app on the host).
+# Values come from .env (copy .env.example). Without a Gemini key, set LLM_MODE=mock and everything still works offline.
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: pramaan-db
+    environment:
+      POSTGRES_USER: pramaan
+      POSTGRES_PASSWORD: pramaan
+      POSTGRES_DB: pramaan
+    ports:
+      - "5432:5432"
+    volumes:
+      - pramaan_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pramaan -d pramaan"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: pramaan-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://pramaan:pramaan@db:5432/pramaan
+      PUBLIC_BASE_URL: http://localhost:3000
+      API_BASE_URL: http://localhost:8000
+      RENDER_BASE_URL: http://web:3000 # how the API reaches the web app to render certificate PDFs
+      LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
+      LLM_MODE: ${LLM_MODE:-mock}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_MODEL_SMART: ${LLM_MODEL_SMART:-gemini-3.8-flash,gemini-3.5-flash,gemini-3.1-flash-lite}
+      LLM_MODEL_FAST: ${LLM_MODEL_FAST:-gemini-3.5-flash-lite,gemini-3.1-flash-lite}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-real-deployments-0123456789abcdef}
+      SIGNING_KEY_B64: ${SIGNING_KEY_B64:-}
+      WIKIMEDIA_CONTACT: ${WIKIMEDIA_CONTACT:-}
+      UNSPLASH_ACCESS_KEY: ${UNSPLASH_ACCESS_KEY:-}
+      # Safe defaults for a shared deployment: AI-written plugins are not hot-loaded into the API process,
+      # and webhooks may not target private addresses.
+      PLUGINS_ENABLED: "false"
+      WEBHOOK_ALLOW_PRIVATE: "false"
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - pramaan_data:/srv/backend/data # signing key, rendered certificates
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    container_name: pramaan-web
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  pramaan_pgdata:
+  pramaan_data:

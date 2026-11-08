@@ -1,0 +1,32 @@
+# secrets / local
+.env
+.env.*
+!.env.example
+backend/data/
+*.key
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# node
+node_modules/
+.next/
+out/
+dist/
+.turbo/
+
+# desktop
+apps/desktop/src-tauri/target/
+
+# misc
+.DS_Store
+*.log
+playwright-report/
+test-results/
+.next-prod/
+smoke-shots/

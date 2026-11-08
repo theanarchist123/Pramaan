@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+  <title>Pramaan — offline</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; text-align: center;
+           font-family: "Segoe UI", system-ui, sans-serif; background: #f8f4ec; color: #231f1a; }
+    @media (prefers-color-scheme: dark) { body { background: #1c1814; color: #f3ede2; } }
+    h1 { font-family: Georgia, serif; font-size: 2rem; margin: 0 0 8px; }
+    p { max-width: 32rem; line-height: 1.6; opacity: .85; }
+    code { background: rgba(127,127,127,.18); padding: 2px 6px; border-radius: 6px; }
+    button { margin-top: 18px; padding: 10px 22px; border: 0; border-radius: 10px; font-size: 1rem; background: #e07a0f; color: #fff; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Can't reach Pramaan</h1>
+    <p>The app couldn't connect to <code id="url"></code>. Check your internet connection, or ask whoever runs this Pramaan server whether it's up.</p>
+    <p lang="hi">Pramaan से कनेक्ट नहीं हो सका। अपना इंटरनेट जाँचें, या सर्वर चलाने वाले से पूछें।</p>
+    <button id="retry">Try again</button>
+  </main>
+  <script>
+    document.getElementById("url").textContent = new URLSearchParams(location.search).get("url") || "";
+    document.getElementById("retry").addEventListener("click", function () { window.pramaanDesktop && window.pramaanDesktop.retry(); });
+  </script>
+</body>
+</html>
