@@ -393,6 +393,51 @@ class OutboxMessage(Base):
     created_at: Mapped[datetime] = ts()
 
 
+class LlmCall(Base):
+    """One live model call: who, how long, how many tokens. The raw material for per-run cost and latency views."""
+
+    __tablename__ = "llm_calls"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    at: Mapped[datetime] = ts()
+    run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    provider: Mapped[str] = mapped_column(String(20))
+    model: Mapped[str] = mapped_column(String(80))
+    tier: Mapped[str] = mapped_column(String(10), default="")
+    schema_name: Mapped[str] = mapped_column(String(60), default="")
+    latency_ms: Mapped[int] = mapped_column(Integer, default=0)
+    ok: Mapped[bool] = mapped_column(Boolean, default=True)
+    error: Mapped[str] = mapped_column(String(300), default="")
+    input_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    output_tokens: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class ImageAsset(Base):
+    """A human-approved Unsplash API image (hotlinked, never downloaded) with everything needed to attribute it."""
+
+    __tablename__ = "image_assets"
+
+    id: Mapped[uuid.UUID] = pk()
+    source: Mapped[str] = mapped_column(String(24), default="unsplash_api")
+    unsplash_id: Mapped[str] = mapped_column(String(40), unique=True)
+    sector: Mapped[str] = mapped_column(String(40), index=True)
+    purpose: Mapped[str] = mapped_column(String(10), default="tile")  # tile | cover | empty
+    url_raw: Mapped[str] = mapped_column(String(800))  # urls.raw as returned, ixid included
+    width: Mapped[int] = mapped_column(Integer, default=0)
+    height: Mapped[int] = mapped_column(Integer, default=0)
+    blur_hash: Mapped[str] = mapped_column(String(80), default="")
+    dominant_color: Mapped[str] = mapped_column(String(16), default="")
+    alt_text: Mapped[str] = mapped_column(String(300), default="")
+    photographer_name: Mapped[str] = mapped_column(String(200))
+    photographer_url: Mapped[str] = mapped_column(String(400))
+    photo_url: Mapped[str] = mapped_column(String(400))
+    download_location: Mapped[str] = mapped_column(String(600))
+    approved_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    download_triggered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
 class CodeChange(Base):
     """An AI-written plugin proposed by Shilpkar. It only ever goes live after passing the code guard,
     the sandbox checks, and a human clicking approve."""

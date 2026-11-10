@@ -76,6 +76,12 @@ async def init_db() -> None:
             await conn.execute(text(stmt))
         for stmt in VIEW_SQL:
             await conn.execute(text(stmt))
+    if get_settings().job_backend == "procrastinate":
+        import asyncio
+
+        from app import jobs
+
+        await asyncio.to_thread(jobs.ensure_schema_sync)  # the queue's own tables
 
 
 # Columns added after a developer's local database was first created (create_all never alters tables).

@@ -96,7 +96,7 @@ async def get_principal(
             ).scalar_one_or_none()
         if row is None or row.revoked_at is not None:
             raise _unauthorized("Invalid or revoked API key")
-        allowed, _ = check_rate_limit(f"key:{row.id}", row.rate_limit_per_min)
+        allowed, _ = await check_rate_limit(f"key:{row.id}", row.rate_limit_per_min)
         if not allowed:
             raise HTTPException(
                 status.HTTP_429_TOO_MANY_REQUESTS,

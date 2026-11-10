@@ -48,8 +48,8 @@ def test_api_key_format_and_hashing():
     assert parse_api_key_prefix("not-a-key") is None
 
 
-def test_rate_limit_window():
+async def test_rate_limit_window():
     ratelimit.reset()
-    results = [ratelimit.check_rate_limit("k", 3)[0] for _ in range(5)]
+    results = [(await ratelimit.check_rate_limit("k", 3))[0] for _ in range(5)]
     assert results == [True, True, True, False, False]
-    assert ratelimit.check_rate_limit("other", 3)[0]
+    assert (await ratelimit.check_rate_limit("other", 3))[0]

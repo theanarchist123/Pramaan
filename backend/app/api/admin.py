@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.deps import Principal, require_admin
+from app.core import redis as rd
 from app.domain import HUMAN_CONFIDENCE_CAP, STATUS_HUMAN
 from app.models import Claim, Evidence, Profile, ReviewItem
 from app.schemas import ClaimOut, ProfileOut, StatusChangeIn
@@ -57,6 +58,8 @@ async def system_status(_: Principal = Depends(require_admin)):
 
     s, llm, emb = get_settings(), get_llm(), get_embedder()
     degraded = []
+    if rd.status()["fallback_active"]:
+        degraded.append("Redis is unreachable: rate limits and locks are per-process only")
     if s.embeddings.lower() != "hash" and emb.kind == "hash":
         degraded.append("Semantic search is using the lexical hash fallback (fastembed is not installed or failed to load)")
     if s.llm_mode == "live" and llm.mode != "live":
@@ -70,10 +73,59 @@ async def system_status(_: Principal = Depends(require_admin)):
         "llm": {"mode": llm.mode, "provider": llm.provider, "models": llm.model_names},
         "embeddings": emb.kind,
         "plugins_enabled": s.plugins_enabled,
+        "redis": rd.status(),
+        "job_backend": s.job_backend,
         "worker_inline": s.worker_inline,
         "sandbox_in_api": s.sandbox_in_api,
         "degraded": degraded,
     }
+
+
+@router.get("/agent-runs")
+async def agent_runs(
+    workflow: str | None = None,
+    status_filter: str | None = None,
+    limit: int = 50,
+    _: Principal = Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+):
+    """Every agent run with its model usage: calls, tokens, latency and errors (from the llm_calls table), plus how many
+    events it produced. Tokens are reported, not priced: confirm the current price list before turning them into cost."""
+    from sqlalchemy import func
+
+    from app.models import AgentEvent, AgentRun, LlmCall
+
+    calls = (
+        select(
+            LlmCall.run_id.label("run_id"), func.count().label("calls"),
+            func.coalesce(func.sum(LlmCall.input_tokens), 0).label("input_tokens"),
+            func.coalesce(func.sum(LlmCall.output_tokens), 0).label("output_tokens"),
+            func.coalesce(func.avg(LlmCall.latency_ms), 0).label("avg_latency_ms"),
+            func.count().filter(LlmCall.ok.is_(False)).label("errors"),
+        ).group_by(LlmCall.run_id).subquery()
+    )
+    events = select(AgentEvent.run_id.label("run_id"), func.count().label("n")).group_by(AgentEvent.run_id).subquery()
+    stmt = (
+        select(AgentRun, calls.c.calls, calls.c.input_tokens, calls.c.output_tokens, calls.c.avg_latency_ms, calls.c.errors, events.c.n)
+        .outerjoin(calls, calls.c.run_id == AgentRun.id)
+        .outerjoin(events, events.c.run_id == AgentRun.id)
+        .order_by(AgentRun.started_at.desc())
+        .limit(min(max(limit, 1), 200))
+    )
+    if workflow:
+        stmt = stmt.where(AgentRun.workflow == workflow)
+    if status_filter:
+        stmt = stmt.where(AgentRun.status == status_filter)
+    out = []
+    for run, n_calls, tin, tout, avg_ms, errs, n_events in (await session.execute(stmt)).all():
+        out.append({
+            "id": str(run.id), "workflow": run.workflow, "profile_id": str(run.profile_id) if run.profile_id else None,
+            "status": run.status, "summary": run.summary, "started_at": run.started_at, "ended_at": run.ended_at,
+            "events": n_events or 0,
+            "llm": {"calls": n_calls or 0, "input_tokens": int(tin or 0), "output_tokens": int(tout or 0),
+                    "avg_latency_ms": int(avg_ms or 0), "errors": errs or 0},
+        })
+    return out
 
 
 @router.get("/review", response_model=list[ReviewItemOut])
@@ -152,6 +204,7 @@ async def set_status(
             select(ReviewItem).where(ReviewItem.profile_id == profile.id, ReviewItem.status == "open")
         )
     ).scalars().all()
+    paused_threads = [(i.details or {}).get("thread_id", "") for i in open_items]
     if body.status in ("approved", "rejected"):
         for item in open_items:
             item.status = body.status
@@ -163,6 +216,11 @@ async def set_status(
         await on_approved(session, profile)
     await session.commit()
     await session.refresh(profile)
+    if body.status in ("approved", "rejected"):
+        from app.agents.workflows import resume_review
+
+        for t in paused_threads:  # finish the paused agent run(s) that were waiting for this decision
+            await resume_review(t, body.status, str(principal.user.id))
     if body.status == "approved":
         from app.services import webhooks
 

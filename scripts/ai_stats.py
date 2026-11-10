@@ -5,6 +5,10 @@ Two independent measures, both computed from git so they can't be hand-waved:
 1. Commits that carry a `Co-Authored-By:` trailer naming an AI model (the convention used by Claude Code).
 2. Surviving lines of code (`git blame`) whose originating commit carries such a trailer.
 
+3. Session logs in `agent-logs/` (the spec's OPS-03): how many sessions agents recorded, and their commit messages'
+   task IDs (e.g. `feat(UI-03): ...`) so work can be traced from log to commit.
+4. Pull requests opened by agents (needs the `gh` CLI and a GitHub remote; reported as "unavailable" otherwise).
+
 Usage:  python scripts/ai_stats.py [--json]
 Needs at least one commit. Standard library only.
 """
@@ -59,6 +63,33 @@ def blame_lines(path: str) -> Counter:
     return Counter(line.split()[0] for line in out.splitlines() if re.match(r"^[0-9a-f]{40} \d+ \d+", line))
 
 
+def agent_logs() -> dict:
+    """Sessions recorded under agent-logs/ and the task IDs they mention (TRU-00, PG-03 ...)."""
+    d = ROOT / "agent-logs"
+    files = sorted(d.glob("*.md")) if d.is_dir() else []
+    ids: set[str] = set()
+    for f in files:
+        ids |= set(re.findall(r"\b[A-Z]{2,4}-\d{2}[a-z]?\b", f.read_text(encoding="utf-8", errors="replace")))
+    return {"sessions": len(files), "task_ids_mentioned": sorted(ids)}
+
+
+def traced_task_commits(rows: list[tuple[str, str]]) -> int:
+    """Commits whose subject starts with a conventional prefix and a task ID: feat(UI-03): ..."""
+    return sum(1 for _, msg in rows if re.match(r"^\w+\([A-Z]{2,4}-\d{2}[a-z]?(?:,[A-Z]{2,4}-\d{2}[a-z]?)*\)", msg))
+
+
+def agent_pull_requests() -> dict:
+    """PRs opened by agents: those whose body carries the Claude Code footer. Needs `gh`; never fails the report."""
+    try:
+        out = subprocess.run(["gh", "pr", "list", "--state", "all", "--limit", "200", "--json", "body,author"],
+                             cwd=ROOT, capture_output=True, text=True, timeout=30, check=True).stdout
+        prs = json.loads(out or "[]")
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return {"available": False}
+    ai = [p for p in prs if re.search(r"generated with .*claude", p.get("body") or "", re.I)]
+    return {"available": True, "total": len(prs), "by_agents": len(ai), "pct": round(100 * len(ai) / len(prs), 1) if prs else 0.0}
+
+
 def main() -> int:
     try:
         rows = commits()
@@ -93,6 +124,9 @@ def main() -> int:
         "ai_authored_surviving_lines": ai_lines,
         "ai_line_share_pct": pct(ai_lines, total_lines),
         "models": dict(models),
+        "agent_logs": agent_logs(),
+        "commits_with_task_id": traced_task_commits(rows),
+        "agent_pull_requests": agent_pull_requests(),
     }
     if "--json" in sys.argv:
         print(json.dumps(result, indent=2))
@@ -104,6 +138,10 @@ def main() -> int:
         print(f"  written in AI commits:    {result['ai_authored_surviving_lines']:,}  ({result['ai_line_share_pct']}%)")
         for who, n in models.most_common():
             print(f"    {n:>4} × {who}")
+        logs, prs = result["agent_logs"], result["agent_pull_requests"]
+        print(f"  agent session logs:       {logs['sessions']}  (task IDs: {', '.join(logs['task_ids_mentioned']) or 'none'})")
+        print(f"  commits traced to a task: {result['commits_with_task_id']}")
+        print("  PRs opened by agents:     " + (f"{prs['by_agents']} of {prs['total']} ({prs['pct']}%)" if prs["available"] else "unavailable (needs gh + a GitHub remote)"))
     return 0
 
 

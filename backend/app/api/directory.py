@@ -63,7 +63,7 @@ def _hit(h: svc.Hit) -> SearchHit:
 async def search(body: SearchIn, request: Request, session: AsyncSession = Depends(get_session)):
     """Ask in plain English (any language). Only approved, consenting profiles are searchable."""
     ip = request.client.host if request.client else "?"
-    ok, _ = check_rate_limit(f"search:{ip}", 40)
+    ok, _ = await check_rate_limit(f"search:{ip}", 40)
     if not ok:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many searches — try again in a minute")
 

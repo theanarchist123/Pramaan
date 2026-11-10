@@ -30,15 +30,73 @@ class EventBus:
     def unsubscribe(self, q: asyncio.Queue[dict[str, Any]]) -> None:
         self._subs.discard(q)
 
-    def publish(self, event: dict[str, Any]) -> None:
+    def deliver_local(self, event: dict[str, Any]) -> None:
         for q in list(self._subs):
             try:
                 q.put_nowait(event)
             except asyncio.QueueFull:  # a stalled client must never block an agent
                 pass
 
+    def publish(self, event: dict[str, Any]) -> None:
+        self.deliver_local(event)
+        # Also fan out through Redis so API replicas and the separate worker process see each other's events
+        # immediately. Best effort: the SSE endpoint also tails the table, so a missed message only costs latency.
+        try:
+            task = asyncio.get_running_loop().create_task(_redis_publish(event))
+            _pending.add(task)
+            task.add_done_callback(_pending.discard)
+        except RuntimeError:
+            pass
+
 
 bus = EventBus()
+
+CHANNEL = "pramaan:events"
+ORIGIN = uuid.uuid4().hex  # which process published an event, so a process ignores its own echo
+_pending: set[asyncio.Task] = set()
+
+
+async def _redis_publish(event: dict[str, Any]) -> None:
+    import json
+
+    from app.core import redis as rd
+
+    async def op(r):
+        await r.publish(CHANNEL, json.dumps({**event, "_origin": ORIGIN}, default=str))
+
+    async def nothing():
+        return None
+
+    await rd.call(op, nothing)
+
+
+async def relay_from_redis() -> None:
+    """Run for the life of the API: hand events published by OTHER processes to this process's SSE subscribers."""
+    import json
+
+    from app.core import redis as rd
+
+    while True:
+        r = rd.get_redis()
+        if r is None:
+            return  # Redis not configured: nothing to relay
+        try:
+            pubsub = r.pubsub()
+            await pubsub.subscribe(CHANNEL)
+            async for msg in pubsub.listen():
+                if msg.get("type") != "message":
+                    continue
+                try:
+                    event = json.loads(msg["data"])
+                except (ValueError, TypeError):
+                    continue
+                if event.pop("_origin", None) != ORIGIN:
+                    bus.deliver_local(event)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - Redis down: back off and retry; rd.call alerts on its own paths
+            rd._mark_down(exc)
+            await asyncio.sleep(5)
 
 
 class RunContext:
@@ -46,6 +104,9 @@ class RunContext:
         self.run_id = run_id
         self.workflow = workflow
         self.profile_id = profile_id
+        from app.core import telemetry
+
+        telemetry.current_run_id.set(run_id)  # model calls made for this run are recorded against it
 
     async def emit(
         self,

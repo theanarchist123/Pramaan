@@ -15,8 +15,9 @@ from app.agents import discovery as discovery_agent
 from app.agents import lipik, saathi
 from app.agents.events import recent_events, start_run
 from app.agents.schemas import DiscoveryDraft, ExtractedClaim
-from app.agents.workflows import run_verification
+from app import jobs
 from app.config import get_settings
+from app.core.locks import LockBusy, short_lock
 from app.core.ratelimit import check_rate_limit
 from app.db import get_session
 from app.deps import Principal, require_scope, require_verified_email
@@ -35,8 +36,8 @@ _EXT = {
 
 
 # ----- helpers -----
-def _limit_llm(principal: Principal, per_minute: int = 40) -> None:
-    ok, _ = check_rate_limit(f"llm:{principal.user.id}", per_minute)
+async def _limit_llm(principal: Principal, per_minute: int = 40) -> None:
+    ok, _ = await check_rate_limit(f"llm:{principal.user.id}", per_minute)
     if not ok:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Slow down a little — too many AI requests")
 
@@ -114,7 +115,7 @@ async def message(
     principal: Principal = Depends(require_scope("profiles:write")),
     session: AsyncSession = Depends(get_session),
 ):
-    _limit_llm(principal)
+    await _limit_llm(principal)
     profile = await _owned(session, profile_id, principal)
     _require_editable(profile)
 
@@ -182,7 +183,7 @@ async def discover(
     body: DiscoverIn,
     principal: Principal = Depends(require_scope("profiles:write")),
 ):
-    _limit_llm(principal, 10)
+    await _limit_llm(principal, 10)
     ctx = await start_run("discover")
     try:
         result = await discovery_agent.discover(ctx, body.name.strip())
@@ -277,7 +278,7 @@ async def upload_document(
     principal: Principal = Depends(require_scope("profiles:write")),
     session: AsyncSession = Depends(get_session),
 ):
-    _limit_llm(principal, 15)
+    await _limit_llm(principal, 15)
     profile = await _owned(session, profile_id, principal)
     content_type = (file.content_type or "").lower()
     if content_type not in _EXT:
@@ -328,26 +329,8 @@ async def upload_document(
 
 
 # ----- verification -----
-@router.post("/{profile_id}/verify", status_code=status.HTTP_202_ACCEPTED)
-async def verify(
-    profile_id: uuid.UUID,
-    background: BackgroundTasks,
-    principal: Principal = Depends(require_scope("profiles:write")),
-    session: AsyncSession = Depends(get_session),
-):
-    """Kick off Pariksha → Prahari. Returns at once; follow progress on the agent stream."""
-    profile = await _owned(session, profile_id, principal)
-    require_verified_email(principal)
-    consent = (
-        await session.execute(
-            select(Consent).where(Consent.profile_id == profile.id, Consent.kind == "public_listing")
-            .order_by(Consent.created_at.desc())
-        )
-    ).scalars().first()
-    if not consent or not consent.granted:
-        raise HTTPException(409, "Consent to public listing is required before verification")
-    if not profile.claims:
-        raise HTTPException(409, "Add at least one achievement before verification")
+
+async def _start_verification(session: AsyncSession, profile: Profile) -> dict:
     # Idempotent: a verification already running for this profile is returned, never started a second time
     # (a double-click, a retry or two tabs used to produce two complete agent runs back to back).
     running = (
@@ -376,8 +359,36 @@ async def verify(
     await session.commit()
 
     ctx = await start_run("verify_profile", profile.id)
-    background.add_task(run_verification, ctx, profile.id)
+    await jobs.enqueue("verify_profile", {"profile_id": str(profile.id), "run_id": str(ctx.run_id)},
+                       idempotency_key=f"verify:{profile.id}")
     return {"run_id": str(ctx.run_id), "status": "started"}
+
+@router.post("/{profile_id}/verify", status_code=status.HTTP_202_ACCEPTED)
+async def verify(
+    profile_id: uuid.UUID,
+    background: BackgroundTasks,
+    principal: Principal = Depends(require_scope("profiles:write")),
+    session: AsyncSession = Depends(get_session),
+):
+    """Kick off Pariksha → Prahari. Returns at once; follow progress on the agent stream."""
+    profile = await _owned(session, profile_id, principal)
+    require_verified_email(principal)
+    consent = (
+        await session.execute(
+            select(Consent).where(Consent.profile_id == profile.id, Consent.kind == "public_listing")
+            .order_by(Consent.created_at.desc())
+        )
+    ).scalars().first()
+    if not consent or not consent.granted:
+        raise HTTPException(409, "Consent to public listing is required before verification")
+    if not profile.claims:
+        raise HTTPException(409, "Add at least one achievement before verification")
+    try:
+        # The lock closes the check-then-act race: two simultaneous requests must not both see "nothing running".
+        async with short_lock(f"verify:{profile.id}"):
+            return await _start_verification(session, profile)
+    except LockBusy as exc:
+        raise HTTPException(409, "A verification is already being started for this profile") from exc
 
 
 class WikidataConfirmIn(BaseModel):
@@ -395,7 +406,7 @@ async def wikidata_candidates(
     from app.services import wikidata
 
     profile = await _owned(session, profile_id, principal)
-    _limit_llm(principal, 20)
+    await _limit_llm(principal, 20)
     return {"confirmed_qid": profile.wikidata_qid or None, "candidates": await wikidata.candidates(profile.full_name)}
 
 
