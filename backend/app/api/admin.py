@@ -28,6 +28,9 @@ class ReviewItemOut(BaseModel):
     status: str
     created_at: datetime
     details: dict = {}
+    assigned_to: uuid.UUID | None = None
+    locked_until: datetime | None = None
+    sla_due_at: datetime | None = None
     profile: ProfileOut | None = None
     model_config = {"from_attributes": True}
 

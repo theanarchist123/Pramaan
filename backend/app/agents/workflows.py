@@ -118,7 +118,10 @@ async def _apply(state: VerifyState) -> VerifyState:
                 select(ReviewItem).where(ReviewItem.profile_id == profile.id, ReviewItem.status == "open")
             )).scalars().first()
             if item is not None:
-                item.details = {**(item.details or {}), "thread_id": thread_id(profile.id, ctx.run_id)}
+                from app.agents.reasons import codes_for
+
+                item.details = {**(item.details or {}), "thread_id": thread_id(profile.id, ctx.run_id),
+                                "reason_codes": codes_for(decision.reasons)}
         await session.commit()
         from app.services import webhooks
 
