@@ -515,6 +515,30 @@ class ApprovalRequest(Base):
     created_at: Mapped[datetime] = ts()
 
 
+class GovernedSetting(Base):
+    """A safety switch whose value lives here (versioned) and changes only through a four-eyes approval."""
+
+    __tablename__ = "governed_settings"
+
+    key: Mapped[str] = mapped_column(String(60), primary_key=True)
+    value: Mapped[dict[str, Any]] = mapped_column(JSONB)  # {"v": <bool|number>}
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
+
+
+class GovernedSettingChange(Base):
+    __tablename__ = "governed_setting_changes"
+
+    id: Mapped[uuid.UUID] = pk()
+    key: Mapped[str] = mapped_column(String(60), index=True)
+    old: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    new: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    approval_request_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    changed_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    at: Mapped[datetime] = ts()
+
+
 class CodeChange(Base):
     """An AI-written plugin proposed by Shilpkar. It only ever goes live after passing the code guard,
     the sandbox checks, and a human clicking approve."""

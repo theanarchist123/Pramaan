@@ -185,7 +185,85 @@ async def _execute(session: AsyncSession, a: ApprovalRequest) -> dict:
         if cert.revoked_at is None:
             cert.revoked_at = datetime.now(timezone.utc)
         return {"code": cert.code, "revoked": True}
+    if a.action == "setting.change":
+        from app.models import GovernedSetting, GovernedSettingChange
+        from app.services import governed
+
+        key = a.payload["key"]
+        try:
+            new = governed.validate(key, a.payload["value"])  # re-validated: the floor holds whatever was approved
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        row = await session.get(GovernedSetting, key)
+        old = row.value["v"] if row else governed.GOVERNED[key].default()
+        if row is None:
+            session.add(GovernedSetting(key=key, value={"v": new}, version=1, updated_by=a.requested_by))
+        else:
+            row.value, row.version, row.updated_by = {"v": new}, row.version + 1, a.requested_by
+        session.add(GovernedSettingChange(key=key, old={"v": old}, new={"v": new}, approval_request_id=a.id,
+                                          changed_by=a.requested_by))
+        governed.clear_cache()
+        return {"key": key, "old": old, "new": new}
     raise HTTPException(500, "Unknown approval action")
+
+
+# ------------------------------------------------------------------------------------------------ governed settings
+@router.get("/settings")
+async def list_settings(_: Principal = Depends(require_permission("approval.read")), session: AsyncSession = Depends(get_session)):
+    from app.services import governed
+
+    return await governed.snapshot(session)
+
+
+class SettingIn(BaseModel):
+    value: bool | float
+    reason: str = Field(min_length=10, max_length=500)
+
+
+@router.post("/settings/{key}", status_code=status.HTTP_202_ACCEPTED)
+async def propose_setting(
+    key: str, body: SettingIn, request: Request,
+    principal: Principal = Depends(require_permission("settings.write")), session: AsyncSession = Depends(get_session),
+):
+    """Safety switches change only through a four-eyes approval (and with a fresh MFA code)."""
+    from app.services import governed
+
+    require_stepup(principal)
+    try:
+        value = governed.validate(key, body.value)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return await _file(session, principal, request, "setting.change", {"key": key, "value": value}, body.reason)
+
+
+# ------------------------------------------------------------------------------------------------ PII reveal
+class RevealIn(BaseModel):
+    profile_id: uuid.UUID
+    reason: str = Field(min_length=10, max_length=500)
+
+
+@router.post("/pii/reveal")
+async def reveal_owner_contact(
+    body: RevealIn, request: Request,
+    principal: Principal = Depends(require_permission("pii.reveal")), session: AsyncSession = Depends(get_session),
+):
+    """Staff screens mask contact details by default. Revealing one needs a reason, a fresh MFA code, and is logged."""
+    from app.core.ratelimit import check_rate_limit
+    from app.models import Profile
+
+    require_stepup(principal)
+    ok, _ = await check_rate_limit(f"pii:{principal.user.id}", 20)
+    if not ok:
+        raise HTTPException(429, "Too many reveals; try again later")
+    profile = await session.get(Profile, body.profile_id)
+    if profile is None or profile.owner_id is None:
+        raise HTTPException(404, "No owner on record for that profile")
+    owner = await session.get(User, profile.owner_id)
+    await audit.record(session, actor_id=principal.user.id, actor_role=await _actor_role(session, principal),
+                       action="pii.reveal", target_type="profile", target_id=str(profile.id), reason=body.reason,
+                       ip=_ip(request))
+    await session.commit()
+    return {"profile_id": str(profile.id), "email": owner.email}
 
 
 # ------------------------------------------------------------------------------------------------ audit log

@@ -19,8 +19,8 @@ from app.agents.events import RunContext
 from app.agents.identity import is_common_name, secondary_signals
 from app.agents.lipik import NAME_MATCH_OK
 from app.agents.schemas import BioAudit
-from app.config import get_settings
-from app.domain import AUTO_APPROVE_THRESHOLD, STATUS_DOCUMENT, STATUS_HUMAN, STATUS_WEB
+from app.services import governed
+from app.domain import STATUS_DOCUMENT, STATUS_HUMAN, STATUS_WEB
 from app.llm.client import get_llm
 from app.models import Document, Profile, ReviewItem
 
@@ -93,12 +93,11 @@ async def audit(ctx: RunContext, session: AsyncSession, profile: Profile) -> Aud
         reasons.append("A document's issuer is not a recognised body; a human must judge it")
         score = min(score, 0.7)
 
-    settings = get_settings()
-    if settings.award_claims_need_human and any(c.field == "award" for c in verified):
+    if await governed.get("award_claims_need_human") and any(c.field == "award" for c in verified):
         reasons.append("Award claims are confirmed by a human reviewer")
     if is_common_name(profile.full_name) and not secondary_signals(profile):
         reasons.append("Common name with no second identifying detail (institution, city or state)")
-    if settings.human_approval_first_listing:
+    if await governed.get("human_approval_first_listing"):
         prior = (
             await session.execute(
                 select(func.count()).select_from(Profile).where(
@@ -130,10 +129,11 @@ async def audit(ctx: RunContext, session: AsyncSession, profile: Profile) -> Aud
             score = min(score, 0.8)
 
     score = round(score, 3)
-    decision = "auto_approve" if score >= AUTO_APPROVE_THRESHOLD and not reasons else "escalate"
+    threshold = await governed.get("auto_approve_threshold")
+    decision = "auto_approve" if score >= threshold and not reasons else "escalate"
     await ctx.emit(
         "Prahari", "result",
-        f"Confidence {score:.0%} (threshold {AUTO_APPROVE_THRESHOLD:.0%}) → "
+        f"Confidence {score:.0%} (threshold {threshold:.0%}) → "
         + ("auto-approve" if decision == "auto_approve" else "human review required"),
         data={"reasons": reasons, "coverage": round(coverage, 2), "identity_confirmed": identity_ok},
         confidence=score,
