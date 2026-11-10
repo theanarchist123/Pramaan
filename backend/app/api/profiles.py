@@ -31,7 +31,7 @@ router = APIRouter(prefix="/v1/profiles", tags=["profiles"])
 
 def slugify(name: str) -> str:
     base = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "profile"
-    return f"{base[:60]}-{secrets.token_hex(2)}"
+    return f"{base[:60]}-{secrets.token_hex(4)}"
 
 
 def can_edit(principal: Principal, profile: Profile) -> bool:
