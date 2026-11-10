@@ -38,12 +38,23 @@ def _unauthorized(detail: str = "Authentication required") -> HTTPException:
 
 
 SESSION_COOKIE = "pramaan_session"
+ADMIN_COOKIE_LOCAL = "pramaan_admin"
+ADMIN_COOKIE_PROD = "__Host-pramaan_admin"  # __Host-: Secure, path=/, no Domain: cannot be set or read by sibling subdomains
+ADMIN_PATHS = ("/v1/admin", "/v1/auth/mfa")
+
+
+def admin_cookie_name() -> str:
+    return ADMIN_COOKIE_LOCAL if get_settings().is_local else ADMIN_COOKIE_PROD
+
+
+def is_admin_path(path: str) -> bool:
+    return path.startswith(ADMIN_PATHS)
 _SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
 
-def _origin_allowed(origin: str) -> bool:
+def _origin_allowed(origin: str, admin: bool = False) -> bool:
     s = get_settings()
-    base = urlparse(s.public_base_url)
+    base = urlparse(s.admin_base_url if admin and s.admin_base_url else s.public_base_url)
     allowed = f"{base.scheme}://{base.netloc}"
     if origin == allowed:
         return True
@@ -62,7 +73,7 @@ def _csrf_check(request: Request) -> None:
     if not origin:
         ref = request.headers.get("referer", "")
         origin = f"{urlparse(ref).scheme}://{urlparse(ref).netloc}" if ref else ""
-    if not origin or not _origin_allowed(origin):
+    if not origin or not _origin_allowed(origin, admin=is_admin_path(request.url.path)):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Cross-site request blocked")
 
 
@@ -77,7 +88,9 @@ async def get_principal(
         token = authorization[7:].strip()
     from_cookie = False
     if not token:
-        token = request.cookies.get(SESSION_COOKIE)  # the browser session (httpOnly: JavaScript can't read it)
+        # Two browser sessions that never cross: staff endpoints read ONLY the admin cookie (set by the separate admin
+        # app's login), everything else reads ONLY the member cookie. A stolen member session is useless on /v1/admin.
+        token = request.cookies.get(admin_cookie_name() if is_admin_path(request.url.path) else SESSION_COOKIE)
         from_cookie = bool(token)
     if not token:
         raise _unauthorized()

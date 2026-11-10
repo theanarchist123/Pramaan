@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import jobs
-from app.api import admin, agents, apikeys, auth, badges, builder, directory, fields, images, onboarding, outreach, profiles, review, staff, verify, webhooks
+from app.api import admin, admin_auth, agents, apikeys, auth, badges, builder, directory, fields, images, onboarding, outreach, profiles, review, staff, verify, webhooks
 from app.agents.events import relay_from_redis
 from app.config import get_settings
 from app.core import redis as rd
@@ -91,7 +91,7 @@ app = FastAPI(
 settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.public_base_url],
+    allow_origins=[o for o in (settings.public_base_url, settings.admin_base_url) if o],
     # Any local port, only when the site itself is served locally (dev).
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?" if settings.is_local else None,
     allow_credentials=True,
@@ -136,7 +136,7 @@ telemetry.setup(app)  # OTLP export only if OTEL_EXPORTER_OTLP_ENDPOINT is set
 
 for r in (
     auth.router, profiles.router, onboarding.router, agents.router, directory.router,
-    review.router, staff.router, images.public, images.admin, verify.router, apikeys.router, webhooks.router, badges.router, fields.router, builder.router, outreach.router, admin.router,
+    admin_auth.router, review.router, staff.router, images.public, images.admin, verify.router, apikeys.router, webhooks.router, badges.router, fields.router, builder.router, outreach.router, admin.router,
 ):
     app.include_router(r)
 

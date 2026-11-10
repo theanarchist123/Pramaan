@@ -1,0 +1,24 @@
+@import "@pramaan/ui/tokens.css";
+
+/* Staff console: dark by default (long sessions), compact density, calm. Tokens only; no hard-coded colours. */
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bond); color: var(--ink); font: 14px/1.5 system-ui, sans-serif; }
+a { color: var(--stamp); }
+main { max-width: 1100px; margin: 0 auto; padding: var(--pad); }
+h1 { font-size: 20px; margin: 0 0 var(--pad); }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius-panel); padding: calc(var(--pad) * 1.25); margin-bottom: var(--pad); }
+.muted { color: var(--ink-muted); }
+input { width: 100%; height: 36px; padding: 0 10px; border-radius: var(--radius-control); border: 1px solid var(--rule); background: var(--bond); color: var(--ink); font: inherit; }
+label { display: block; margin: 10px 0 4px; font-weight: 600; }
+button { height: 36px; padding: 0 14px; border-radius: var(--radius-control); border: 0; background: var(--stamp); color: var(--bond); font: inherit; font-weight: 600; cursor: pointer; }
+button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--rule); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+:focus-visible { outline: 3px solid var(--stamp); outline-offset: 2px; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row > * { flex: none; } .row > .grow { flex: 1; }
+.err { color: var(--seal); }
+.chip { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--stamp-tint); color: var(--stamp); font-size: 12px; margin-right: 4px; }
+.warn { color: var(--caution); }
+code { font-family: ui-monospace, Menlo, monospace; background: var(--bond); padding: 1px 4px; border-radius: var(--radius-data); }
+table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

@@ -78,6 +78,9 @@ class Settings(BaseSettings):
     # Staff must enrol an authenticator app, and sensitive staff actions need a fresh code (step-up). On by default.
     staff_mfa_required: bool = True
     stepup_minutes: int = 10
+    # Origin of the separate staff console (apps/admin). Empty = same as PUBLIC_BASE_URL (local dev).
+    admin_base_url: str = ""
+    admin_session_minutes: int = 30  # staff sessions are short; sign in again
     cookie_samesite: str = "auto"
     # "auto" tries the local multilingual model, falling back to a lexical hash; "hash" forces it.
     embeddings: str = "auto"

@@ -75,6 +75,12 @@ Webhook deliveries and scheduled emails go through database tables claimed with 
 
 AI-written plugin checks run inside Docker, which the API image does not have and should not. Outside localhost they are **queued** (status `queued`) until `python -m app.worker` runs on a machine with Docker and the `pramaan-sandbox` image (`docker build -t pramaan-sandbox sandbox/`) and the same `DATABASE_URL`. `SANDBOX_MODE=worker|inline|auto` overrides this. Until such a worker exists, queued changes simply wait; nothing runs unchecked.
 
+### Staff console, MFA and governed settings (Phase 2)
+- **`apps/admin`** is a separate Next.js app: deploy it as its own Vercel project (Root Directory `apps/admin`, `NEXT_PUBLIC_API_URL` = the API) on its **own origin** (e.g. `admin.example.org`) and set `ADMIN_BASE_URL` on the API to that origin. Staff sign in at `/login` there; the API issues a separate `__Host-pramaan_admin` cookie (SameSite=Strict, 30 min). Member sessions are never accepted on `/v1/admin`, and the staff cookie does not log anyone into the public site.
+- **MFA is mandatory for staff** (`STAFF_MFA_REQUIRED=true`): the first sign-in goes to the authenticator set-up page; revoking a certificate, granting a role, approving four-eyes requests, changing settings and revealing PII need a fresh code. **Bootstrap:** the legacy `admin` users keep every permission, so enrol each of them first, then grant real roles (a role grant is a four-eyes action: two admins).
+- **Governed settings:** `human_approval_first_listing`, `award_claims_need_human`, `require_email_verification` and `auto_approve_threshold` can be changed at runtime only through a four-eyes approval; the threshold cannot go below 0.90. History is kept in `governed_setting_changes`.
+- Run `alembic upgrade head` (migrations 0004-0011) before deploying this version.
+
 ### Safety switches
 `REQUIRE_EMAIL_VERIFICATION`, `HUMAN_APPROVAL_FIRST_LISTING` and `AWARD_CLAIMS_NEED_HUMAN` default to `true`: a person's first public listing, and any award claim, is approved by an admin in the review queue even when every check passes. Edits to an approved profile's public text send it back to review.
 
