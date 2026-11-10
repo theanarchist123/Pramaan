@@ -72,7 +72,7 @@ AI-written plugin checks run inside Docker, which the API image does not have an
 `REQUIRE_EMAIL_VERIFICATION`, `HUMAN_APPROVAL_FIRST_LISTING` and `AWARD_CLAIMS_NEED_HUMAN` default to `true`: a person's first public listing, and any award claim, is approved by an admin in the review queue even when every check passes. Edits to an approved profile's public text send it back to review.
 
 ## 3. Web — Vercel
-Import the repo → **Root Directory: `apps/web`** → framework Next.js (auto-detected).
+Import the repo → **Root Directory: `apps/web`** → framework Next.js (auto-detected). The web app is now a **pnpm workspace** member (lockfile at the repo root), so in *Settings → General* keep **"Include source files outside of the Root Directory in the Build Step"** switched on (Vercel's default). Docker builds use the repo root as context: `docker build -f apps/web/Dockerfile .` (compose does this for you).
 
 | Variable | Value |
 |---|---|

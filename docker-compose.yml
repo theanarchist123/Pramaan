@@ -79,7 +79,8 @@ services:
 
   web:
     build:
-      context: ./apps/web
+      context: . # repository root: the web app is a pnpm workspace member
+      dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: http://localhost:8000
     container_name: pramaan-web

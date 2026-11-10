@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -29,6 +30,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Self-contained server bundle: what the Docker image runs.
   output: "standalone",
+  // The web app lives in a pnpm workspace: trace dependencies from the repo root so the standalone bundle is complete.
+  outputFileTracingRoot: path.join(__dirname, "../../"),
   // Lets a production build live beside a running `next dev` without clobbering its .next folder.
   distDir: process.env.NEXT_DIST_DIR || ".next",
   async headers() {
