@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from pgvector.sqlalchemy import Vector
@@ -314,6 +314,28 @@ class ReviewItem(Base):
     resolved_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = ts()
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Case locking (spec 7.5): whoever opens a case holds it for a while; others see who.
+    assigned_to: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    sla_due_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=lambda: _now() + timedelta(hours=24)
+    )
+
+
+class ReviewDecision(Base):
+    """One decision by one person about one claim (or the whole case when claim_id is null). Never edited."""
+
+    __tablename__ = "review_decisions"
+
+    id: Mapped[uuid.UUID] = pk()
+    review_item_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("review_queue.id", ondelete="CASCADE"), index=True)
+    claim_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    decided_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    decision: Mapped[str] = mapped_column(String(12))  # verify | hold | reject | approve
+    reason_code: Mapped[str] = mapped_column(String(32))
+    note: Mapped[str] = mapped_column(Text, default="")
+    evidence_ref: Mapped[str] = mapped_column(String(600), default="")
+    decided_at: Mapped[datetime] = ts()
 
 
 class AgentRun(Base):
