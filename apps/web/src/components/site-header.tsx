@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Command as CommandIcon, Languages, LogOut, Menu, Moon, Sun, Type } from "lucide-react";
+import { Command as CommandIcon, Languages, LogOut, Menu, Moon, Sun, Type, Zap, ZapOff } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/command-palette";
 import { InstallButton } from "@/components/install-button";
 import { useAuth } from "@/lib/auth";
+import { useMotionPreference } from "@/lib/motion-preference";
 import { useI18n, type Key } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,7 @@ export function SiteHeader() {
   const { lang, setLang, t } = useI18n();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { reduced, setReduced } = useMotionPreference();
 
   useEffect(() => {
     setMounted(true);
@@ -102,6 +104,15 @@ export function SiteHeader() {
           </Button>
           <Button variant="ghost" size="icon" aria-label={t("nav.largeText")} onClick={toggleLargeText}>
             <Type />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t("nav.reduceMotion")}
+            aria-pressed={reduced}
+            onClick={() => setReduced(!reduced)}
+          >
+            {reduced ? <ZapOff /> : <Zap />}
           </Button>
           <Button
             variant="ghost"

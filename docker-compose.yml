@@ -19,6 +19,20 @@ services:
       timeout: 3s
       retries: 10
 
+  # Rate-limit counters, short locks and live-event fan-out only: never the source of truth. The API falls back to
+  # in-process limits (and logs an ALERT) if it is unreachable.
+  redis:
+    image: redis:7-alpine
+    container_name: pramaan-redis
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   backend:
     build: ./backend
     container_name: pramaan-api
@@ -29,6 +43,8 @@ services:
       DATABASE_URL: postgresql+asyncpg://pramaan:pramaan@db:5432/pramaan
       PUBLIC_BASE_URL: http://localhost:3000
       API_BASE_URL: http://localhost:8000
+      REDIS_URL: redis://redis:6379/0
+      JOB_BACKEND: procrastinate # background jobs are Postgres rows, run by the API's inline worker or `python -m app.worker`
       RENDER_BASE_URL: http://web:3000 # how the API reaches the web app to render certificate PDFs
       LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
       LLM_MODE: ${LLM_MODE:-mock}
@@ -79,7 +95,8 @@ services:
 
   web:
     build:
-      context: ./apps/web
+      context: . # repository root: the web app is a pnpm workspace member
+      dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: http://localhost:8000
     container_name: pramaan-web

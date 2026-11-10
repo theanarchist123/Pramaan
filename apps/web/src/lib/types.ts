@@ -1,6 +1,6 @@
 // Mirrors backend/app/schemas.py — keep in sync (Phase 6 generates these from OpenAPI).
 
-export type ClaimStatus = "self" | "web" | "document";
+export type ClaimStatus = "self" | "web" | "document" | "human" | "issuer";
 export type ProfileStatus = "draft" | "pending_review" | "approved" | "rejected";
 
 export interface Evidence {
@@ -34,6 +34,9 @@ export interface Profile {
   photo_url: string;
   custom: Record<string, unknown>;
   status: ProfileStatus;
+  /** How an approval was reached; the banner is worded from this, never from free text. */
+  decision_basis?: "" | "automation" | "reviewer";
+  wikidata_qid?: string;
   is_demo: boolean;
   created_at: string;
   claims: Claim[];

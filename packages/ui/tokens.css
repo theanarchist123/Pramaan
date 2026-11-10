@@ -1,0 +1,68 @@
+/* Pramaan design tokens - "Seal & Ink" (spec section 4, Appendix A).
+   Every colour pair used for text is checked by scripts/contrast.mjs (run in CI). Edit a colour here and the gate
+   re-computes the contrast ratios from THIS file, so the spec's numbers cannot drift from the code. */
+
+:root {
+  /* light "Bond" */
+  --bond: #F4F6FA;  --surface: #FFFFFF;  --paper: #FBF8F1;
+  --ink: #1A1B3A;   --ink-muted: #5A5F7A;  --rule: #D9DDE8;
+  --stamp: #4A2C8F; --stamp-tint: #E9E4F7;
+  --verified: #0B7A5E; --verified-tint: #DDF3EA;
+  --seal: #B8321B;  --seal-tint: #FBE5E0;
+  --caution: #8A5A00; --caution-tint: #FFF1D6;
+  --foil: #A87B1E;   /* certificate and seal ring only: decorative, never text */
+  /* Text ON a paper object. Paper stays light in both themes (a document lying on the desk), so the ink on it must
+     stay dark in both themes too: --ink flips to light in dark mode and would be invisible on --paper. */
+  --paper-ink: #1A1B3A; --paper-ink-muted: #5A5F7A;
+
+  /* sector palette: spines, dots, monogram rings, duotone ends, chart series. Each sector also has an icon. */
+  --sector-energy: #877500;      --sector-agriculture: #578429; --sector-healthcare: #148A53;
+  --sector-technology: #008C77;  --sector-science: #00889C;     --sector-media: #007EB6;
+  --sector-business: #4972C0;    --sector-education: #7565BB;   --sector-literature: #9758A1;
+  --sector-social-work: #AC507C; --sector-arts-culture: #B45151; --sector-sports: #B05925;
+  --sector-law: #9F6700;         --sector-public-service: #65768C;
+
+  /* shape, depth, density */
+  --radius-data: 2px; --radius-control: 6px; --radius-panel: 12px; --radius-sheet: 16px;
+  --lift-1: 0 1px 2px rgb(26 27 58 / .08), 0 4px 12px rgb(26 27 58 / .06);   /* paper objects */
+  --lift-2: 0 8px 24px rgb(26 27 58 / .16);                                  /* floating layers */
+  --row-h: 44px; --pad: 16px;
+
+  /* motion (spec 4.6.2) */
+  --dur-instant: 90ms; --dur-fast: 140ms; --dur-base: 220ms; --dur-slow: 360ms; --dur-hero: 640ms; --dur-epic: 1200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);   --ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);  --ease-stamp: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-ink: cubic-bezier(0.65, 0, 0.35, 1);    --stagger: 40ms;
+}
+
+[data-density="compact"] { --row-h: 32px; --pad: 8px; }
+
+.dark {
+  --bond: #12142B;  --surface: #1A1D3A;  /* --paper stays light on purpose: documents lie on the desk */
+  --ink: #ECEEF8;   --ink-muted: #A3A8C4;  --rule: rgb(255 255 255 / .12);
+  --stamp: #B6A8FF; --stamp-tint: #2A2559;
+  --verified: #4FD1A5; --verified-tint: #123B31;
+  --seal: #FF7A63;  --seal-tint: #4A1F19;
+  --caution: #F2C46D; --caution-tint: #3D2F0F;
+  --foil: #D9B25C;
+  --sector-energy: #CBB94C;      --sector-agriculture: #98C96F; --sector-healthcare: #69D094;
+  --sector-technology: #36D2BA;  --sector-science: #1FCEE3;     --sector-media: #58C4FF;
+  --sector-business: #89B7FF;    --sector-education: #B6A8FF;   --sector-literature: #DE9BE9;
+  --sector-social-work: #F693C0; --sector-arts-culture: #FF9492; --sector-sports: #FA9D6B;
+  --sector-law: #E7AA5B;         --sector-public-service: #A2BAD8;
+  --lift-1: 0 1px 2px rgb(0 0 0 / .4), 0 6px 18px rgb(0 0 0 / .35);
+  --lift-2: 0 12px 32px rgb(0 0 0 / .5);
+}
+
+/* duotone for photographs from the image service: sector colour over a greyscale image */
+.duotone { position: relative; isolation: isolate; }
+.duotone img { filter: grayscale(1) contrast(1.05); }
+.duotone::after { content: ""; position: absolute; inset: 0; background: var(--sector, var(--stamp)); mix-blend-mode: color; opacity: .85; }
+
+/* reduced motion: the OS setting AND the in-app switch (data-reduce-motion on <html>) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+[data-reduce-motion="true"] *, [data-reduce-motion="true"] *::before, [data-reduce-motion="true"] *::after {
+  animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important;
+}

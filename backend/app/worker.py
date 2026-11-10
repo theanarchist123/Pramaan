@@ -81,9 +81,14 @@ async def run_forever(interval: float = 5.0, *, sandbox: bool = True) -> None:
 async def main() -> None:
     logging.basicConfig(level=logging.INFO)
     log.info("worker started")
+    from app import jobs
+
     try:
-        await run_forever()
+        await jobs.start()
+        # The bespoke loop (webhook outbox, scheduled email, sandbox) and the Postgres job queue side by side.
+        await asyncio.gather(run_forever(), jobs.run_worker())
     finally:
+        await jobs.stop()
         await dispose_engine()
 
 

@@ -81,7 +81,29 @@ class LLM:
     def model_names(self) -> dict[str, list[str]]:
         return {"smart": self._chain("smart"), "fast": self._chain("fast")}
 
-    async def structured(
+    async def structured(self, schema: type[T], **kw) -> T:
+        """Every model call goes through here: traced, timed and recorded (see core/telemetry.py)."""
+        from app.core import telemetry
+
+        if not self.live:
+            return await self._structured(schema, **kw)
+        telemetry.usage.set(None)
+        t0 = time.monotonic()
+        ok, err = True, ""
+        with telemetry.span("llm.structured", provider=self.provider, tier=kw.get("tier", "smart"), schema=schema.__name__):
+            try:
+                return await self._structured(schema, **kw)
+            except Exception as exc:
+                ok, err = False, f"{type(exc).__name__}: {exc}"
+                raise
+            finally:
+                telemetry.record_llm_call(
+                    provider=self.provider, model=",".join(self._chain(kw.get("tier", "smart")))[:80],
+                    tier=kw.get("tier", "smart"), schema=schema.__name__,
+                    latency_ms=int((time.monotonic() - t0) * 1000), ok=ok, error=err,
+                )
+
+    async def _structured(
         self,
         schema: type[T],
         *,
@@ -166,6 +188,10 @@ class LLM:
         if cands and any(k in reason for k in ("SAFETY", "PROHIBITED", "BLOCKLIST", "RECITATION")):
             raise LLMRefusal(f"Gemini declined to answer ({reason})")
 
+        from app.core import telemetry
+
+        meta = getattr(resp, "usage_metadata", None)
+        telemetry.note_usage(getattr(meta, "prompt_token_count", 0), getattr(meta, "candidates_token_count", 0))
         parsed = getattr(resp, "parsed", None)
         if isinstance(parsed, schema):
             return parsed
@@ -193,6 +219,9 @@ class LLM:
             response = await self._claude.beta.messages.parse(**kwargs)
         except anthropic.APIError as exc:
             raise LLMError(f"Model call failed: {exc}") from exc
+        from app.core import telemetry
+
+        telemetry.note_usage(getattr(response.usage, "input_tokens", 0), getattr(response.usage, "output_tokens", 0))
         if response.stop_reason == "refusal":
             raise LLMRefusal("Model declined this request")
         if response.parsed_output is None:

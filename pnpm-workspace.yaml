@@ -1,0 +1,7 @@
+# Workspace members. apps/desktop is deliberately NOT here (Electron packaging is verified on its own, see
+# .github/workflows/desktop-release.yml). apps/admin and packages/ui arrive in Phases 1-2 and are picked up by the globs.
+packages:
+  - "apps/web"
+  - "apps/admin"
+  - "packages/*"
+  - "packages/sdk/*"

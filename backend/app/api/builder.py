@@ -43,8 +43,8 @@ class ChangeOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-def _limit(principal: Principal) -> None:
-    ok, _ = check_rate_limit(f"builder:{principal.user.id}", 20)
+async def _limit(principal: Principal) -> None:
+    ok, _ = await check_rate_limit(f"builder:{principal.user.id}", 20)
     if not ok:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Slow down — too many builder requests")
 
@@ -55,7 +55,7 @@ async def field_proposal(
     body: RequestIn, principal: Principal = Depends(require_admin), session: AsyncSession = Depends(get_session)
 ):
     """Turn a sentence into a field definition. Nothing is created until you POST /v1/admin/fields."""
-    _limit(principal)
+    await _limit(principal)
     existing = {k for (k,) in (await session.execute(select(FieldDefinition.key))).all()}
     ctx = await start_run("shilpkar_field")
     try:
@@ -150,7 +150,7 @@ async def propose_change(
     principal: Principal = Depends(require_admin),
     session: AsyncSession = Depends(get_session),
 ):
-    _limit(principal)
+    await _limit(principal)
     ctx = await start_run("shilpkar_plugin")
     inline = get_settings().sandbox_in_api
     # The sandbox needs Docker, which the deployed API image does not (and should not) have. Outside local

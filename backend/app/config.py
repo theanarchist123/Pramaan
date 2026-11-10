@@ -44,6 +44,18 @@ class Settings(BaseSettings):
     # Background work (webhook retries, scheduled email, AI-code sandbox) runs in a worker loop. By default the
     # API runs it too (WORKER_INLINE=true); in production run `python -m app.worker` separately and set it false.
     worker_inline: bool = True
+    # Redis: ONLY for rate-limit counters, short locks, small caches and live-event fan-out (never source of truth).
+    # Empty = in-process only. Set but unreachable = in-process fallback plus an alert in the logs.
+    redis_url: str = ""
+    # Background jobs. "inline" runs them in this process (dev, tests); "procrastinate" queues them in Postgres for
+    # `python -m app.worker`, so they survive restarts and run on any replica.
+    job_backend: str = "inline"
+    job_inline_wait: bool = False  # tests: run the job before the request returns, like a background task
+    # OpenTelemetry: an OTLP/HTTP collector URL. Empty = tracing is a no-op.
+    otel_exporter_otlp_endpoint: str = ""
+    otel_service_name: str = "pramaan-api"
+    # LangGraph checkpoints (a paused review survives a restart). "postgres" | "memory"
+    checkpoint_backend: str = "postgres"
     # Run `alembic upgrade head` when the API starts (outside localhost, where the schema is otherwise only checked).
     # The Docker image already migrates before starting; this is for running the API directly against a real database.
     auto_migrate: bool = False
@@ -100,7 +112,10 @@ class Settings(BaseSettings):
     # Comma-separated base64 public keys of past signing keys, so old certificates keep verifying after rotation.
     signing_retired_public_keys: str = ""
 
-    unsplash_access_key: str = ""  # unused now: certificate photos are self-hosted (scripts/download_photos.py)
+    # Unsplash API for SECTOR imagery on experience pages (spec 4.9, services/images.py): server-side only, hotlinked,
+    # attributed, human-curated. Certificates never use it: they use the frozen local photos.
+    unsplash_access_key: str = ""
+    unsplash_app_name: str = "pramaan"
     # Wikidata as a second public source next to Wikipedia (structured awards/occupation/education; no key needed).
     wikidata_enabled: bool = True
     # Wikimedia's bot policy requires a real contact (email or URL) in the User-Agent.

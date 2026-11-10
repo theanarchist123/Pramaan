@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OverrideDialog } from "@/components/admin/override-dialog";
 import { ConfidenceMeter, VerificationBadge } from "@/components/verification-badge";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -77,24 +78,17 @@ export default function AdminPage() {
     }
   }
 
-  // Manual verification: the reviewer has checked the document themselves and vouches for this claim.
-  async function verifyClaim(item: ReviewItem, claimId: string) {
-    setBusy(claimId);
-    try {
-      await api(`/v1/admin/claims/${claimId}/verify`, { method: "POST", json: { status: "document", confidence: 0.97 } });
-      setItems((prev) =>
-        prev?.map((i) =>
-          i.id !== item.id || !i.profile
-            ? i
-            : { ...i, profile: { ...i.profile, claims: i.profile.claims.map((c) => (c.id === claimId ? { ...c, status: "document", confidence: 0.97 } : c)) } },
-        ) ?? null,
-      );
-      toast.success("Claim marked as document-verified");
-    } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Action failed");
-    } finally {
-      setBusy(null);
-    }
+  // A reviewer can confirm a claim themselves, but only with a written reason and an evidence reference (collected by the
+  // dialog). It becomes "Confirmed by a reviewer", never "Document verified": no matching document backs it.
+  const [override, setOverride] = useState<{ claimId: string; text: string } | null>(null);
+  function markConfirmed(claimId: string) {
+    setItems((prev) =>
+      prev?.map((i) =>
+        !i.profile
+          ? i
+          : { ...i, profile: { ...i.profile, claims: i.profile.claims.map((c) => (c.id === claimId ? { ...c, status: "human" as const, confidence: 0.9 } : c)) } },
+      ) ?? null,
+    );
   }
 
   async function reindex() {
@@ -123,6 +117,7 @@ export default function AdminPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <AdminNav />
+      <OverrideDialog claimId={override?.claimId ?? null} claimText={override?.text ?? ""} onClose={() => setOverride(null)} onDone={markConfirmed} />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-4xl font-semibold">Review queue</h1>
@@ -215,8 +210,8 @@ export default function AdminPage() {
                           <div className="flex shrink-0 flex-col items-end gap-2">
                             <VerificationBadge status={c.status} />
                             {c.status === "self" && (
-                              <Button size="sm" variant="outline" disabled={busy === c.id} onClick={() => verifyClaim(item, c.id)}>
-                                <Check /> I checked it — verify
+                              <Button size="sm" variant="outline" disabled={busy === c.id} onClick={() => setOverride({ claimId: c.id, text: c.value })}>
+                                <Check /> Confirm it myself…
                               </Button>
                             )}
                           </div>

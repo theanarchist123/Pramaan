@@ -187,3 +187,9 @@ body:has([data-print-route]) {
     transition-duration: 0.01ms !important;
   }
 }
+/* The in-app "Reduce motion" switch (spec MOT-01): same effect as the OS setting, remembered per viewer. */
+html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, html[data-reduce-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

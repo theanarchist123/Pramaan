@@ -61,13 +61,13 @@ async def register(body: RegisterIn, response: Response, session: AsyncSession =
 @router.post("/login", response_model=TokenOut, dependencies=[Depends(ip_limit("login", 20))])
 async def login(body: LoginIn, response: Response, session: AsyncSession = Depends(get_session)):
     email = body.email.lower().strip()
-    if login_locked(email):
+    if await login_locked(email):
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many failed attempts - try again in 15 minutes")
     user = (await session.execute(select(User).where(User.email == email))).scalar_one_or_none()
     if user is None or not verify_password(body.password, user.password_hash):
-        login_failed(email)
+        await login_failed(email)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect email or password")
-    login_ok(email)
+    await login_ok(email)
     return _token_out(user, response)
 
 

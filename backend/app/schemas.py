@@ -112,6 +112,8 @@ class ProfileOut(ORM):
     photo_url: str
     custom: dict[str, Any]
     status: str
+    decision_basis: str = ""
+    wikidata_qid: str = ""
     is_demo: bool
     created_at: datetime
     claims: list[ClaimOut] = []

@@ -20,7 +20,7 @@ from app.agents.identity import is_common_name, secondary_signals
 from app.agents.lipik import NAME_MATCH_OK
 from app.agents.schemas import BioAudit
 from app.config import get_settings
-from app.domain import AUTO_APPROVE_THRESHOLD, STATUS_DOCUMENT, STATUS_WEB
+from app.domain import AUTO_APPROVE_THRESHOLD, STATUS_DOCUMENT, STATUS_HUMAN, STATUS_WEB
 from app.llm.client import get_llm
 from app.models import Document, Profile, ReviewItem
 
@@ -50,7 +50,7 @@ async def audit(ctx: RunContext, session: AsyncSession, profile: Profile) -> Aud
     ).scalars().all()
 
     reasons: list[str] = []
-    verified = [c for c in claims if c.status in (STATUS_WEB, STATUS_DOCUMENT) and c.confidence >= 0.5]
+    verified = [c for c in claims if c.status in (STATUS_WEB, STATUS_DOCUMENT, STATUS_HUMAN) and c.confidence >= 0.5]
     contradicted = [c for c in claims if c.status == "self" and c.confidence == 0.0]
     unverified = [c for c in claims if c not in verified and c not in contradicted]
 
@@ -83,6 +83,9 @@ async def audit(ctx: RunContext, session: AsyncSession, profile: Profile) -> Aud
         reasons.append("Identity not confirmed by a matching document")
         score = min(score, 0.9)
 
+    if "partial_match" in flags:
+        reasons.append("The name on an uploaded document only partly matches the profile name; a person must confirm it is the same person")
+        score = min(score, 0.7)
     if "not_a_credential" in flags:
         reasons.append("An uploaded document is an article or clipping about the person, not a credential issued to them")
         score = min(score, 0.7)
@@ -162,6 +165,7 @@ async def apply_decision(
 
     if decision.decision == "auto_approve":
         profile.status = "approved"
+        profile.decision_basis = "automation"
         for item in open_items:
             item.status = "approved"
             item.resolved_at = datetime.now(timezone.utc)
@@ -173,6 +177,7 @@ async def apply_decision(
         return
 
     profile.status = "pending_review"
+    profile.decision_basis = ""
     reason = "; ".join(decision.reasons)[:300] or "Below confidence threshold"
     if open_items:
         item = open_items[0]

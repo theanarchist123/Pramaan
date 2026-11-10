@@ -14,7 +14,7 @@ from app.agents.textutil import normalize
 from app.models import Edge, Profile, ProfileEmbedding
 from app.services.embeddings import get_embedder
 
-VERIFIED = ("web", "document")
+VERIFIED = ("web", "document", "human", "issuer")
 
 
 def profile_text(p: Profile, defs: list | None = None) -> str:
@@ -142,7 +142,7 @@ def _reasons(p: Profile, query: str, state: str | None, sector: str | None) -> l
     q_tokens = {t for t in normalize(query).split() if len(t) > 3}
     for c in p.claims:
         if c.status in VERIFIED and q_tokens & set(normalize(c.value).split()):
-            label = "document-verified" if c.status == "document" else "web-verified"
+            label = {"document": "document verified", "human": "confirmed by a reviewer", "issuer": "verified by issuer"}.get(c.status, "public evidence")
             reasons.append(f"{c.value} ({label})")
             break
     for inst in p.institutions:

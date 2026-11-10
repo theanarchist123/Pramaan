@@ -47,7 +47,7 @@ def pct(n: int, d: int) -> str:
 async def run_pariksha() -> dict:
     from app.agents import pariksha
     from app.agents.schemas import FactCheckReport
-    from app.agents.textutil import quote_in_source
+    from app.agents.textutil import claim_specifics_in_quote, quote_in_source
     from app.llm.client import LLMError, get_llm
     from evals.cases import PARIKSHA
 
@@ -76,8 +76,9 @@ async def run_pariksha() -> dict:
                 supported_verdicts += 1
                 if not quote_ok:
                     bad_quotes += 1
-            # What actually ships: the verbatim-quote guard turns a "supported" without a real quote into "not supported".
-            effective = "supported" if said == "supported" and quote_ok else "not_supported"
+            # What actually ships: the verbatim-quote and year/number guards turn a "supported" without a real quote into "not supported".
+            specifics_ok = bool(v) and claim_specifics_in_quote(dict(claims)[cid], None, v.quote)
+            effective = "supported" if said == "supported" and quote_ok and specifics_ok else "not_supported"
             if effective == expected[cid]:
                 correct += 1
             else:

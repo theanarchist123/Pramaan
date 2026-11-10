@@ -14,7 +14,7 @@ async def _approved(client, make_user, admin, *, name, sector, state, city="", i
     ).json()
     c = (await client.post(f"/v1/profiles/{p['id']}/claims", headers=person, json={"field": "award", "value": claim})).json()
     await client.post(f"/v1/profiles/{p['id']}/submit", headers=person)
-    await client.post(f"/v1/admin/claims/{c['id']}/verify", headers=admin, json={"status": "web", "confidence": 0.9})
+    await client.post(f"/v1/admin/claims/{c['id']}/verify", headers=admin, json={"reason": "Checked against the published honours list", "evidence_ref": "https://example.org/honours"})
     r = await client.post(f"/v1/admin/profiles/{p['id']}/status", headers=admin, json={"status": "approved"})
     assert r.status_code == 200, r.text
     return p

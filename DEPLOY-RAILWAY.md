@@ -63,6 +63,13 @@ CORS allows exactly one web origin (`PUBLIC_BASE_URL`; localhost origins are all
 ### Sign-in cookie
 The browser session is an `httpOnly` cookie set by the API (`SameSite=None; Secure` in production because the web app and API are on different domains). State-changing requests that arrive with the cookie must carry an `Origin` equal to `PUBLIC_BASE_URL`, which blocks cross-site forgery. **Safari and some privacy settings block third-party cookies**, which breaks sign-in when the web app and API are on unrelated domains (`*.vercel.app` + `*.up.railway.app`). The robust fix is one registrable domain for both, e.g. `app.example.com` (Vercel) and `api.example.com` (Railway); then set `COOKIE_SAMESITE=lax`. API clients and SDKs keep using `Authorization: Bearer` / `X-API-Key`; logging out revokes every token issued before it.
 
+### Redis, the job queue and migrations (Phase 0)
+- **Redis** is used only for rate-limit counters, short locks, small caches and live-event fan-out; it is never the source of truth. Add a managed Redis (same region, private network) and set `REDIS_URL`. If it is unset everything runs in-process; if it is set but down, limits fall back to per-process memory and the API logs `ALERT: Redis is unreachable` (once a minute); `/v1/admin/system` lists it under `degraded`.
+- **Jobs** (`JOB_BACKEND=procrastinate`) are rows in Postgres (the queue's tables are created by migration `0005`), run by the API's inline worker (`WORKER_INLINE=true`) or by one or more `python -m app.worker` services. Verification runs go through it, so they survive restarts. `inline` (the default) runs jobs inside the API process, which is what you want on a laptop. **Windows note:** psycopg's async mode cannot run on Windows' default event loop, so on a Windows dev machine use `JOB_BACKEND=inline` (the in-memory LangGraph checkpointer is used there too); Linux and Docker are unaffected.
+- **A paused review is durable.** Escalated cases wait inside the verification graph (a LangGraph interrupt checkpointed in Postgres). A reviewer's decision resumes that same run.
+- **Semantic search is fail-closed:** in production the API refuses to start if the embedding model cannot load. Set `EMBEDDINGS=hash` to choose keyword search deliberately (the free-tier lite setup above).
+- **Tracing:** set `OTEL_EXPORTER_OTLP_ENDPOINT` to send traces to any OTLP/HTTP collector. Every live model call is also recorded in `llm_calls`; `GET /v1/admin/agent-runs` shows per-run calls, tokens and latency.
+
 ### Background worker and the AI-code sandbox
 Webhook deliveries and scheduled emails go through database tables claimed with `FOR UPDATE SKIP LOCKED`, so restarts lose nothing and several replicas never send the same one twice. By default the API runs that loop itself. For production, run it as its own Railway service (same image, start command `python -m app.worker`) and set `WORKER_INLINE=false` on the API.
 
@@ -72,7 +79,7 @@ AI-written plugin checks run inside Docker, which the API image does not have an
 `REQUIRE_EMAIL_VERIFICATION`, `HUMAN_APPROVAL_FIRST_LISTING` and `AWARD_CLAIMS_NEED_HUMAN` default to `true`: a person's first public listing, and any award claim, is approved by an admin in the review queue even when every check passes. Edits to an approved profile's public text send it back to review.
 
 ## 3. Web — Vercel
-Import the repo → **Root Directory: `apps/web`** → framework Next.js (auto-detected).
+Import the repo → **Root Directory: `apps/web`** → framework Next.js (auto-detected). The web app is now a **pnpm workspace** member (lockfile at the repo root), so in *Settings → General* keep **"Include source files outside of the Root Directory in the Build Step"** switched on (Vercel's default). Docker builds use the repo root as context: `docker build -f apps/web/Dockerfile .` (compose does this for you).
 
 | Variable | Value |
 |---|---|

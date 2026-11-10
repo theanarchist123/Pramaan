@@ -11,8 +11,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from app.deps import Principal, require_admin
-from app.models import Claim, Profile, ReviewItem
+from app.deps import Principal, require_admin, require_permission
+from app.core import redis as rd
+from app.domain import HUMAN_CONFIDENCE_CAP, STATUS_HUMAN
+from app.models import Claim, Evidence, Profile, ReviewItem
 from app.schemas import ClaimOut, ProfileOut, StatusChangeIn
 
 router = APIRouter(prefix="/v1/admin", tags=["admin"])
@@ -31,12 +33,23 @@ class ReviewItemOut(BaseModel):
 
 
 class ClaimVerifyIn(BaseModel):
-    status: str = Field(pattern="^(self|web|document)$")
-    confidence: float = Field(ge=0, le=1)
+    """A person vouching for (or withdrawing) a claim. It can only ever produce `human` or `self`: a reviewer cannot
+    mint `web` or `document` status, because those mean "an evidence record of that kind exists" (invariant I-8)."""
+
+    status: str = Field(default="human", pattern="^(self|human)$")
+    reason: str = Field(min_length=10, max_length=500, description="Why you are overriding the automated result")
+    evidence_ref: str = Field(min_length=5, max_length=600, description="URL or case reference that supports it")
+    confidence: float = Field(default=HUMAN_CONFIDENCE_CAP, ge=0, le=1)
+
+
+def _no_self_review(principal: Principal, profile: Profile | None) -> None:
+    """Invariant I-10: nobody approves, overrides or reviews their own profile."""
+    if profile is not None and profile.owner_id == principal.user.id:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "You cannot review your own profile")
 
 
 @router.get("/system")
-async def system_status(_: Principal = Depends(require_admin)):
+async def system_status(_: Principal = Depends(require_permission("agent_run.read"))):
     """What the running server is really doing. Admin-only (the public /healthz reveals nothing).
     `degraded` lists features that silently fell back to something weaker."""
     from app.config import get_settings
@@ -45,6 +58,8 @@ async def system_status(_: Principal = Depends(require_admin)):
 
     s, llm, emb = get_settings(), get_llm(), get_embedder()
     degraded = []
+    if rd.status()["fallback_active"]:
+        degraded.append("Redis is unreachable: rate limits and locks are per-process only")
     if s.embeddings.lower() != "hash" and emb.kind == "hash":
         degraded.append("Semantic search is using the lexical hash fallback (fastembed is not installed or failed to load)")
     if s.llm_mode == "live" and llm.mode != "live":
@@ -58,10 +73,59 @@ async def system_status(_: Principal = Depends(require_admin)):
         "llm": {"mode": llm.mode, "provider": llm.provider, "models": llm.model_names},
         "embeddings": emb.kind,
         "plugins_enabled": s.plugins_enabled,
+        "redis": rd.status(),
+        "job_backend": s.job_backend,
         "worker_inline": s.worker_inline,
         "sandbox_in_api": s.sandbox_in_api,
         "degraded": degraded,
     }
+
+
+@router.get("/agent-runs")
+async def agent_runs(
+    workflow: str | None = None,
+    status_filter: str | None = None,
+    limit: int = 50,
+    _: Principal = Depends(require_permission("agent_run.read")),
+    session: AsyncSession = Depends(get_session),
+):
+    """Every agent run with its model usage: calls, tokens, latency and errors (from the llm_calls table), plus how many
+    events it produced. Tokens are reported, not priced: confirm the current price list before turning them into cost."""
+    from sqlalchemy import func
+
+    from app.models import AgentEvent, AgentRun, LlmCall
+
+    calls = (
+        select(
+            LlmCall.run_id.label("run_id"), func.count().label("calls"),
+            func.coalesce(func.sum(LlmCall.input_tokens), 0).label("input_tokens"),
+            func.coalesce(func.sum(LlmCall.output_tokens), 0).label("output_tokens"),
+            func.coalesce(func.avg(LlmCall.latency_ms), 0).label("avg_latency_ms"),
+            func.count().filter(LlmCall.ok.is_(False)).label("errors"),
+        ).group_by(LlmCall.run_id).subquery()
+    )
+    events = select(AgentEvent.run_id.label("run_id"), func.count().label("n")).group_by(AgentEvent.run_id).subquery()
+    stmt = (
+        select(AgentRun, calls.c.calls, calls.c.input_tokens, calls.c.output_tokens, calls.c.avg_latency_ms, calls.c.errors, events.c.n)
+        .outerjoin(calls, calls.c.run_id == AgentRun.id)
+        .outerjoin(events, events.c.run_id == AgentRun.id)
+        .order_by(AgentRun.started_at.desc())
+        .limit(min(max(limit, 1), 200))
+    )
+    if workflow:
+        stmt = stmt.where(AgentRun.workflow == workflow)
+    if status_filter:
+        stmt = stmt.where(AgentRun.status == status_filter)
+    out = []
+    for run, n_calls, tin, tout, avg_ms, errs, n_events in (await session.execute(stmt)).all():
+        out.append({
+            "id": str(run.id), "workflow": run.workflow, "profile_id": str(run.profile_id) if run.profile_id else None,
+            "status": run.status, "summary": run.summary, "started_at": run.started_at, "ended_at": run.ended_at,
+            "events": n_events or 0,
+            "llm": {"calls": n_calls or 0, "input_tokens": int(tin or 0), "output_tokens": int(tout or 0),
+                    "avg_latency_ms": int(avg_ms or 0), "errors": errs or 0},
+        })
+    return out
 
 
 @router.get("/review", response_model=list[ReviewItemOut])
@@ -101,6 +165,7 @@ async def resolve_review(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Review item not found")
     if item.status != "open":
         raise HTTPException(status.HTTP_409_CONFLICT, f"Already {item.status}")
+    _no_self_review(principal, await session.get(Profile, item.profile_id))
     item.status = "resolved"
     item.details = {**(item.details or {}), "resolution_note": body.note}
     item.resolved_by = principal.user.id
@@ -131,12 +196,20 @@ async def set_status(
     profile = await session.get(Profile, profile_id)
     if profile is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Profile not found")
+    _no_self_review(principal, profile)
+    from app.services import audit
+
+    await audit.record(session, actor_id=principal.user.id, actor_role="admin", action="profile.status",
+                       target_type="profile", target_id=str(profile.id), before={"status": profile.status},
+                       after={"status": body.status})
     profile.status = body.status
+    profile.decision_basis = "reviewer" if body.status == "approved" else ""
     open_items = (
         await session.execute(
             select(ReviewItem).where(ReviewItem.profile_id == profile.id, ReviewItem.status == "open")
         )
     ).scalars().all()
+    paused_threads = [(i.details or {}).get("thread_id", "") for i in open_items]
     if body.status in ("approved", "rejected"):
         for item in open_items:
             item.status = body.status
@@ -148,6 +221,11 @@ async def set_status(
         await on_approved(session, profile)
     await session.commit()
     await session.refresh(profile)
+    if body.status in ("approved", "rejected"):
+        from app.agents.workflows import resume_review
+
+        for t in paused_threads:  # finish the paused agent run(s) that were waiting for this decision
+            await resume_review(t, body.status, str(principal.user.id))
     if body.status == "approved":
         from app.services import webhooks
 
@@ -170,15 +248,28 @@ async def reindex(_: Principal = Depends(require_admin), session: AsyncSession =
 async def set_claim_verification(
     claim_id: uuid.UUID,
     body: ClaimVerifyIn,
-    _: Principal = Depends(require_admin),
+    principal: Principal = Depends(require_permission("claim.override")),
     session: AsyncSession = Depends(get_session),
 ):
     """Manual override of a claim's verification (agents do this automatically in Phase 2)."""
     claim = await session.get(Claim, claim_id)
     if claim is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Claim not found")
+    _no_self_review(principal, await session.get(Profile, claim.profile_id))
+    before = {"status": claim.status, "confidence": claim.confidence}
     claim.status = body.status
-    claim.confidence = body.confidence
+    if body.status == STATUS_HUMAN:
+        claim.confidence = min(body.confidence, HUMAN_CONFIDENCE_CAP)
+        claim.evidence.append(Evidence(kind="human", quote=body.reason, url=body.evidence_ref,
+                                       source_hash=f"reviewer:{principal.user.id}"))
+    else:
+        claim.confidence = 0.0
+    from app.services import audit
+
+    await audit.record(session, actor_id=principal.user.id, actor_role="admin", action="claim.override",
+                       target_type="claim", target_id=str(claim.id), before=before,
+                       after={"status": claim.status, "confidence": claim.confidence, "evidence_ref": body.evidence_ref},
+                       reason=body.reason)
     await session.commit()
     await session.refresh(claim)
     return claim

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown, ExternalLink, MapPin, Quote } from "lucide-react";
-import { ConfidenceMeter, VerificationBadge } from "@/components/verification-badge";
+import { VerificationBadge } from "@/components/verification-badge";
 import { api } from "@/lib/api";
 import type { Claim, Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -54,7 +54,7 @@ function ClaimRow({ claim }: { claim: Claim }) {
         <VerificationBadge status={claim.status} className="shrink-0" />
       </div>
       <div className="mt-2 flex items-center justify-between">
-        <ConfidenceMeter value={claim.confidence} />
+        <span />
         {evidence.length > 0 && (
           <button
             type="button"

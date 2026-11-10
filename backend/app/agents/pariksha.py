@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.agents.events import RunContext
 from app.agents.identity import corroborates, is_common_name
 from app.agents.schemas import ClaimVerdict, FactCheckReport
-from app.agents.textutil import quote_in_source
+from app.agents.textutil import claim_specifics_in_quote, quote_in_source
 from app.domain import STATUS_SELF, STATUS_WEB, WEB_CONFIDENCE_CAP
 from app.llm.client import get_llm
 from app.models import Claim, Evidence, Profile
@@ -100,6 +100,13 @@ async def _apply_verdict(
             await ctx.emit(
                 "Pariksha", "warning",
                 f"Rejected evidence for {label}: quote not found in the cited source",
+            )
+            return
+        if not claim_specifics_in_quote(claim.value, claim.year, verdict.quote):
+            counts["unverifiable"] += 1
+            await ctx.emit(
+                "Pariksha", "warning",
+                f"Not accepted: {label} - the quoted text does not contain the year/number the claim states",
             )
             return
         confidence = round(min(max(verdict.confidence, 0.0), WEB_CONFIDENCE_CAP), 2)

@@ -158,6 +158,11 @@ class Profile(Base):
     # draft | pending_review | approved | rejected
     status: Mapped[str] = mapped_column(String(20), default="draft", index=True)
     is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
+    # How an approval was reached: "automation" (checks passed) | "reviewer" (a person approved). The UI words its
+    # "verified" banner from this server-side enum, never from free text. Empty unless status is approved.
+    decision_basis: Mapped[str] = mapped_column(String(12), default="")
+    # The Wikidata item the APPLICANT confirmed is them. Only this item is ever used as Wikidata evidence (namesakes).
+    wikidata_qid: Mapped[str] = mapped_column(String(20), default="")
     created_at: Mapped[datetime] = ts()
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
 
@@ -195,7 +200,7 @@ class Evidence(Base):
     claim_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("claims.id", ondelete="CASCADE"), index=True
     )
-    kind: Mapped[str] = mapped_column(String(12))  # chat|web|document
+    kind: Mapped[str] = mapped_column(String(12))  # chat|web|document|human
     url: Mapped[str] = mapped_column(String(600), default="")
     quote: Mapped[str] = mapped_column(Text, default="")
     source_hash: Mapped[str] = mapped_column(String(64), default="")
@@ -385,6 +390,101 @@ class OutboxMessage(Base):
     status: Mapped[str] = mapped_column(String(12), default="draft")  # draft|scheduled|sent|discarded
     scheduled_for: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = ts()
+
+
+class LlmCall(Base):
+    """One live model call: who, how long, how many tokens. The raw material for per-run cost and latency views."""
+
+    __tablename__ = "llm_calls"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    at: Mapped[datetime] = ts()
+    run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    provider: Mapped[str] = mapped_column(String(20))
+    model: Mapped[str] = mapped_column(String(80))
+    tier: Mapped[str] = mapped_column(String(10), default="")
+    schema_name: Mapped[str] = mapped_column(String(60), default="")
+    latency_ms: Mapped[int] = mapped_column(Integer, default=0)
+    ok: Mapped[bool] = mapped_column(Boolean, default=True)
+    error: Mapped[str] = mapped_column(String(300), default="")
+    input_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    output_tokens: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class ImageAsset(Base):
+    """A human-approved Unsplash API image (hotlinked, never downloaded) with everything needed to attribute it."""
+
+    __tablename__ = "image_assets"
+
+    id: Mapped[uuid.UUID] = pk()
+    source: Mapped[str] = mapped_column(String(24), default="unsplash_api")
+    unsplash_id: Mapped[str] = mapped_column(String(40), unique=True)
+    sector: Mapped[str] = mapped_column(String(40), index=True)
+    purpose: Mapped[str] = mapped_column(String(10), default="tile")  # tile | cover | empty
+    url_raw: Mapped[str] = mapped_column(String(800))  # urls.raw as returned, ixid included
+    width: Mapped[int] = mapped_column(Integer, default=0)
+    height: Mapped[int] = mapped_column(Integer, default=0)
+    blur_hash: Mapped[str] = mapped_column(String(80), default="")
+    dominant_color: Mapped[str] = mapped_column(String(16), default="")
+    alt_text: Mapped[str] = mapped_column(String(300), default="")
+    photographer_name: Mapped[str] = mapped_column(String(200))
+    photographer_url: Mapped[str] = mapped_column(String(400))
+    photo_url: Mapped[str] = mapped_column(String(400))
+    download_location: Mapped[str] = mapped_column(String(600))
+    approved_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    download_triggered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class UserRole(Base):
+    """A staff role granted to a user (spec 7.2). Permissions come from core/rbac.py."""
+
+    __tablename__ = "user_roles"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    role_key: Mapped[str] = mapped_column(String(32), primary_key=True)
+    granted_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    granted_at: Mapped[datetime] = ts()
+
+
+class AdminAuditLog(Base):
+    """Append-only, hash-chained record of staff actions (a DB trigger refuses UPDATE/DELETE)."""
+
+    __tablename__ = "admin_audit_log"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    at_iso: Mapped[str] = mapped_column(String(32))  # the exact string that is hashed
+    actor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    actor_role: Mapped[str] = mapped_column(String(64), default="")
+    action: Mapped[str] = mapped_column(String(80), index=True)
+    target_type: Mapped[str] = mapped_column(String(40), default="")
+    target_id: Mapped[str] = mapped_column(String(80), default="")
+    before: Mapped[Any] = mapped_column(JSONB, nullable=True)
+    after: Mapped[Any] = mapped_column(JSONB, nullable=True)
+    reason: Mapped[str] = mapped_column(Text, default="")
+    ip: Mapped[str] = mapped_column(String(64), default="")
+    request_id: Mapped[str] = mapped_column(String(64), default="")
+    prev_hash: Mapped[str] = mapped_column(String(64))
+    entry_hash: Mapped[str] = mapped_column(String(64), unique=True)
+
+
+class ApprovalRequest(Base):
+    """A four-eyes action waiting for a SECOND authorised person (spec 7.6)."""
+
+    __tablename__ = "approval_requests"
+
+    id: Mapped[uuid.UUID] = pk()
+    action: Mapped[str] = mapped_column(String(40), index=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    reason: Mapped[str] = mapped_column(Text, default="")
+    requested_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    status: Mapped[str] = mapped_column(String(10), default="pending", index=True)  # pending|approved|rejected|expired
+    decided_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = ts()
 
 
