@@ -5,6 +5,7 @@ RUN corepack enable
 WORKDIR /repo
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/web/package.json apps/web/
+COPY packages/ui/package.json packages/ui/
 COPY packages/sdk/typescript/package.json packages/sdk/typescript/
 RUN pnpm install --frozen-lockfile --filter web...
 
@@ -15,6 +16,7 @@ COPY --from=deps /repo/node_modules ./node_modules
 COPY --from=deps /repo/apps/web/node_modules ./apps/web/node_modules
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/web ./apps/web
+COPY packages/ui ./packages/ui
 # The browser (not the server) calls the API, so this is the API's address as seen from the user's machine.
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL NEXT_TELEMETRY_DISABLED=1

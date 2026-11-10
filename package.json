@@ -4,9 +4,12 @@
   "description": "Pramaan monorepo (pnpm workspace). The backend is Python (backend/); the desktop app stays outside the workspace until its packaging is verified.",
   "packageManager": "pnpm@11.9.0",
   "scripts": {
-    "web:dev": "pnpm --filter web dev",
-    "lint": "pnpm -r --if-present lint",
-    "typecheck": "pnpm -r --if-present typecheck",
-    "build": "pnpm -r --if-present build"
+    "web:dev": "turbo run dev --filter=web",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "build": "turbo run build"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.10"
   }
 }

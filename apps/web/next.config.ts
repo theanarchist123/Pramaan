@@ -9,7 +9,9 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: ${api}`, // ${api}: certificate QR codes are served by the API
+  // ${api}: certificate QR codes. images.unsplash.com: HOTLINKED sector photographs from the approved set (Unsplash API
+  // terms forbid re-hosting). Certificates never use it: they use self-hosted photos, and the render blocks third parties.
+  `img-src 'self' data: blob: ${api} https://images.unsplash.com`,
   "font-src 'self' data:",
   `connect-src 'self' ${api}${isDev ? " ws: http://localhost:* http://127.0.0.1:*" : ""}`,
   "frame-ancestors 'none'",
@@ -30,6 +32,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Self-contained server bundle: what the Docker image runs.
   output: "standalone",
+  transpilePackages: ["@pramaan/ui"], // workspace package shipped as TypeScript source
   // The web app lives in a pnpm workspace: trace dependencies from the repo root so the standalone bundle is complete.
   outputFileTracingRoot: path.join(__dirname, "../../"),
   // Lets a production build live beside a running `next dev` without clobbering its .next folder.
