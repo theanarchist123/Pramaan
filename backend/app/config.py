@@ -75,6 +75,9 @@ class Settings(BaseSettings):
     award_claims_need_human: bool = True
     # Extra issuer names to accept for documents, comma-separated (e.g. "Kerala Sahitya Akademi,Tata Trusts").
     trusted_issuers_extra: str = ""
+    # Staff must enrol an authenticator app, and sensitive staff actions need a fresh code (step-up). On by default.
+    staff_mfa_required: bool = True
+    stepup_minutes: int = 10
     cookie_samesite: str = "auto"
     # "auto" tries the local multilingual model, falling back to a lexical hash; "hash" forces it.
     embeddings: str = "auto"

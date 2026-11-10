@@ -90,6 +90,9 @@ async def init_db() -> None:
 
 # Columns added after a developer's local database was first created (create_all never alters tables).
 LOCAL_PATCHES = [
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret_enc VARCHAR(300)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_enrolled_at TIMESTAMPTZ",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS stepup_until TIMESTAMPTZ",
     "ALTER TABLE review_queue ADD COLUMN IF NOT EXISTS assigned_to UUID",
     "ALTER TABLE review_queue ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ",
     "ALTER TABLE review_queue ADD COLUMN IF NOT EXISTS sla_due_at TIMESTAMPTZ",

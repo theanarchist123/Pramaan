@@ -26,6 +26,7 @@ os.environ["REQUIRE_EMAIL_VERIFICATION"] = "false"
 os.environ["HUMAN_APPROVAL_FIRST_LISTING"] = "false"
 os.environ["AWARD_CLAIMS_NEED_HUMAN"] = "false"
 os.environ["IP_RATE_LIMITS"] = "false"
+os.environ["STAFF_MFA_REQUIRED"] = "false"  # the older admin tests predate MFA; tests/test_mfa.py turns it on
 os.environ["REDIS_URL"] = ""  # in-process limits unless a test opts in (tests/test_infra.py uses a real Redis)
 os.environ["JOB_BACKEND"] = "inline"
 os.environ["JOB_INLINE_WAIT"] = "true"  # a job finishes before its request returns, like the old background task  # the suite registers dozens of users from one address
