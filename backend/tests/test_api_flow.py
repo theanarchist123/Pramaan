@@ -32,7 +32,7 @@ async def _approved_profile_with_cert(client, make_user):
 
     assert (await client.post(f"/v1/profiles/{profile['id']}/submit", headers=person)).status_code == 200
     r = await client.post(
-        f"/v1/admin/claims/{claim['id']}/verify", headers=admin, json={"status": "web", "confidence": 0.9}
+        f"/v1/admin/claims/{claim['id']}/verify", headers=admin, json={"reason": "Checked against the published honours list", "evidence_ref": "https://example.org/honours"}
     )
     assert r.status_code == 200
     r = await client.post(
@@ -132,7 +132,7 @@ async def test_year_is_not_duplicated_in_certified_claims(client, make_user):
     c = (await client.post(f"/v1/profiles/{p['id']}/claims", headers=person,
                            json={"field": "award", "value": "Won the Foo Prize in 2022.", "year": 2022})).json()
     await client.post(f"/v1/profiles/{p['id']}/submit", headers=person)
-    await client.post(f"/v1/admin/claims/{c['id']}/verify", headers=admin, json={"status": "web", "confidence": 0.9})
+    await client.post(f"/v1/admin/claims/{c['id']}/verify", headers=admin, json={"reason": "Checked against the published honours list", "evidence_ref": "https://example.org/honours"})
     await client.post(f"/v1/admin/profiles/{p['id']}/status", headers=admin, json={"status": "approved"})
     cert = (await client.post(f"/v1/profiles/{p['id']}/certificate", headers=person)).json()
     assert cert["payload"]["claims"][0]["value"] == "Won the Foo Prize in 2022."

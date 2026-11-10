@@ -48,10 +48,11 @@ async def n_research(state: VerifyState) -> VerifyState:
     ctx = state["ctx"]
     async with get_sessionmaker()() as session:
         profile = await _load_profile(session, state["profile_id"])
-        name = profile.full_name
+        name, qid = profile.full_name, profile.wikidata_qid
     await ctx.emit("Pariksha", "tool", f"Looking for public evidence about {name}")
     found = await wikipedia.fetch_sources(name, limit=3)
-    found = [*found, *await wikidata.fetch_sources(name, limit=3)]  # structured facts for people with no article
+    # Wikidata is used ONLY for the item the applicant confirmed is them; never the first same-named person.
+    found = [*found, *(await wikidata.fetch_by_qid(qid) if qid else [])]
     # Only keep pages that are plausibly about this person, so a namesake can't vouch for them.
     sources = [s for s in found if name_similarity(s.title, name) >= SOURCE_NAME_MATCH]
     await ctx.emit(

@@ -110,7 +110,7 @@ async def test_a_new_field_is_searchable_the_moment_it_exists(client, make_user)
         "consent_public_listing": True, "custom": {f["key"]: "zzyzxophone"}})).json()
     c = (await client.post(f"/v1/profiles/{p['id']}/claims", headers=person, json={"field": "award", "value": "A music prize"})).json()
     await client.post(f"/v1/profiles/{p['id']}/submit", headers=person)
-    await client.post(f"/v1/admin/claims/{c['id']}/verify", headers=admin, json={"status": "web", "confidence": 0.9})
+    await client.post(f"/v1/admin/claims/{c['id']}/verify", headers=admin, json={"reason": "Checked against the published honours list", "evidence_ref": "https://example.org/honours"})
     await client.post(f"/v1/admin/profiles/{p['id']}/status", headers=admin, json={"status": "approved"})
     hits = (await client.post("/v1/search", json={"query": "zzyzxophone"})).json()["results"]
     assert hits and hits[0]["id"] == p["id"]  # found by a field that did not exist five lines ago

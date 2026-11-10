@@ -28,3 +28,19 @@ def token_overlap(a: str, b: str) -> float:
     ta = {t for t in re.findall(r"\w+", a.lower()) if t not in stop and len(t) > 1}
     tb = set(re.findall(r"\w+", b.lower()))
     return len(ta & tb) / len(ta) if ta else 0.0
+
+
+_DEVANAGARI_DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")
+
+
+def numbers_in(text: str) -> set[str]:
+    """Every number in the text (years included), with Devanagari digits normalised and thousands commas ignored."""
+    return set(re.findall(r"\d+", text.translate(_DEVANAGARI_DIGITS).replace(",", "")))
+
+
+def claim_specifics_in_quote(claim_text: str, claim_year: int | None, quote: str) -> bool:
+    """A quote can be real and still not support THIS claim: "award 2021" is not supported by a sentence about 2024.
+    Every number and year the claim states must appear in the cited quote. Deterministic; it never trusts the model
+    to have been careful (finding P-17)."""
+    wanted = numbers_in(claim_text) | ({str(claim_year)} if claim_year else set())
+    return wanted <= numbers_in(quote)

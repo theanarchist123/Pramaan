@@ -80,6 +80,8 @@ async def init_db() -> None:
 
 # Columns added after a developer's local database was first created (create_all never alters tables).
 LOCAL_PATCHES = [
+    "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS decision_basis VARCHAR(12) NOT NULL DEFAULT ''",
+    "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS wikidata_qid VARCHAR(20) NOT NULL DEFAULT ''",
     "ALTER TABLE code_changes ADD COLUMN IF NOT EXISTS run_id UUID",
     "ALTER TABLE outbox ADD COLUMN IF NOT EXISTS kind VARCHAR(30) NOT NULL DEFAULT 'custom'",
     "ALTER TABLE outbox ADD COLUMN IF NOT EXISTS to_email VARCHAR(255) NOT NULL DEFAULT ''",

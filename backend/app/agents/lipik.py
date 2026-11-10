@@ -114,6 +114,9 @@ async def read_document(
         flags.append("unreadable")
     elif score < NAME_MISMATCH:
         flags.append("identity_mismatch")
+    elif score < NAME_MATCH_OK:
+        # Neither a match nor a mismatch: "Meera Iyer" vs "Meera Iyer Rao". Never reported as "holder matches".
+        flags.append("partial_match")
     if extraction.suspicious:
         flags.append("suspicious")
     if extraction.title and not issuer_is_recognised(extraction.issuer):
@@ -147,7 +150,7 @@ async def read_document(
     else:
         await ctx.emit(
             "Lipik", "result",
-            f"Holder matches ({score:.0%}); {upgraded} claim(s) now document-verified",
+            f"Holder matches ({score:.0%}); {upgraded} claim(s) now backed by this document",
             data={"title": extraction.title, "issuer": extraction.issuer}, confidence=score,
         )
     return IntakeResult(extraction, score, flags, upgraded)

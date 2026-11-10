@@ -4,11 +4,16 @@ Wikidata records awards received (including the Padma awards), occupations, educ
 who have no Wikipedia article. It is CROWD-EDITED, not an official registry: Pariksha treats it exactly like
 Wikipedia (a citation only counts if the quote is really in this text, and web evidence stays capped below the
 document level). Network failures degrade to "no evidence".
+
+NAMESAKES: searching by name can return several people with the same label. So the pipeline never picks one itself:
+the applicant is shown the candidates (`candidates`) and confirms their own item; only that QID is then used as
+evidence (`fetch_by_qid`). `fetch_sources` (search by name) exists for evals and tooling, not for verification.
 """
 
 from __future__ import annotations
 
 import logging
+import re
 
 import httpx
 
@@ -17,6 +22,7 @@ from app.services.wikipedia import Source, _headers
 
 log = logging.getLogger("pramaan.wikidata")
 _API = "https://www.wikidata.org/w/api.php"
+QID_RE = re.compile(r"^Q[1-9]\d{0,12}$")
 
 # property -> label used in the evidence text
 PROPS = {
@@ -50,7 +56,14 @@ def _year(claims: dict) -> str:
     return ""
 
 
-async def fetch_sources(name: str, limit: int = 3) -> list[Source]:
+async def _entities(qids: list[str]) -> dict:
+    """Humans only (P31 = Q5)."""
+    ents = (await _get({"action": "wbgetentities", "ids": "|".join(qids), "props": "labels|descriptions|claims", "languages": "en"})).get("entities", {})
+    return {q: e for q, e in ents.items() if "Q5" in _ids(e.get("claims", {}), "P31")}
+
+
+async def candidates(name: str, limit: int = 5) -> list[dict]:
+    """People on Wikidata whose label matches `name`, for the applicant to pick from ("Is this you?")."""
     if not get_settings().wikidata_enabled:
         return []
     try:
@@ -58,15 +71,32 @@ async def fetch_sources(name: str, limit: int = 3) -> list[Source]:
         qids = [r["id"] for r in found.get("search", [])]
         if not qids:
             return []
-        ents = (await _get({"action": "wbgetentities", "ids": "|".join(qids), "props": "labels|descriptions|claims", "languages": "en"})).get("entities", {})
-        people = {q: e for q, e in ents.items() if "Q5" in _ids(e.get("claims", {}), "P31")}  # humans only
+        people = await _entities(qids)
+    except (httpx.HTTPError, ValueError, KeyError) as exc:
+        log.warning("wikidata candidate lookup failed: %s", exc)
+        return []
+    out = []
+    for qid in qids:  # keep the search ranking
+        e = people.get(qid)
+        label = e.get("labels", {}).get("en", {}).get("value", "") if e else ""
+        if not label:
+            continue
+        out.append({"qid": qid, "label": label, "description": e.get("descriptions", {}).get("en", {}).get("value", ""),
+                    "born": _year(e["claims"]), "url": f"https://www.wikidata.org/wiki/{qid}"})
+        if len(out) >= limit:
+            break
+    return out
+
+
+async def _sources_for(qids: list[str]) -> list[Source]:
+    try:
+        people = await _entities(qids)
         wanted = sorted({i for e in people.values() for p in PROPS if p != "P569" for i in _ids(e["claims"], p)})
         labels: dict[str, str] = {}
-        if wanted:
-            for start in range(0, len(wanted), 50):
-                chunk = wanted[start:start + 50]
-                got = (await _get({"action": "wbgetentities", "ids": "|".join(chunk), "props": "labels", "languages": "en"})).get("entities", {})
-                labels.update({q: v.get("labels", {}).get("en", {}).get("value", "") for q, v in got.items()})
+        for start in range(0, len(wanted), 50):
+            chunk = wanted[start:start + 50]
+            got = (await _get({"action": "wbgetentities", "ids": "|".join(chunk), "props": "labels", "languages": "en"})).get("entities", {})
+            labels.update({q: v.get("labels", {}).get("en", {}).get("value", "") for q, v in got.items()})
     except (httpx.HTTPError, ValueError, KeyError) as exc:
         log.warning("wikidata lookup failed: %s", exc)
         return []
@@ -87,6 +117,24 @@ async def fetch_sources(name: str, limit: int = 3) -> list[Source]:
             if names:
                 lines.append(f"{title}: {'; '.join(names[:15])}.")
         sources.append(Source(title=label, url=f"https://www.wikidata.org/wiki/{qid}", text="\n".join(lines)))
-        if len(sources) >= limit:
-            break
     return sources
+
+
+async def fetch_by_qid(qid: str) -> list[Source]:
+    """Evidence from exactly the item the applicant confirmed. An invalid or missing QID yields nothing."""
+    if not get_settings().wikidata_enabled or not QID_RE.match(qid or ""):
+        return []
+    return await _sources_for([qid])
+
+
+async def fetch_sources(name: str, limit: int = 3) -> list[Source]:
+    """Search by name (evals/tooling). NOT used for verification: see the module docstring."""
+    if not get_settings().wikidata_enabled:
+        return []
+    try:
+        found = await _get({"action": "wbsearchentities", "search": name, "language": "en", "type": "item", "limit": limit * 2})
+        qids = [r["id"] for r in found.get("search", [])]
+    except (httpx.HTTPError, ValueError, KeyError) as exc:
+        log.warning("wikidata lookup failed: %s", exc)
+        return []
+    return (await _sources_for(qids))[:limit] if qids else []

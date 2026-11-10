@@ -158,6 +158,11 @@ class Profile(Base):
     # draft | pending_review | approved | rejected
     status: Mapped[str] = mapped_column(String(20), default="draft", index=True)
     is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
+    # How an approval was reached: "automation" (checks passed) | "reviewer" (a person approved). The UI words its
+    # "verified" banner from this server-side enum, never from free text. Empty unless status is approved.
+    decision_basis: Mapped[str] = mapped_column(String(12), default="")
+    # The Wikidata item the APPLICANT confirmed is them. Only this item is ever used as Wikidata evidence (namesakes).
+    wikidata_qid: Mapped[str] = mapped_column(String(20), default="")
     created_at: Mapped[datetime] = ts()
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
 
@@ -195,7 +200,7 @@ class Evidence(Base):
     claim_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("claims.id", ondelete="CASCADE"), index=True
     )
-    kind: Mapped[str] = mapped_column(String(12))  # chat|web|document
+    kind: Mapped[str] = mapped_column(String(12))  # chat|web|document|human
     url: Mapped[str] = mapped_column(String(600), default="")
     quote: Mapped[str] = mapped_column(Text, default="")
     source_hash: Mapped[str] = mapped_column(String(64), default="")

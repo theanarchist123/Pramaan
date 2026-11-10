@@ -18,10 +18,11 @@ from app.core.signing import (
     verify_payload,
     verify_signature,
 )
-from app.models import Certificate, Profile, TransparencyLog
+from app.agents.lipik import NAME_MATCH_OK
+from app.models import Certificate, Document, Profile, TransparencyLog
 from app.schemas import VerifyOut
 
-VERIFIED_STATUSES = {"web", "document"}
+VERIFIED_STATUSES = {"web", "document", "human"}
 MIN_CONFIDENCE = 0.5
 _CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTVWXYZ"
 _CHAIN_LOCK_ID = 7001
@@ -35,7 +36,31 @@ def new_code() -> str:
     return "PRM-" + "".join(secrets.choice(_CODE_ALPHABET) for _ in range(10))
 
 
-def verified_claims(profile: Profile) -> list[dict]:
+async def backed_claims(session: AsyncSession, profile: Profile) -> list[dict]:
+    """The claims a certificate may print, each with a status its EVIDENCE actually supports (invariant I-8).
+
+    A status is a promise; flipping a flag does not make it true. So:
+      web       needs a web evidence row (a source URL and a quote)
+      document  needs a document-evidence row whose uploaded file matched the holder at the acceptance threshold,
+                with no flags (unreadable, suspicious, issuer not recognised...)
+      human     needs a human evidence row: the reviewer's written reason and evidence reference
+    A claim whose status is not backed is left OFF the certificate, never printed under a stronger label."""
+    docs = (await session.execute(select(Document).where(Document.profile_id == profile.id))).scalars().all()
+    good_files = {
+        (d.extracted or {}).get("sha256")
+        for d in docs
+        if (d.match_score or 0) >= NAME_MATCH_OK and not (d.extracted or {}).get("flags")
+    }
+
+    def backed(c) -> bool:
+        if c.status == "web":
+            return any(e.kind == "web" and e.url and e.quote for e in c.evidence)
+        if c.status == "document":
+            return any(e.kind == "document" and e.source_hash in good_files for e in c.evidence)
+        if c.status == "human":
+            return any(e.kind == "human" and e.quote and e.url for e in c.evidence)
+        return False
+
     def label(c) -> str:
         # Append the year only if the text doesn't already say it.
         return c.value if not c.year or str(c.year) in c.value else f"{c.value} ({c.year})"
@@ -43,7 +68,7 @@ def verified_claims(profile: Profile) -> list[dict]:
     return [
         {"field": c.field, "value": label(c), "status": c.status}
         for c in profile.claims
-        if c.status in VERIFIED_STATUSES and c.confidence >= MIN_CONFIDENCE
+        if c.status in VERIFIED_STATUSES and c.confidence >= MIN_CONFIDENCE and backed(c)
     ]
 
 
@@ -52,9 +77,9 @@ async def issue_certificate(
 ) -> Certificate:
     if profile.status != "approved":
         raise CertificateError("Profile must be approved before a certificate can be issued.")
-    claims = verified_claims(profile)
+    claims = await backed_claims(session, profile)
     if not claims:
-        raise CertificateError("No verified claims yet — nothing to certify.")
+        raise CertificateError("None of this profile's claims is backed by evidence yet - nothing to certify.")
 
     existing = (
         await session.execute(

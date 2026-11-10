@@ -12,7 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.deps import Principal, require_admin
-from app.models import Claim, Profile, ReviewItem
+from app.domain import HUMAN_CONFIDENCE_CAP, STATUS_HUMAN
+from app.models import Claim, Evidence, Profile, ReviewItem
 from app.schemas import ClaimOut, ProfileOut, StatusChangeIn
 
 router = APIRouter(prefix="/v1/admin", tags=["admin"])
@@ -31,8 +32,19 @@ class ReviewItemOut(BaseModel):
 
 
 class ClaimVerifyIn(BaseModel):
-    status: str = Field(pattern="^(self|web|document)$")
-    confidence: float = Field(ge=0, le=1)
+    """A person vouching for (or withdrawing) a claim. It can only ever produce `human` or `self`: a reviewer cannot
+    mint `web` or `document` status, because those mean "an evidence record of that kind exists" (invariant I-8)."""
+
+    status: str = Field(default="human", pattern="^(self|human)$")
+    reason: str = Field(min_length=10, max_length=500, description="Why you are overriding the automated result")
+    evidence_ref: str = Field(min_length=5, max_length=600, description="URL or case reference that supports it")
+    confidence: float = Field(default=HUMAN_CONFIDENCE_CAP, ge=0, le=1)
+
+
+def _no_self_review(principal: Principal, profile: Profile | None) -> None:
+    """Invariant I-10: nobody approves, overrides or reviews their own profile."""
+    if profile is not None and profile.owner_id == principal.user.id:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "You cannot review your own profile")
 
 
 @router.get("/system")
@@ -101,6 +113,7 @@ async def resolve_review(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Review item not found")
     if item.status != "open":
         raise HTTPException(status.HTTP_409_CONFLICT, f"Already {item.status}")
+    _no_self_review(principal, await session.get(Profile, item.profile_id))
     item.status = "resolved"
     item.details = {**(item.details or {}), "resolution_note": body.note}
     item.resolved_by = principal.user.id
@@ -131,7 +144,9 @@ async def set_status(
     profile = await session.get(Profile, profile_id)
     if profile is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Profile not found")
+    _no_self_review(principal, profile)
     profile.status = body.status
+    profile.decision_basis = "reviewer" if body.status == "approved" else ""
     open_items = (
         await session.execute(
             select(ReviewItem).where(ReviewItem.profile_id == profile.id, ReviewItem.status == "open")
@@ -170,15 +185,21 @@ async def reindex(_: Principal = Depends(require_admin), session: AsyncSession =
 async def set_claim_verification(
     claim_id: uuid.UUID,
     body: ClaimVerifyIn,
-    _: Principal = Depends(require_admin),
+    principal: Principal = Depends(require_admin),
     session: AsyncSession = Depends(get_session),
 ):
     """Manual override of a claim's verification (agents do this automatically in Phase 2)."""
     claim = await session.get(Claim, claim_id)
     if claim is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Claim not found")
+    _no_self_review(principal, await session.get(Profile, claim.profile_id))
     claim.status = body.status
-    claim.confidence = body.confidence
+    if body.status == STATUS_HUMAN:
+        claim.confidence = min(body.confidence, HUMAN_CONFIDENCE_CAP)
+        claim.evidence.append(Evidence(kind="human", quote=body.reason, url=body.evidence_ref,
+                                       source_hash=f"reviewer:{principal.user.id}"))
+    else:
+        claim.confidence = 0.0
     await session.commit()
     await session.refresh(claim)
     return claim

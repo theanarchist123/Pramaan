@@ -159,6 +159,7 @@ async def patch_profile(
     if public_changed and profile.status == "approved":
         # Approved text is what the public sees: edits must be re-reviewed before going live.
         profile.status = "pending_review"
+        profile.decision_basis = ""
         session.add(ReviewItem(profile_id=profile.id, reason="Edited after approval", confidence=0.0))
     await session.commit()
     await session.refresh(profile)

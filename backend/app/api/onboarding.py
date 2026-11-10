@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
@@ -21,7 +21,7 @@ from app.core.ratelimit import check_rate_limit
 from app.db import get_session
 from app.deps import Principal, require_scope, require_verified_email
 from app.llm.client import LLMError, LLMRefusal, get_llm
-from app.models import ChatMessage, Consent, Document, Profile, ReviewItem
+from app.models import AgentRun, ChatMessage, Consent, Document, Profile, ReviewItem
 from app.schemas import ClaimOut, ProfileOut
 from app.services import fields as fields_svc
 from app.services import onboarding as svc
@@ -348,11 +348,24 @@ async def verify(
         raise HTTPException(409, "Consent to public listing is required before verification")
     if not profile.claims:
         raise HTTPException(409, "Add at least one achievement before verification")
+    # Idempotent: a verification already running for this profile is returned, never started a second time
+    # (a double-click, a retry or two tabs used to produce two complete agent runs back to back).
+    running = (
+        await session.execute(
+            select(AgentRun).where(
+                AgentRun.workflow == "verify_profile", AgentRun.profile_id == profile.id, AgentRun.status == "running",
+                AgentRun.started_at > datetime.now(timezone.utc) - timedelta(minutes=10),
+            ).order_by(AgentRun.started_at.desc())
+        )
+    ).scalars().first()
+    if running is not None:
+        return {"run_id": str(running.id), "status": "already_running"}
     if profile.status not in ("draft", "rejected", "pending_review"):
         raise HTTPException(409, f"Profile is already '{profile.status}'")
 
     if profile.status != "pending_review":
         profile.status = "pending_review"  # locks chat edits while agents work
+        profile.decision_basis = ""
         already_open = (
             await session.execute(
                 select(ReviewItem.id).where(ReviewItem.profile_id == profile.id, ReviewItem.status == "open")
@@ -365,6 +378,51 @@ async def verify(
     ctx = await start_run("verify_profile", profile.id)
     background.add_task(run_verification, ctx, profile.id)
     return {"run_id": str(ctx.run_id), "status": "started"}
+
+
+class WikidataConfirmIn(BaseModel):
+    qid: str | None = Field(default=None, max_length=20, description="The Wikidata item that is you, or null for 'none of these'")
+
+
+@router.get("/{profile_id}/wikidata-candidates")
+async def wikidata_candidates(
+    profile_id: uuid.UUID,
+    principal: Principal = Depends(require_scope("profiles:read")),
+    session: AsyncSession = Depends(get_session),
+):
+    """People on Wikidata with your name. You choose which (if any) is you: that item, and only that item, is then
+    used as evidence, so a namesake's awards can never be credited to you."""
+    from app.services import wikidata
+
+    profile = await _owned(session, profile_id, principal)
+    _limit_llm(principal, 20)
+    return {"confirmed_qid": profile.wikidata_qid or None, "candidates": await wikidata.candidates(profile.full_name)}
+
+
+@router.post("/{profile_id}/wikidata-confirm", response_model=ProfileOut)
+async def wikidata_confirm(
+    profile_id: uuid.UUID,
+    body: WikidataConfirmIn,
+    principal: Principal = Depends(require_scope("profiles:write")),
+    session: AsyncSession = Depends(get_session),
+):
+    from app.services import wikidata
+
+    profile = await _owned(session, profile_id, principal)
+    _require_editable(profile)
+    if body.qid is None:
+        profile.wikidata_qid = ""
+    else:
+        if not wikidata.QID_RE.match(body.qid):
+            raise HTTPException(422, "That is not a Wikidata item id (like Q12345)")
+        # Only an item that was actually offered for this name can be confirmed.
+        offered = {c["qid"] for c in await wikidata.candidates(profile.full_name)}
+        if body.qid not in offered:
+            raise HTTPException(409, "That item is not one of the candidates for this name")
+        profile.wikidata_qid = body.qid
+    await session.commit()
+    await session.refresh(profile)
+    return profile
 
 
 @router.get("/{profile_id}/agent-events")

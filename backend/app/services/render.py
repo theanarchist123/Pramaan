@@ -23,6 +23,29 @@ class RenderError(RuntimeError):
     pass
 
 
+def allowed_origins() -> set[str]:
+    """The only origins a certificate render may talk to: our web app (page, fonts, photos) and our API (QR image)."""
+    from urllib.parse import urlparse
+
+    s = get_settings()
+    out = set()
+    for base in (s.render_base_url or s.public_base_url, s.public_base_url, s.api_base_url):
+        p = urlparse(base)
+        if p.scheme and p.netloc:
+            out.add(f"{p.scheme}://{p.netloc}")
+    return out
+
+
+def request_allowed(url: str, origins: set[str]) -> bool:
+    """data: and blob: URLs never leave the browser. Everything else must be same-origin with us."""
+    from urllib.parse import urlparse
+
+    if url.startswith(("data:", "blob:", "about:")):
+        return True
+    p = urlparse(url)
+    return f"{p.scheme}://{p.netloc}" in origins
+
+
 def _cache_path(code: str, digest: str, ext: str) -> Path:
     d = get_settings().data_dir / "cache"
     d.mkdir(parents=True, exist_ok=True)
@@ -48,8 +71,20 @@ async def render(code: str, digest: str, kind: str) -> Path:
                     page = await browser.new_page(
                         viewport={"width": CERT_W, "height": CERT_H}, device_scale_factor=2
                     )
-                    # Not "networkidle": it flags itself ready
-                    # (data-cert-ready) once its photo and QR code have loaded or failed.
+                    # Not "networkidle": the page flags itself ready (data-cert-ready) once its photo and QR code
+                    # have loaded or failed.
+                    # A credential must render identically years from now, offline. Block (and fail on) any request
+                    # to a third party: a stray font, image or script URL would otherwise load silently.
+                    origins, blocked = allowed_origins(), []
+
+                    async def guard(route):
+                        if request_allowed(route.request.url, origins):
+                            await route.continue_()
+                        else:
+                            blocked.append(route.request.url)
+                            await route.abort()
+
+                    await page.route("**/*", guard)
                     await page.goto(url, wait_until="domcontentloaded", timeout=30000)
                     await page.wait_for_selector('[data-cert-ready="true"]', timeout=20000)
                     await page.evaluate("document.fonts.ready")
@@ -60,6 +95,8 @@ async def render(code: str, digest: str, kind: str) -> Path:
                         )
                     else:
                         await page.locator("#certificate").screenshot(path=str(path))
+                    if blocked:
+                        raise RenderError(f"certificate page requested a third-party resource: {blocked[0][:120]}")
                 finally:
                     await browser.close()
         except Exception as exc:  # noqa: BLE001
