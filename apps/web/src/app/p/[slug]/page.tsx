@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const verified = p.claims.filter((c) => c.status !== "self").length;
   return {
     title: p.full_name,
-    description: `${p.headline || p.sector}${p.state ? ` · ${p.state}` : ""} — ${verified} independently verified achievement${verified === 1 ? "" : "s"} on Pramaan.`,
+    description: `${p.headline || p.sector}${p.state ? ` · ${p.state}` : ""} — ${verified} achievement${verified === 1 ? "" : "s"} checked against evidence on Pramaan.`,
   };
 }
 
@@ -48,7 +48,7 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
   const extras = defs.filter((d) => p.custom?.[d.key] != null && p.custom[d.key] !== "");
   const color = paletteFor(p.sector);
   const verified = p.claims.filter((c) => c.status !== "self");
-  const order = { document: 0, web: 1, self: 2 } as const;
+  const order = { issuer: 0, document: 1, human: 2, web: 3, self: 4 } as const;
   const claims = [...p.claims].sort((a, b) => order[a.status] - order[b.status]);
 
   return (

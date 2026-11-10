@@ -1,4 +1,4 @@
-import { BadgeCheck, FileCheck2, Globe, MessageCircle } from "lucide-react";
+import { BadgeCheck, FileCheck2, Globe, MessageCircle, ShieldCheck, Stamp } from "lucide-react";
 import type { ClaimStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -7,19 +7,31 @@ const META: Record<ClaimStatus, { label: string; icon: typeof Globe; cls: string
     label: "Self-claimed",
     icon: MessageCircle,
     cls: "bg-pending-soft text-foreground/80 ring-pending/40",
-    hint: "Said by the person; not yet independently verified",
+    hint: "Said by the person; not backed by evidence yet",
   },
   web: {
-    label: "Web-verified",
+    label: "Public evidence",
     icon: Globe,
     cls: "bg-indigo-soft text-indigo ring-indigo/30",
     hint: "Supported by a public source quoted verbatim",
   },
   document: {
-    label: "Document-verified",
+    label: "Document verified",
     icon: FileCheck2,
     cls: "bg-verified-soft text-verified ring-verified/30",
     hint: "Backed by an uploaded credential whose holder matches",
+  },
+  human: {
+    label: "Confirmed by a reviewer",
+    icon: Stamp,
+    cls: "bg-verified-soft text-verified ring-verified/30",
+    hint: "A named reviewer confirmed it, with a written reason and evidence",
+  },
+  issuer: {
+    label: "Verified by issuer",
+    icon: ShieldCheck,
+    cls: "bg-verified-soft text-verified ring-verified/30",
+    hint: "Confirmed directly with the body that issued it",
   },
 };
 

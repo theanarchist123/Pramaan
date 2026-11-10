@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AgentFeed } from "@/components/agent-feed";
 import { EmailVerify } from "@/components/onboarding/email-verify";
+import { WikidataConfirm } from "@/components/onboarding/wikidata-confirm";
 import { Certificate } from "@/components/certificate/certificate";
 import { ScaledTilt } from "@/components/certificate/scaled-tilt";
 import { toCertificateData, useCertificate } from "@/hooks/use-certificate";
@@ -44,6 +45,7 @@ export function VerifyPanel({
   issuing,
   onVerify,
   onIssue,
+  onProfileChange,
 }: {
   profile: Profile;
   events: AgentEvent[];
@@ -52,6 +54,7 @@ export function VerifyPanel({
   issuing: boolean;
   onVerify: () => void;
   onIssue: () => void;
+  onProfileChange?: () => void;
 }) {
   const canVerify = profile.claims.length > 0 && ["draft", "rejected"].includes(profile.status);
   // Prahari's latest verdict carries the human-readable reasons.
@@ -61,13 +64,22 @@ export function VerifyPanel({
   return (
     <div className="space-y-4">
       <EmailVerify />
+      <WikidataConfirm profile={profile} onChanged={() => onProfileChange?.()} />
       {profile.status === "approved" ? (
         <div className="flex gap-3 rounded-2xl bg-verified-soft p-4">
           <BadgeCheck className="size-6 shrink-0 text-verified" />
           <div>
-            <p className="font-semibold">Verified</p>
+            <p className="font-semibold">
+              {profile.decision_basis === "reviewer"
+                ? "Reviewed and approved by a person"
+                : profile.decision_basis === "automation"
+                  ? "Passed automated checks"
+                  : "Approved"}
+            </p>
             <p className="text-sm text-muted-foreground">
-              Your profile passed automated verification.{" "}
+              {profile.decision_basis === "reviewer"
+                ? "A reviewer looked at your evidence and approved your record."
+                : "Every claim below shows how it was checked."}{" "}
               {certificateCode ? "Here is your signed certificate." : "Your signed certificate is next."}
             </p>
           </div>
@@ -85,10 +97,9 @@ export function VerifyPanel({
         <div className="flex gap-3 rounded-2xl bg-pending-soft p-4">
           <Clock className="size-6 shrink-0 text-pending" />
           <div>
-            <p className="font-semibold">With a human reviewer</p>
+            <p className="font-semibold">With a reviewer</p>
             <p className="text-sm text-muted-foreground">
-              Our agents couldn&apos;t reach 95% confidence on their own, so a person will review it.
-              {verdict?.confidence != null && ` Confidence reached: ${Math.round(verdict.confidence * 100)}%.`}
+              We couldn&apos;t confirm everything automatically, so a person will look at it. Nothing is published as verified until then.
             </p>
             {reasons.length > 0 && (
               <ul className="mt-2 space-y-1 text-sm">

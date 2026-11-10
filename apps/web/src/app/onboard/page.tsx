@@ -203,7 +203,11 @@ export default function OnboardPage() {
           disabled={!editable}
           disabledReason={
             profile.status === "approved"
-              ? "Your profile is verified. 🎉"
+              ? profile.decision_basis === "reviewer"
+                ? "Your profile was reviewed and approved by a person."
+                : profile.decision_basis === "automation"
+                  ? "Your profile passed automated checks."
+                  : "Your profile is approved."
               : verifyRun
                 ? "Your profile is being verified — chat is paused so the evidence stays consistent."
                 : "Your profile is with a reviewer. You can still add documents in the Documents tab."
@@ -216,7 +220,7 @@ export default function OnboardPage() {
         />
       </div>
 
-      <div className="min-h-0 overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="h-[80dvh] min-h-0 overflow-hidden rounded-2xl border border-border bg-card lg:h-auto">
         <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className="flex h-full flex-col">
           <div className="border-b border-border px-4 pt-3 pb-2">
             <TabsList>
@@ -235,8 +239,8 @@ export default function OnboardPage() {
             <TabsContent value="documents">
               <h2 className="text-xl font-semibold">Back it up with a document</h2>
               <p className="mb-4 mt-1 text-sm text-muted-foreground">
-                Lipik reads it, checks the name matches yours, and upgrades the matching claim to{" "}
-                <em>document-verified</em>.
+                Lipik reads it and checks that the name and the issuer match. A claim shows as{" "}
+                <em>document verified</em> only when they do.
               </p>
               <DocumentDrop profileId={profile.id} onDone={refresh} />
             </TabsContent>
@@ -249,6 +253,7 @@ export default function OnboardPage() {
                 issuing={issuing}
                 onVerify={verify}
                 onIssue={issue}
+                onProfileChange={() => void refresh()}
               />
             </TabsContent>
           </div>

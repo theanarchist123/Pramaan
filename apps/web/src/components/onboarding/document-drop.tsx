@@ -11,6 +11,9 @@ const ACCEPT = "image/png,image/jpeg,image/webp,application/pdf,text/plain";
 
 const FLAG_COPY: Record<string, string> = {
   identity_mismatch: "The name on this document doesn't match your profile.",
+  partial_match: "The name on this document only partly matches yours, so a reviewer will confirm it.",
+  not_a_credential: "This looks like an article or clipping about someone, not a credential issued to them.",
+  issuer_unrecognised: "We don't recognise the body that issued this, so a reviewer will look at it.",
   unreadable: "We couldn't read this clearly. Try a sharper photo or the original PDF.",
   suspicious: "This document looks edited — a reviewer will take a look.",
 };

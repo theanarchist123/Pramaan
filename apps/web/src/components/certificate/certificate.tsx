@@ -21,7 +21,14 @@ export interface CertificateData {
   state?: string | null;
 }
 
-const STATUS_LABEL: Record<string, string> = { document: "Document-verified", web: "Web-verified" };
+const STATUS_LABEL: Record<string, string> = {
+  document: "Document verified",
+  web: "Public evidence",
+  human: "Confirmed by a reviewer",
+  issuer: "Verified by issuer",
+};
+// "Independently" is only true when every printed claim is backed by a document or the issuer itself (invariant I-9).
+const INDEPENDENT = new Set(["document", "issuer"]);
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -128,14 +135,18 @@ export function Certificate({ data, forceTamper = false }: { data: CertificateDa
           {[data.sector, data.state].filter(Boolean).join(" · ")}
         </p>
         <div style={{ margin: "22px 0 14px", height: 1, background: `linear-gradient(90deg, ${palette.ink}, transparent)` }} />
-        <p style={{ fontSize: 14, color: "#4a463d" }}>has had the following achievements independently verified:</p>
+        <p style={{ fontSize: 14, color: "#4a463d" }}>
+          {data.claims.length > 0 && data.claims.every((x) => INDEPENDENT.has(x.status))
+            ? "has had the following achievements independently verified:"
+            : "has the following achievements on record, each shown with how it was checked:"}
+        </p>
         <ul style={{ marginTop: 12, display: "grid", gap: 9 }}>
           {shown.map((c, i) => (
             <li key={i} style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
               <span style={{ width: 7, height: 7, background: palette.primary, transform: "rotate(45deg)", flexShrink: 0, translate: "0 -1px" }} />
               <span style={{ fontSize: 15, lineHeight: 1.3 }}>
                 {c.value}{" "}
-                <span style={{ fontSize: 10.5, color: palette.ink, letterSpacing: "0.04em", textTransform: "uppercase", fontWeight: 600 }}>
+                <span style={{ fontSize: 12.5, color: palette.ink, fontWeight: 600 }}>
                   · {STATUS_LABEL[c.status] ?? c.status}
                 </span>
               </span>
