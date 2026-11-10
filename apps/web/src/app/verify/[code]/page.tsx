@@ -151,6 +151,22 @@ function Actions({ code, detail }: { code: string; detail: CertificateDetail }) 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Button variant="outline" render={<a href={`${API_URL}/v1/certificates/${code}/pdf`} download />} nativeButton={false}><Download /> PDF</Button>
         <Button variant="outline" render={<a href={`${API_URL}/v1/certificates/${code}/image.png`} download />} nativeButton={false}><FileImage /> Image</Button>
+        <Button
+          variant="outline"
+          title="The signed certificate as JSON. The Pramaan desktop app can verify it with no internet."
+          onClick={async () => {
+            try {
+              const res = await fetch(`${API_URL}/v1/certificates/${encodeURIComponent(code)}`);
+              if (!res.ok) throw new Error();
+              const href = URL.createObjectURL(new Blob([await res.text()], { type: "application/json" }));
+              const a = Object.assign(document.createElement("a"), { href, download: `${code}.json` });
+              a.click();
+              URL.revokeObjectURL(href);
+            } catch {
+              toast.error("Couldn't download the certificate file");
+            }
+          }}
+        ><Download /> JSON (offline check)</Button>
         <Button variant="outline" onClick={() => navigator.clipboard.writeText(url).then(() => toast.success("Verification link copied"))}><Copy /> Copy link</Button>
         <Button variant="outline" render={<a href={linkedin} target="_blank" rel="noreferrer" />} nativeButton={false}><Share2 /> Add to LinkedIn</Button>
       </div>

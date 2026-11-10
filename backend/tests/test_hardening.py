@@ -503,41 +503,6 @@ async def test_stream_accepts_the_session_cookie_and_never_a_url_token():
     assert not await _authorize_stream(req({"cookie": "pramaan_session=garbage"}), None)
 
 
-# --------------------------------------------------------------------------- certificate photos
-async def test_a_slow_or_dead_photo_host_costs_a_few_seconds_not_the_render(monkeypatch, tmp_path):
-    from app.services import render
-
-    monkeypatch.setattr(get_settings(), "public_base_url", get_settings().public_base_url)
-
-    class Route:
-        aborted = fulfilled = False
-        request = type("R", (), {"url": f"https://images.unsplash.com/photo-{uuid.uuid4().hex}"})()
-
-        async def abort(self):
-            self.aborted = True
-
-        async def fulfill(self, **kw):
-            self.fulfilled = True
-
-    class Dead:
-        def __init__(self, *a, **k):
-            pass
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *a):
-            return False
-
-        async def get(self, url):
-            raise httpx.ConnectTimeout("slow")
-
-    monkeypatch.setattr(render.httpx, "AsyncClient", Dead)
-    route = Route()
-    await render._photo_route(route)
-    assert route.aborted and not route.fulfilled
-
-
 # --------------------------------------------------------------------------- migrations
 async def test_alembic_builds_the_whole_schema_on_an_empty_database_and_is_repeatable():
     name = f"pramaan_mig_{uuid.uuid4().hex[:6]}"
@@ -558,3 +523,22 @@ async def test_alembic_builds_the_whole_schema_on_an_empty_database_and_is_repea
     finally:
         await admin.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')
         await admin.close()
+
+
+# --------------------------------------------------------------------------- honest labelling + visibility
+async def test_the_agent_catalog_says_what_each_agent_really_is(client):
+    kinds = {a["name"]: a["kind"] for a in (await client.get("/v1/agents/catalog")).json()}
+    assert kinds["Setu"] == "service" and kinds["Chitrakar"] == "service"  # plain code, not models
+    assert kinds["Prahari"] == "hybrid" and kinds["Pariksha"] == "llm"
+    assert sum(k == "llm" for k in kinds.values()) == 7  # Saathi, Khoji-Pehle, Lipik, Pariksha, Khoji, Doot, Shilpkar
+
+
+async def test_system_status_is_admin_only_and_flags_silent_degradation(client, make_user, monkeypatch):
+    person, _ = await make_user()
+    admin, _ = await make_user(promote_to_admin=True)
+    assert (await client.get("/v1/admin/system", headers=person)).status_code == 403
+    setting(monkeypatch, wikimedia_contact="")
+    body = (await client.get("/v1/admin/system", headers=admin)).json()
+    assert body["embeddings"] in ("hash", "fastembed") and body["llm"]["mode"] in ("mock", "live")
+    assert any("WIKIMEDIA_CONTACT" in d for d in body["degraded"])
+    assert any("mock" in d for d in body["degraded"])  # the test suite runs on the offline mock: it must say so

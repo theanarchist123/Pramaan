@@ -98,6 +98,7 @@ export interface AgentEvent {
 
 export interface AgentInfo {
   name: string;
+  kind?: "llm" | "hybrid" | "service";
   role: string;
   does: string;
   replaces: string;

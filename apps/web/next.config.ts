@@ -8,7 +8,7 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: ${api} https://images.unsplash.com`,  // ${api}: certificate QR codes are served by the API
+  `img-src 'self' data: blob: ${api}`, // ${api}: certificate QR codes are served by the API
   "font-src 'self' data:",
   `connect-src 'self' ${api}${isDev ? " ws: http://localhost:* http://127.0.0.1:*" : ""}`,
   "frame-ancestors 'none'",

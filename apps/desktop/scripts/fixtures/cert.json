@@ -1,0 +1,25 @@
+{
+  "payload": {
+    "v": 1,
+    "cert_id": "PRM-TESTVECTOR",
+    "profile_id": "00000000-0000-0000-0000-000000000001",
+    "full_name": "मीरा अय्यर (Meera Iyer)",
+    "claims": [
+      {
+        "field": "award",
+        "value": "Sagar Samman 2024 — \"top\" <honour> & more",
+        "status": "document"
+      },
+      {
+        "field": "education",
+        "value": "Cochin University",
+        "status": "web"
+      }
+    ],
+    "issued_at": "2026-01-02T03:04:05Z",
+    "salt": "abababababababababababababababab"
+  },
+  "digest": "2747e7f594098f40027c6083ee91a7ed630f201a25cc1c24b8aa5852e0b079bc",
+  "signature": "Ws3pdc-esy00AGGTA7WzSvGnoJ8Rk8VmUlup-2TlalSK6hSaj1_zTbWzc1wldL0sG8yeFaK9Vn25XP06BS_HDg",
+  "key_id": "2fddf48325ab0f5a"
+}

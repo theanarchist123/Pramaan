@@ -100,7 +100,9 @@ class Settings(BaseSettings):
     # Comma-separated base64 public keys of past signing keys, so old certificates keep verifying after rotation.
     signing_retired_public_keys: str = ""
 
-    unsplash_access_key: str = ""
+    unsplash_access_key: str = ""  # unused now: certificate photos are self-hosted (scripts/download_photos.py)
+    # Wikidata as a second public source next to Wikipedia (structured awards/occupation/education; no key needed).
+    wikidata_enabled: bool = True
     # Wikimedia's bot policy requires a real contact (email or URL) in the User-Agent.
     # Without one, lookups are refused (403) and Pariksha simply finds no public evidence.
     wikimedia_contact: str = ""

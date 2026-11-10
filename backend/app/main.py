@@ -21,9 +21,22 @@ certificate is cryptographically signed and publicly verifiable.
 """
 
 
+def _warn_if_degraded() -> None:
+    import logging
+
+    from app.services.embeddings import get_embedder
+
+    s, log = get_settings(), logging.getLogger("pramaan.startup")
+    if s.embeddings.lower() != "hash" and get_embedder().kind == "hash":
+        log.warning("Semantic search is DEGRADED: fastembed not available, using the lexical hash fallback")
+    if not s.wikimedia_contact.strip():
+        log.warning("WIKIMEDIA_CONTACT is empty: Wikipedia may refuse lookups (set an email or project URL)")
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await init_db()
+    _warn_if_degraded()
     get_signer()  # create/load the signing key at boot so failures surface early
     if get_settings().plugins_enabled:
         from app.plugins_loader import load_all

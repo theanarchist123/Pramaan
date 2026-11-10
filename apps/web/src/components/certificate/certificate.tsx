@@ -44,7 +44,7 @@ export function Certificate({ data, forceTamper = false }: { data: CertificateDa
   }, [data.photo_id, data.code]);
 
   const photo = data.photo_id
-    ? `https://images.unsplash.com/photo-${data.photo_id}?w=900&q=75&fm=jpg&fit=crop&crop=entropy`
+    ? `/certificate-photos/${encodeURIComponent(data.photo_id)}.jpg` // self-hosted: a credential must not depend on a third party
     : "";
   const shown = data.claims.slice(0, 4);
 

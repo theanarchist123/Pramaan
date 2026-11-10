@@ -7,11 +7,9 @@ certificate can never be served from a stale file.
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import logging
 from pathlib import Path
 
-import httpx
 
 from app.config import get_settings
 
@@ -21,30 +19,8 @@ _sem = asyncio.Semaphore(1)  # headless Chromium is heavy (~300 MB); one at a ti
 CERT_W, CERT_H = 1123, 794  # A4 landscape at 96 dpi
 
 
-PHOTO_HOST = "images.unsplash.com"
-PHOTO_TIMEOUT = 4.0  # a slow photo host must cost seconds, never the whole render
-
-
 class RenderError(RuntimeError):
     pass
-
-
-async def _photo_route(route) -> None:
-    """Serve Unsplash photos from a local cache. A cold fetch gets PHOTO_TIMEOUT seconds; if the host is slow or
-    down the photo is dropped (the certificate page treats a failed image as 'done') instead of stalling."""
-    url = route.request.url
-    cached = get_settings().data_dir / "cache" / f"photo-{hashlib.sha256(url.encode()).hexdigest()[:20]}.jpg"
-    try:
-        if not cached.exists():
-            async with httpx.AsyncClient(timeout=PHOTO_TIMEOUT, follow_redirects=True) as client:
-                resp = await client.get(url)
-                resp.raise_for_status()
-            cached.parent.mkdir(parents=True, exist_ok=True)
-            cached.write_bytes(resp.content)
-        await route.fulfill(body=cached.read_bytes(), content_type="image/jpeg")
-    except Exception:  # noqa: BLE001
-        log.warning("certificate photo unavailable, rendering without it")
-        await route.abort()
 
 
 def _cache_path(code: str, digest: str, ext: str) -> Path:
@@ -72,8 +48,7 @@ async def render(code: str, digest: str, kind: str) -> Path:
                     page = await browser.new_page(
                         viewport={"width": CERT_W, "height": CERT_H}, device_scale_factor=2
                     )
-                    await page.route(f"https://{PHOTO_HOST}/**", _photo_route)
-                    # Not "networkidle": any slow third-party request would hold it. The page flags itself ready
+                    # Not "networkidle": it flags itself ready
                     # (data-cert-ready) once its photo and QR code have loaded or failed.
                     await page.goto(url, wait_until="domcontentloaded", timeout=30000)
                     await page.wait_for_selector('[data-cert-ready="true"]', timeout=20000)

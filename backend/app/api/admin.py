@@ -35,6 +35,35 @@ class ClaimVerifyIn(BaseModel):
     confidence: float = Field(ge=0, le=1)
 
 
+@router.get("/system")
+async def system_status(_: Principal = Depends(require_admin)):
+    """What the running server is really doing. Admin-only (the public /healthz reveals nothing).
+    `degraded` lists features that silently fell back to something weaker."""
+    from app.config import get_settings
+    from app.llm.client import get_llm
+    from app.services.embeddings import get_embedder
+
+    s, llm, emb = get_settings(), get_llm(), get_embedder()
+    degraded = []
+    if s.embeddings.lower() != "hash" and emb.kind == "hash":
+        degraded.append("Semantic search is using the lexical hash fallback (fastembed is not installed or failed to load)")
+    if s.llm_mode == "live" and llm.mode != "live":
+        degraded.append("LLM_MODE=live but no API key: agents are running on the offline mock")
+    if llm.mode == "mock":
+        degraded.append("Agents are in offline mock mode: verification is not using a real model")
+    if not s.wikimedia_contact.strip():
+        degraded.append("WIKIMEDIA_CONTACT is not set: Wikipedia may refuse lookups, so there is no public evidence")
+    return {
+        "environment": "development" if s.is_local else "production",
+        "llm": {"mode": llm.mode, "provider": llm.provider, "models": llm.model_names},
+        "embeddings": emb.kind,
+        "plugins_enabled": s.plugins_enabled,
+        "worker_inline": s.worker_inline,
+        "sandbox_in_api": s.sandbox_in_api,
+        "degraded": degraded,
+    }
+
+
 @router.get("/review", response_model=list[ReviewItemOut])
 async def review_queue(
     _: Principal = Depends(require_admin), session: AsyncSession = Depends(get_session)

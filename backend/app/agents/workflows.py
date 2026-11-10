@@ -23,7 +23,7 @@ from app.db import get_sessionmaker
 from app.domain import STATUS_SELF
 from app.llm.client import LLMError, LLMRefusal
 from app.models import Profile, ReviewItem
-from app.services import wikipedia
+from app.services import wikidata, wikipedia
 from app.services.wikipedia import Source
 
 log = logging.getLogger("pramaan.workflow")
@@ -51,6 +51,7 @@ async def n_research(state: VerifyState) -> VerifyState:
         name = profile.full_name
     await ctx.emit("Pariksha", "tool", f"Looking for public evidence about {name}")
     found = await wikipedia.fetch_sources(name, limit=3)
+    found = [*found, *await wikidata.fetch_sources(name, limit=3)]  # structured facts for people with no article
     # Only keep pages that are plausibly about this person, so a namesake can't vouch for them.
     sources = [s for s in found if name_similarity(s.title, name) >= SOURCE_NAME_MATCH]
     await ctx.emit(

@@ -19,17 +19,21 @@ from app.models import AgentRun, Profile, User
 
 router = APIRouter(prefix="/v1/agents", tags=["agents"])
 
+# `kind` says what is really behind each name, so the product never claims more than the code does:
+#   llm      a model call (structured output) does the work
+#   hybrid   deterministic rules decide; a model only assists
+#   service  ordinary code, no model
 CATALOG = [
-    {"name": "Saathi", "role": "Interviewer", "does": "Talks with the person (any language) and builds the profile live", "replaces": "Form filling"},
-    {"name": "Khoji-Pehle", "role": "Researcher", "does": "Finds public information so the person only has to confirm", "replaces": "Typing in a biography"},
-    {"name": "Lipik", "role": "Document reader", "does": "Reads uploaded credentials and checks the holder is the applicant", "replaces": "Manual data entry from certificates"},
-    {"name": "Pariksha", "role": "Fact-checker", "does": "Checks each claim against public sources and quotes its evidence", "replaces": "Googling every claim"},
-    {"name": "Prahari", "role": "Auditor", "does": "Approves only at ≥95% confidence; otherwise escalates to a human with reasons", "replaces": "Reviewing every profile by hand"},
-    {"name": "Setu", "role": "Connector", "does": "Links people by institution, sector and place", "replaces": "Manual tagging and clustering"},
-    {"name": "Khoji", "role": "Search", "does": "Answers plain-English questions about the registry", "replaces": "Building filters and queries"},
-    {"name": "Chitrakar", "role": "Artist", "does": "Designs each certificate's unique artwork", "replaces": "Designing certificates"},
-    {"name": "Doot", "role": "Outreach", "does": "Drafts and schedules follow-up messages", "replaces": "Writing emails"},
-    {"name": "Shilpkar", "role": "Builder", "does": "Adds new fields and features on request, tested before release", "replaces": "Developer tickets"},
+    {"name": "Saathi", "kind": "llm", "role": "Interviewer", "does": "Talks with the person (any language) and builds the profile live", "replaces": "Form filling"},
+    {"name": "Khoji-Pehle", "kind": "llm", "role": "Researcher", "does": "Finds public information so the person only has to confirm", "replaces": "Typing in a biography"},
+    {"name": "Lipik", "kind": "llm", "role": "Document reader", "does": "Reads uploaded credentials (vision model) and checks the holder and issuer", "replaces": "Manual data entry from certificates"},
+    {"name": "Pariksha", "kind": "llm", "role": "Fact-checker", "does": "Checks each claim against Wikipedia and Wikidata; a citation only counts if the quote is really in the source", "replaces": "Googling every claim"},
+    {"name": "Prahari", "kind": "hybrid", "role": "Auditor", "does": "Fixed rules decide approve vs. escalate (a model only checks the bio); first listings and awards always go to a human", "replaces": "Reviewing every profile by hand"},
+    {"name": "Setu", "kind": "service", "role": "Connector", "does": "Links people who share an institution, sector or place (plain code, no model)", "replaces": "Manual tagging and clustering"},
+    {"name": "Khoji", "kind": "llm", "role": "Search", "does": "A model turns a plain-English question into filters; ranking is vector search", "replaces": "Building filters and queries"},
+    {"name": "Chitrakar", "kind": "service", "role": "Certificate artwork", "does": "Draws each certificate's artwork deterministically from its hash, over a curated sector photo (no image model)", "replaces": "Designing certificates"},
+    {"name": "Doot", "kind": "llm", "role": "Outreach", "does": "Drafts follow-up messages; a human approves every send", "replaces": "Writing emails"},
+    {"name": "Shilpkar", "kind": "llm", "role": "Builder", "does": "Proposes new profile fields and read-only API endpoints, tested in a sandbox before a human approves them", "replaces": "Developer tickets"},
 ]
 
 

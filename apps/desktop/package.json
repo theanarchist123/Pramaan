@@ -8,7 +8,7 @@
     "start": "electron .",
     "package": "electron-builder",
     "package:dir": "electron-builder --dir",
-    "test": "node scripts/test.mjs"
+    "test": "node scripts/test-verify.mjs && node scripts/test.mjs"
   },
   "devDependencies": {
     "electron": "^33.2.0",

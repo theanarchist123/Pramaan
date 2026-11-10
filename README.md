@@ -35,11 +35,11 @@ flowchart LR
   ORCH --> A3[Pariksha<br/>fact-checker]
   ORCH --> A4[Lipik<br/>document reader]
   ORCH --> A5[Prahari<br/>auditor]
-  ORCH --> A6[Setu<br/>graph builder]
+  ORCH --> A6[Setu<br/>graph builder · plain code]
   ORCH --> A7[Khoji<br/>semantic search]
   ORCH --> A8[Doot<br/>outreach]
   ORCH --> A9[Shilpkar<br/>builder]
-  ORCH --> A10[Chitrakar<br/>certificates]
+  ORCH --> A10[Chitrakar<br/>deterministic art · plain code]
 
   A1 & A2 & A3 & A4 & A5 & A7 --> LLM[(LLM layer<br/>Gemini fallback chain<br/>· offline mock)]
   A9 --> GUARD[AST code guard] --> SBX[Docker sandbox<br/>no network · read-only] --> HUMAN{{Human approves}} --> PLUG[Hot-loaded plugin]
@@ -53,7 +53,7 @@ flowchart LR
 
 1. **Claims, not facts.** Every statement is a claim with a status and confidence. Self-declared claims stay labelled as such.
 2. **Evidence.** Pariksha looks for public evidence; a *verbatim-quote check* rejects hallucinated citations. Web evidence is capped at 0.9, a matching identity document at 0.97.
-3. **Auditor gate.** Prahari auto-approves only at ≥ 0.95 *with* a matching identity document. Anything doubtful goes to a human review queue — the fail-safe is to escalate.
+3. **Auditor gate.** Prahari (fixed rules; a model only checks the bio) auto-approves only at ≥ 0.95 *with* a matching document from a recognised issuer. Every owner's first listing, every award claim, common names without a second identifying detail, and any edit to an approved profile go to a human. The fail-safe is to escalate. Public evidence comes from Wikipedia and Wikidata (crowd-edited, not official registries); DigiLocker/PAN/Aadhaar checks are not implemented.
 4. **Seal.** The verified claims are canonicalised → SHA-256 → **Ed25519** signature. The public key is published at `/.well-known/pramaan-keys.json`.
 5. **Transparency.** Each issuance is appended to a public hash chain (`/transparency`); tampering with history breaks every later link.
 6. **Verify anywhere.** The QR on the certificate opens `/verify/<code>`. The *Try to tamper* page edits a field and shows exactly which one breaks the signature.
@@ -104,10 +104,12 @@ pnpm install
 node node_modules/electron/install.js    # pnpm 11 skips install scripts
 pnpm start                               # dev;  PRAMAAN_URL=https://your-server to point elsewhere
 pnpm package                             # electron-builder → dist/ installer for the OS you run it on (Windows NSIS, macOS dmg, Linux AppImage/deb)
-pnpm test                                # 11 security/behaviour checks against the real app
+pnpm test                                # offline-verifier vectors (signed by the Python backend) + 11 security/behaviour checks against the real app
 ```
 
 Releases, signing and auto-update: push a tag `desktop-vX.Y.Z` and `.github/workflows/desktop-release.yml` builds Windows, macOS and Linux installers on their own runners, signs them when the certificate secrets are set (`WIN_CSC_LINK`/`WIN_CSC_KEY_PASSWORD`, `CSC_LINK`/`CSC_KEY_PASSWORD` + `APPLE_ID`/`APPLE_APP_SPECIFIC_PASSWORD`/`APPLE_TEAM_ID`), and publishes them to the GitHub Release. The installed app checks that release every 6 hours (`electron-updater` verifies the signed manifest), downloads quietly and installs when the user next quits. Unsigned builds work but trigger SmartScreen/Gatekeeper warnings; get certificates before shipping. To point an installed app at your server without rebuilding, put `{"url": "https://your-server"}` in `config.json` inside the app's user-data folder (survives updates).
+
+**Offline verification:** *Pramaan → Verify a certificate file (offline)…* (Ctrl+O) checks a certificate's `.json` (the verify page's *JSON (offline check)* button) with no network: it re-hashes the payload and checks the Ed25519 signature against registry keys the app cached earlier (only cached keys are trusted, never one inside the file). It cannot see revocations; open the certificate online for that. Set `apiUrl` in the desktop `config.json` if your API is not on localhost:8000.
 
 Hardened by default: context isolation + sandbox, no Node in the page, window locked to the app's origin, every permission denied, single instance, and `pramaan://verify/<code>` · `profile/<slug>` · `onboard` · `directory` deep links that are strictly validated.
 

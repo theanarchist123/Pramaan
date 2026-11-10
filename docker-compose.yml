@@ -42,7 +42,7 @@ services:
       UNSPLASH_ACCESS_KEY: ${UNSPLASH_ACCESS_KEY:-}
       # Safe defaults for a shared deployment: AI-written plugins are not hot-loaded into the API process,
       # and webhooks may not target private addresses.
-      PLUGINS_ENABLED: "false"
+      PLUGINS_ENABLED: ${PLUGINS_ENABLED:-false}
       WEBHOOK_ALLOW_PRIVATE: "false"
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}

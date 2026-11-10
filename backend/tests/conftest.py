@@ -19,6 +19,7 @@ os.environ["LLM_MODE"] = "mock"
 os.environ["ENVIRONMENT"] = "auto"  # a developer's .env may force "development"; tests decide from PUBLIC_BASE_URL
 os.environ["PUBLIC_BASE_URL"] = "http://localhost:3000"  # a dev .env may point at the deployed site; tests are local
 os.environ["EMBEDDINGS"] = "hash"
+os.environ["WIKIDATA_ENABLED"] = "false"  # no network in tests; wikidata has its own tests with a fake
 # The safety rules below are ON by default and have their own tests (test_hardening.py); the older flow tests
 # exercise the machinery itself, so they run with the human-in-the-loop gates relaxed.
 os.environ["REQUIRE_EMAIL_VERIFICATION"] = "false"

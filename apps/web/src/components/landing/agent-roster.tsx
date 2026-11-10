@@ -18,7 +18,10 @@ export function AgentRoster() {
             <AgentAvatar name={a.name} />
             <div>
               <p className="text-sm font-semibold">{a.name}</p>
-              <p className="text-xs text-muted-foreground">{a.role}</p>
+              <p className="text-xs text-muted-foreground">
+                {a.role}
+                {a.kind && <> · {a.kind === "llm" ? "AI model" : a.kind === "hybrid" ? "rules + AI" : "plain code"}</>}
+              </p>
             </div>
           </div>
           <p className="mt-3 text-sm">{a.does}</p>

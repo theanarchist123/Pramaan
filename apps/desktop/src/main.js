@@ -1,15 +1,15 @@
 "use strict";
-const { app, BrowserWindow, Menu, Tray, globalShortcut, shell, ipcMain, nativeImage, session } = require("electron");
+const { app, BrowserWindow, Menu, Tray, globalShortcut, shell, ipcMain, nativeImage, session, dialog, net } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { PROTOCOL, resolveDeepLink, findDeepLink } = require("./links");
 const { startAutoUpdates } = require("./updater");
+const { verifyCertificate } = require("./verify");
 
 const TEST = process.env.PRAMAAN_TEST === "1";
 if (process.env.PRAMAAN_USER_DATA) app.setPath("userData", process.env.PRAMAAN_USER_DATA);
 
-function configuredUrl() {
-  if (process.env.PRAMAAN_URL) return process.env.PRAMAAN_URL;
+function readConfig() {
   // A config.json lets an organisation point the app at its own server. Checked in order: the user's data folder
   // (survives auto-updates, which replace the install folder), beside the executable, then the bundled default.
   const candidates = [
@@ -20,15 +20,72 @@ function configuredUrl() {
   for (const file of candidates) {
     try {
       const cfg = JSON.parse(fs.readFileSync(file, "utf8"));
-      if (typeof cfg.url === "string") return cfg.url;
+      if (cfg && typeof cfg === "object") return cfg;
     } catch {
       /* not there: try the next */
     }
   }
-  return "http://localhost:3100";
+  return {};
+}
+function configuredUrl() {
+  if (process.env.PRAMAAN_URL) return process.env.PRAMAAN_URL;
+  const cfg = readConfig();
+  return typeof cfg.url === "string" ? cfg.url : "http://localhost:3100";
+}
+function configuredApiUrl() {
+  if (process.env.PRAMAAN_API_URL) return process.env.PRAMAAN_API_URL;
+  const cfg = readConfig();
+  return typeof cfg.apiUrl === "string" ? cfg.apiUrl : "http://localhost:8000";
 }
 const APP_URL = configuredUrl().replace(/\/$/, "");
 const ORIGIN = new URL(APP_URL).origin;
+const API_URL = configuredApiUrl().replace(/\/$/, "");
+
+// ---- offline certificate verification -------------------------------------------------------------------------
+// The registry's public keys are cached on disk (never removed: old certificates need old keys), so a certificate
+// file can be checked with no network at all.
+const keysFile = () => path.join(app.getPath("userData"), "registry-keys.json");
+function loadKeys() {
+  try {
+    return JSON.parse(fs.readFileSync(keysFile(), "utf8"));
+  } catch {
+    return {};
+  }
+}
+async function refreshKeys() {
+  try {
+    const res = await net.fetch(`${API_URL}/.well-known/pramaan-keys.json`);
+    if (!res.ok) return;
+    const body = await res.json();
+    const keys = loadKeys();
+    for (const k of body.keys || []) if (k && typeof k.kid === "string" && typeof k.x === "string") keys[k.kid] = k.x;
+    fs.writeFileSync(keysFile(), JSON.stringify(keys, null, 2));
+  } catch {
+    /* offline: keep whatever is cached */
+  }
+}
+async function verifyCertificateFile() {
+  const pick = await dialog.showOpenDialog(win || undefined, {
+    title: "Verify a certificate file (offline)",
+    filters: [{ name: "Certificate JSON", extensions: ["json"] }],
+    properties: ["openFile"],
+  });
+  if (pick.canceled || !pick.filePaths[0]) return;
+  let result;
+  try {
+    const raw = fs.readFileSync(pick.filePaths[0], "utf8");
+    if (raw.length > 2_000_000) throw new Error("too large");
+    result = verifyCertificate(JSON.parse(raw), loadKeys());
+  } catch {
+    result = { valid: false, reason: "Could not read that file as a certificate (it must be the JSON the registry provides)." };
+  }
+  await dialog.showMessageBox(win || undefined, {
+    type: result.valid ? "info" : "warning",
+    title: result.valid ? "Certificate is genuine" : "Certificate could not be verified",
+    message: result.valid ? `Valid: ${result.subject} (${result.certId})` : "Not verified",
+    detail: [result.reason, result.valid ? `Issued ${result.issuedAt}; ${result.claims} verified claim(s).` : "", result.note || ""].filter(Boolean).join("\n\n"),
+  });
+}
 
 let win = null;
 let tray = null;
@@ -165,6 +222,7 @@ function buildMenu() {
       label: "Pramaan",
       submenu: [
         { label: "Verify a certificate", accelerator: "CmdOrCtrl+L", click: () => navigate("/verify") },
+        { label: "Verify a certificate file (offline)…", accelerator: "CmdOrCtrl+O", click: () => verifyCertificateFile() },
         { type: "separator" },
         { role: "quit" },
       ],
@@ -215,6 +273,10 @@ if (!gotLock) {
     pendingLink = resolveDeepLink(findDeepLink(process.argv));
     createWindow();
     startAutoUpdates(app);
+    if (!TEST) {
+      refreshKeys();
+      setInterval(refreshKeys, 24 * 60 * 60 * 1000).unref();
+    }
     if (!TEST) {
       buildTray();
       globalShortcut.register("CommandOrControl+Shift+P", () => (win && win.isVisible() && win.isFocused() ? win.hide() : showWindow()));
