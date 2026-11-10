@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.keys import get_signer
+from app.core.keys import get_signer, public_keyring
 from app.core.signing import (
     GENESIS_HASH,
     build_certificate_payload,
@@ -56,6 +56,18 @@ async def issue_certificate(
     if not claims:
         raise CertificateError("No verified claims yet — nothing to certify.")
 
+    existing = (
+        await session.execute(
+            select(Certificate).where(Certificate.profile_id == profile.id, Certificate.revoked_at.is_(None))
+            .order_by(Certificate.issued_at.desc()).limit(1)
+        )
+    ).scalar_one_or_none()
+    if existing is not None:
+        current = sorted((c["field"], str(c["value"]), c["status"]) for c in claims)
+        issued = sorted((c["field"], str(c["value"]), c["status"]) for c in existing.payload.get("claims", []))
+        if current == issued and existing.payload.get("full_name") == profile.full_name:
+            raise CertificateError("An active certificate already covers these claims.")
+
     signer = get_signer()
     issued_at = datetime.now(timezone.utc)
     code = new_code()
@@ -66,6 +78,8 @@ async def issue_certificate(
         claims=claims,
         issued_at=issued_at,
     )
+    # Random salt: the public digest can't be used to confirm a guessed name/claims after erasure.
+    payload["salt"] = secrets.token_hex(16)
     digest = digest_payload(payload)
 
     # Serialise appends so the chain can never fork.
@@ -113,8 +127,9 @@ async def verify_certificate(session: AsyncSession, code: str) -> VerifyOut:
         return VerifyOut(valid=False, code=code, reason="No certificate with this code exists.")
 
     signer = get_signer()
+    cert_pub = public_keyring().get(cert.key_id)
     digest_ok = digest_payload(cert.payload) == cert.digest
-    sig_ok = digest_ok and verify_signature(cert.digest, cert.signature, signer.public_key_b64)
+    sig_ok = bool(cert_pub) and digest_ok and verify_signature(cert.digest, cert.signature, cert_pub)
 
     entry = (
         await session.execute(
@@ -159,7 +174,7 @@ async def verify_certificate(session: AsyncSession, code: str) -> VerifyOut:
         payload=cert.payload,
         signature_ok=sig_ok,
         signature=cert.signature,
-        public_key=signer.public_key_b64,
+        public_key=cert_pub or signer.public_key_b64,
         log_position=log_position,
         log_size=log_size,
         entry_hash=entry.entry_hash if entry else "",
@@ -172,7 +187,7 @@ async def check_submitted_payload(session: AsyncSession, code: str, submitted: d
     if cert is None:
         return VerifyOut(valid=False, code=code, reason="No certificate with this code exists.")
     result = verify_payload(
-        submitted, cert.signature, get_signer().public_key_b64, original=cert.payload
+        submitted, cert.signature, public_keyring().get(cert.key_id, ""), original=cert.payload
     )
     return VerifyOut(
         valid=result.valid,

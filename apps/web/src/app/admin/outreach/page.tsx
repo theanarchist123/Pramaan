@@ -36,7 +36,7 @@ export default function OutreachPage() {
 
   const load = useCallback(() => api<Msg[]>("/v1/admin/outbox").then(setMsgs).catch(() => setMsgs([])), []);
   useEffect(() => {
-    if (ready && !user) router.replace("/auth?next=/admin/outreach");
+    if (ready && !user) router.replace("/auth?mode=login&next=/admin/outreach");
     else if (ready && user?.role === "admin") load();
   }, [ready, user, router, load]);
 

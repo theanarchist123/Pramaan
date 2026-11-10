@@ -46,7 +46,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!ready) return;
-    if (!user) router.replace("/auth?next=/admin");
+    if (!user) router.replace("/auth?mode=login&next=/admin");
     else if (user.role === "admin") load().catch((e) => toast.error(e instanceof ApiError ? e.message : "Couldn't load"));
   }, [ready, user, router, load]);
 

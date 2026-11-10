@@ -12,9 +12,7 @@ export function useAgentStream(profileId: string | undefined, enabled = true) {
 
   useEffect(() => {
     if (!enabled) return;
-    const url = streamUrl(profileId);
-    if (!url) return;
-    const es = new EventSource(url);
+    const es = new EventSource(streamUrl(profileId), { withCredentials: true });
 
     const push = (raw: MessageEvent) => {
       try {

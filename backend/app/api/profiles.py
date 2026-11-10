@@ -9,9 +9,9 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from app.deps import Principal, get_optional_principal, require_scope
+from app.deps import Principal, get_optional_principal, require_scope, require_verified_email
 from app.config import get_settings
-from app.domain import pick_photo
+from app.domain import is_known_photo, pick_photo
 from app.services import fields as fields_svc
 from app.services import webhooks
 from app.models import Claim, Consent, Evidence, Profile, ReviewItem
@@ -130,6 +130,9 @@ async def get_profile(
     return profile
 
 
+_PUBLIC_FIELDS = ("headline", "sector", "state", "city", "bio", "languages", "institutions", "photo_url", "custom")
+
+
 @router.patch("/{profile_id}", response_model=ProfileOut)
 async def patch_profile(
     profile_id: uuid.UUID,
@@ -148,8 +151,15 @@ async def patch_profile(
         # `null`/empty clears a field; values of deactivated fields are preserved.
         cleared = {k for k, v in changes["custom"].items() if v in (None, "", [])}
         changes["custom"] = {k: v for k, v in {**profile.custom, **cleaned}.items() if k not in cleared}
+    public_changed = any(
+        k in changes and changes[k] != getattr(profile, k) for k in _PUBLIC_FIELDS
+    )
     for key, value in changes.items():
         setattr(profile, key, value)
+    if public_changed and profile.status == "approved":
+        # Approved text is what the public sees: edits must be re-reviewed before going live.
+        profile.status = "pending_review"
+        session.add(ReviewItem(profile_id=profile.id, reason="Edited after approval", confidence=0.0))
     await session.commit()
     await session.refresh(profile)
     return profile
@@ -182,6 +192,7 @@ async def submit_for_review(
     session: AsyncSession = Depends(get_session),
 ):
     profile = await _load_editable(session, profile_id, principal)
+    require_verified_email(principal)
     consent = (
         await session.execute(
             select(Consent)
@@ -211,6 +222,8 @@ async def issue_profile_certificate(
     session: AsyncSession = Depends(get_session),
 ):
     profile = await _load_editable(session, profile_id, principal)
+    if photo_id and not is_known_photo(photo_id):
+        raise HTTPException(422, "Unknown photo_id")
     try:
         cert = await issue_certificate(session, profile, photo_id=photo_id)
     except CertificateError as exc:

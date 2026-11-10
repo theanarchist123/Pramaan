@@ -266,12 +266,14 @@ async def test_chat_locked_while_under_review(client, make_user, fake_wikipedia)
 
 
 async def test_event_stream_auth_and_bus(client, make_user):
-    assert (await client.get("/v1/agents/stream")).status_code == 422  # token required
-    assert (await client.get("/v1/agents/stream", params={"token": "bad"})).status_code == 401
+    assert (await client.get("/v1/agents/stream")).status_code == 401  # a session is required
+    assert (await client.get("/v1/agents/stream", headers={"Authorization": "Bearer bad"})).status_code == 401
+    # a token in the URL is never accepted (it would end up in logs and browser history)
     person, _ = await make_user()
     token = person["Authorization"].split()[1]
-    # a non-admin can't open the global firehose
     assert (await client.get("/v1/agents/stream", params={"token": token})).status_code == 401
+    # a non-admin can't open the global firehose
+    assert (await client.get("/v1/agents/stream", headers=person)).status_code == 401
 
     q = bus.subscribe()
     ctx = await start_run("unit_test")

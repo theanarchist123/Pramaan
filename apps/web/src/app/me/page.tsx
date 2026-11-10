@@ -15,7 +15,7 @@ export default function MyProfiles() {
 
   useEffect(() => {
     if (!ready) return;
-    if (!user) router.replace("/auth?next=/me");
+    if (!user) router.replace("/auth?mode=login&next=/me");
     else api<Profile[]>("/v1/profiles/mine").then(setProfiles).catch(() => setProfiles([]));
   }, [ready, user, router]);
 

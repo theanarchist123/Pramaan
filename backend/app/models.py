@@ -53,6 +53,23 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(255), default="")
     role: Mapped[str] = mapped_column(String(16), default="person")  # person|delegate|admin
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Tokens issued before this moment are dead (logout / "sign out everywhere" / password change).
+    tokens_valid_after: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = ts()
+
+
+class EmailOtp(Base):
+    """A one-time code proving the applicant controls the email address. Only a hash is stored."""
+
+    __tablename__ = "email_otps"
+
+    id: Mapped[uuid.UUID] = pk()
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = ts()
 
 
@@ -97,6 +114,23 @@ class WebhookDelivery(Base):
     ok: Mapped[bool] = mapped_column(Boolean, default=False)
     error: Mapped[str] = mapped_column(String(300), default="")
     duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = ts()
+
+
+class WebhookJob(Base):
+    """Outbox row: one pending delivery of one event to one webhook. Workers claim due rows with
+    FOR UPDATE SKIP LOCKED, so a restart loses nothing and two replicas never send the same one twice."""
+
+    __tablename__ = "webhook_jobs"
+
+    id: Mapped[uuid.UUID] = pk()
+    webhook_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("webhooks.id", ondelete="CASCADE"), index=True)
+    delivery_id: Mapped[str] = mapped_column(String(40))
+    event: Mapped[str] = mapped_column(String(60))
+    data: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    attempt: Mapped[int] = mapped_column(Integer, default=0)  # attempts already made
+    status: Mapped[str] = mapped_column(String(10), default="pending", index=True)  # pending|done|failed
+    next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, index=True)
     created_at: Mapped[datetime] = ts()
 
 
@@ -365,8 +399,9 @@ class CodeChange(Base):
     slug: Mapped[str] = mapped_column(String(40), index=True)
     summary: Mapped[str] = mapped_column(Text, default="")
     files: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)  # {"plugins/x.py": "<source>"}
-    # proposed | rejected_by_guard | checks_failed | ready | applied | rejected
+    # queued | proposed | rejected_by_guard | checks_failed | ready | applied | rejected
     status: Mapped[str] = mapped_column(String(20), default="proposed", index=True)
     checks: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)  # the agent run to follow live
     created_at: Mapped[datetime] = ts()
     applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

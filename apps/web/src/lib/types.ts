@@ -44,6 +44,7 @@ export interface User {
   email: string;
   name: string;
   role: "person" | "delegate" | "admin";
+  email_verified?: boolean;
 }
 
 export interface TurnOut {

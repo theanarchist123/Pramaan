@@ -6,6 +6,7 @@ import base64
 import hashlib
 import hmac
 import secrets
+import time
 from datetime import datetime, timedelta, timezone
 
 import jwt
@@ -39,7 +40,7 @@ def verify_password(password: str, stored: str | None) -> bool:
 
 def create_access_token(user_id: str, role: str, minutes: int = 60 * 12) -> str:
     now = datetime.now(timezone.utc)
-    payload = {"sub": user_id, "role": role, "iat": now, "exp": now + timedelta(minutes=minutes)}
+    payload = {"sub": user_id, "role": role, "iat": now, "iatf": time.time(), "exp": now + timedelta(minutes=minutes)}
     return jwt.encode(payload, get_settings().jwt_secret, algorithm="HS256")
 
 

@@ -16,7 +16,15 @@ TEST_DB = "pramaan_test"
 ADMIN_DSN = "postgresql://pramaan:pramaan@localhost:5432/postgres"
 os.environ["DATABASE_URL"] = f"postgresql+asyncpg://pramaan:pramaan@localhost:5432/{TEST_DB}"
 os.environ["LLM_MODE"] = "mock"
+os.environ["ENVIRONMENT"] = "auto"  # a developer's .env may force "development"; tests decide from PUBLIC_BASE_URL
+os.environ["PUBLIC_BASE_URL"] = "http://localhost:3000"  # a dev .env may point at the deployed site; tests are local
 os.environ["EMBEDDINGS"] = "hash"
+# The safety rules below are ON by default and have their own tests (test_hardening.py); the older flow tests
+# exercise the machinery itself, so they run with the human-in-the-loop gates relaxed.
+os.environ["REQUIRE_EMAIL_VERIFICATION"] = "false"
+os.environ["HUMAN_APPROVAL_FIRST_LISTING"] = "false"
+os.environ["AWARD_CLAIMS_NEED_HUMAN"] = "false"
+os.environ["IP_RATE_LIMITS"] = "false"  # the suite registers dozens of users from one address
 os.environ["WEBHOOK_ALLOW_PRIVATE"] = "false"  # tests assert the SSRF guard; never inherit the dev .env flag
 
 
@@ -48,6 +56,23 @@ async def app_instance():
 
 @pytest_asyncio.fixture
 async def client(app_instance):
+    transport = httpx.ASGITransport(app=app_instance)
+
+    async def forget_cookies(response):
+        # The API sets an httpOnly session cookie on login. Real browsers keep it; this shared client must not,
+        # or every "anonymous" request after a register() would silently be authenticated. Tests pick their
+        # identity with explicit Authorization headers; cookie behaviour has its own client (cookie_client).
+        c.cookies.clear()
+
+    async with httpx.AsyncClient(
+        transport=transport, base_url="http://test", event_hooks={"response": [forget_cookies]}
+    ) as c:
+        yield c
+
+
+@pytest_asyncio.fixture
+async def cookie_client(app_instance):
+    """Behaves like a browser: keeps cookies between requests."""
     transport = httpx.ASGITransport(app=app_instance)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
         yield c

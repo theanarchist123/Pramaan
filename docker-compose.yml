@@ -53,6 +53,30 @@ services:
     volumes:
       - pramaan_data:/srv/backend/data # signing key, rendered certificates
 
+  # Optional dedicated worker for webhook retries + scheduled email (docker compose --profile worker up). Set
+  # WORKER_INLINE=false on `backend` when you use it. AI-code sandbox checks need Docker, which this image does
+  # not have: run `python -m app.worker` from backend/ on a host that does (see DEPLOY-RAILWAY.md).
+  worker:
+    profiles: ["worker"]
+    build: ./backend
+    container_name: pramaan-worker
+    command: ["python", "-m", "app.worker"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://pramaan:pramaan@db:5432/pramaan
+      PUBLIC_BASE_URL: http://localhost:3000
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-real-deployments-0123456789abcdef}
+      SIGNING_KEY_B64: ${SIGNING_KEY_B64:-}
+      WEBHOOK_ALLOW_PRIVATE: "false"
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    volumes:
+      - pramaan_data:/srv/backend/data
+
   web:
     build:
       context: ./apps/web

@@ -13,8 +13,10 @@ import { ApiError } from "@/lib/api";
 function AuthForm() {
   const { login, register } = useAuth();
   const router = useRouter();
-  const next = useSearchParams().get("next") || "/onboard";
-  const [mode, setMode] = useState<"login" | "register">("register");
+  const params = useSearchParams();
+  const next = params.get("next") || "/onboard";
+  // "Sign in" links open the sign-in form; "Get started" links open registration.
+  const [mode, setMode] = useState<"login" | "register">(params.get("mode") === "login" ? "login" : "register");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 

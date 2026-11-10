@@ -1,28 +1,12 @@
-// Thin typed client for the Pramaan API. The token lives in localStorage (per-viewer only).
+// Thin typed client for the Pramaan API.
+// The session is an httpOnly cookie set by the API: JavaScript never sees the token, so an XSS bug can't steal it.
+// Every request therefore sends credentials; there is nothing to store in localStorage.
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const TOKEN_KEY = "pramaan.token";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
-  }
-}
-
-export function getToken(): string | null {
-  try {
-    return typeof window === "undefined" ? null : window.localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
-export function setToken(token: string | null) {
-  try {
-    if (token) window.localStorage.setItem(TOKEN_KEY, token);
-    else window.localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    /* storage blocked (private mode) — session simply won't persist */
   }
 }
 
@@ -42,13 +26,12 @@ export async function api<T>(
   const { json, auth = true, headers, ...rest } = init;
   const h = new Headers(headers);
   if (json !== undefined) h.set("Content-Type", "application/json");
-  const token = auth ? getToken() : null;
-  if (token) h.set("Authorization", `Bearer ${token}`);
 
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, {
       ...rest,
+      credentials: auth ? "include" : "omit", // auth:false = a public call; don't send the session cookie
       headers: h,
       body: json !== undefined ? JSON.stringify(json) : rest.body,
     });
@@ -61,10 +44,9 @@ export async function api<T>(
   return body as T;
 }
 
-export function streamUrl(profileId?: string): string | null {
-  const token = getToken();
-  if (!token) return null;
-  const q = new URLSearchParams({ token });
+/** Live agent stream. No token in the URL (URLs end up in logs): the browser sends the session cookie. */
+export function streamUrl(profileId?: string): string {
+  const q = new URLSearchParams();
   if (profileId) q.set("profile_id", profileId);
-  return `${API_URL}/v1/agents/stream?${q}`;
+  return `${API_URL}/v1/agents/stream${q.size ? `?${q}` : ""}`;
 }

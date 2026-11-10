@@ -14,7 +14,7 @@ const en = {
   "nav.directory": "Directory", "nav.verify": "Verify", "nav.mission": "Mission Control",
   "nav.developers": "Developers", "nav.admin": "Admin", "nav.search": "Search", "nav.signin": "Sign in",
   "nav.signout": "Sign out", "nav.menu": "Open menu", "nav.largeText": "Toggle large text",
-  "nav.darkMode": "Toggle dark mode", "nav.language": "Switch language", "nav.skip": "Skip to content",
+  "nav.darkMode": "Toggle dark mode", "nav.language": "Switch language", "nav.install": "Install app", "nav.skip": "Skip to content",
 
   "home.badge": "Who's Who India — rebuilt around evidence",
   "home.h1a": "Don't claim it.", "home.h1b": "Prove it.",
@@ -69,7 +69,7 @@ const hi: Partial<Record<Key, string>> = {
   "nav.directory": "निर्देशिका", "nav.verify": "सत्यापन", "nav.mission": "मिशन कंट्रोल",
   "nav.developers": "डेवलपर्स", "nav.admin": "एडमिन", "nav.search": "खोजें", "nav.signin": "साइन इन",
   "nav.signout": "साइन आउट", "nav.menu": "मेनू खोलें", "nav.largeText": "बड़े अक्षर चालू/बंद करें",
-  "nav.darkMode": "डार्क मोड चालू/बंद करें", "nav.language": "भाषा बदलें", "nav.skip": "सीधे सामग्री पर जाएँ",
+  "nav.darkMode": "डार्क मोड चालू/बंद करें", "nav.language": "भाषा बदलें", "nav.install": "ऐप इंस्टॉल करें", "nav.skip": "सीधे सामग्री पर जाएँ",
 
   "home.badge": "भारत के जाने-माने लोग — अब सबूतों के साथ",
   "home.h1a": "दावा मत कीजिए।", "home.h1b": "साबित कीजिए।",

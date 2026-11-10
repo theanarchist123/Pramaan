@@ -8,13 +8,13 @@ Most registries ask you to *say* who you are. Pramaan makes the registry itself 
 **self-declared / web-evidenced / document-verified**, the certificate carries an Ed25519 signature, and every
 issuance is appended to a public, hash-chained transparency log.
 
-| | |
-|---|---|
-| **Web app** | Next.js 15 · Tailwind 4 · shadcn/ui · English + हिन्दी · installable PWA · light/dark |
-| **Desktop app** | Electron shell with tray, global shortcut `Ctrl+Shift+P`, `pramaan://` deep links |
-| **Public API** | FastAPI, OpenAPI at `/docs`, API keys with scopes + rate limits, signed webhooks |
+|                       |                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
+| **Web app**     | Next.js 15 · Tailwind 4 · shadcn/ui · English + हिन्दी · installable PWA · light/dark |
+| **Desktop app** | Electron shell with tray, global shortcut `Ctrl+Shift+P`, `pramaan://` deep links            |
+| **Public API**  | FastAPI, OpenAPI at `/docs`, API keys with scopes + rate limits, signed webhooks               |
 | **Build on it** | Python + TypeScript SDKs, MCP server for other AI agents, embeddable badge, Telegram bot example |
-| **Agents** | 10 named agents orchestrated with LangGraph, watchable live in *Mission Control* |
+| **Agents**      | 10 named agents orchestrated with LangGraph, watchable live in *Mission Control*               |
 
 ## Architecture
 
@@ -73,7 +73,8 @@ Requirements: Docker. (For local development: Python 3.12 with [uv](https://docs
 cp .env.example .env          # add GEMINI_API_KEY, or leave LLM_MODE=mock to run fully offline
 docker compose up --build
 ```
-Web <http://localhost:3000> · API docs <http://localhost:8000/docs>
+
+Web [http://localhost:3000](http://localhost:3000) · API docs [http://localhost:8000/docs](http://localhost:8000/docs)
 
 `LLM_MODE=mock` is a deterministic offline mode: the whole product, every agent included, works with no API key — handy for demos on bad Wi-Fi.
 
@@ -92,6 +93,7 @@ uv venv --python 3.12 && uv pip install -e ".[dev]"
 cd apps/web
 pnpm install && pnpm build && pnpm start --port 3100      # or: pnpm dev
 ```
+
 Demo admin (review queue, dashboard): `admin@pramaan.demo` / `pramaan-demo-1` — **change before any real deployment**.
 
 ### Desktop app
@@ -101,22 +103,25 @@ cd apps/desktop
 pnpm install
 node node_modules/electron/install.js    # pnpm 11 skips install scripts
 pnpm start                               # dev;  PRAMAAN_URL=https://your-server to point elsewhere
-pnpm package                             # → dist/Pramaan-win32-x64/Pramaan.exe (edit config.json beside it for your server URL)
+pnpm package                             # electron-builder → dist/ installer for the OS you run it on (Windows NSIS, macOS dmg, Linux AppImage/deb)
 pnpm test                                # 11 security/behaviour checks against the real app
 ```
+
+Releases, signing and auto-update: push a tag `desktop-vX.Y.Z` and `.github/workflows/desktop-release.yml` builds Windows, macOS and Linux installers on their own runners, signs them when the certificate secrets are set (`WIN_CSC_LINK`/`WIN_CSC_KEY_PASSWORD`, `CSC_LINK`/`CSC_KEY_PASSWORD` + `APPLE_ID`/`APPLE_APP_SPECIFIC_PASSWORD`/`APPLE_TEAM_ID`), and publishes them to the GitHub Release. The installed app checks that release every 6 hours (`electron-updater` verifies the signed manifest), downloads quietly and installs when the user next quits. Unsigned builds work but trigger SmartScreen/Gatekeeper warnings; get certificates before shipping. To point an installed app at your server without rebuilding, put `{"url": "https://your-server"}` in `config.json` inside the app's user-data folder (survives updates).
+
 Hardened by default: context isolation + sandbox, no Node in the page, window locked to the app's origin, every permission denied, single instance, and `pramaan://verify/<code>` · `profile/<slug>` · `onboard` · `directory` deep links that are strictly validated.
 
 ## Build on Pramaan
 
-| | |
-|---|---|
-| REST API | `http://localhost:8000/docs` — create a key under *Developers* in the web app |
-| Python SDK | `packages/sdk/python` — `pip install -e packages/sdk/python` |
-| TypeScript SDK | `packages/sdk/typescript` — typed from the OpenAPI schema |
-| Webhooks | HMAC-signed (`X-Pramaan-Signature: t=…,v1=…`), retried, delivery log, SSRF-checked |
-| Badge | `/v1/badge/profile/<slug>.svg` and `/v1/badge/certificate/<code>.svg` — embed anywhere |
-| MCP server | `mcp/server.py` — gives Claude/other agents `search_registry`, `get_profile`, `verify_certificate`, `check_document_content`, `registry_overview` |
-| Example app | `examples/telegram-bot` — built **only** on the public API + SDK |
+|                |                                                                                                                                                                |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| REST API       | `http://localhost:8000/docs` — create a key under *Developers* in the web app                                                                             |
+| Python SDK     | `packages/sdk/python` — `pip install -e packages/sdk/python`                                                                                              |
+| TypeScript SDK | `packages/sdk/typescript` — typed from the OpenAPI schema                                                                                                   |
+| Webhooks       | HMAC-signed (`X-Pramaan-Signature: t=…,v1=…`), retried, delivery log, SSRF-checked                                                                         |
+| Badge          | `/v1/badge/profile/<slug>.svg` and `/v1/badge/certificate/<code>.svg` — embed anywhere                                                                    |
+| MCP server     | `mcp/server.py` — gives Claude/other agents `search_registry`, `get_profile`, `verify_certificate`, `check_document_content`, `registry_overview` |
+| Example app    | `examples/telegram-bot` — built **only** on the public API + SDK                                                                                      |
 
 ## Tests
 

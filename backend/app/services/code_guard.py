@@ -1,8 +1,8 @@
 """Static guard for AI-written plugins (Shilpkar). Runs BEFORE anything executes, and again right
 before a plugin is loaded.
 
-It is a whitelist, not a blacklist: a plugin may only read approved public data through a read-only
-database path and return JSON. Everything else — files, processes, sockets, reflection, writes,
+It is a whitelist, not a blacklist: a plugin may only read the public views (approved, consented, verified
+data) through a read-only database session and return JSON. Everything else — files, processes, sockets, reflection, writes,
 other tables (users, API keys, webhooks…) — is refused at the syntax-tree level.
 
 This is one layer of three: (1) this guard, (2) tests + a security scan inside a network-less
@@ -23,9 +23,10 @@ ALLOWED_FROM: dict[str, set[str] | None] = {
     "pydantic": {"BaseModel", "Field"},
     "sqlalchemy": {"select", "func", "and_", "or_", "desc", "asc", "case", "distinct"},
     "sqlalchemy.ext.asyncio": {"AsyncSession"},
-    "app.db": {"get_session"},
-    # Public registry data only. Deliberately NOT User, ApiKey, Webhook, Consent, Document, OutboxMessage…
-    "app.models": {"Profile", "Claim", "Evidence", "Certificate"},
+    # A read-only session (Postgres refuses writes) and read-only VIEWS of approved, consented, verified data.
+    # Deliberately NOT app.models: no drafts, rejected profiles, chat quotes, users, keys or webhooks.
+    "app.plugin_api": {"get_readonly_session"},
+    "app.public_views": {"PublicProfile", "PublicClaim", "PublicEvidence", "PublicCertificate"},
     "typing": None, "datetime": None, "collections": None, "itertools": None, "statistics": None,
     "decimal": None, "enum": None, "dataclasses": None, "math": None, "re": None, "json": None,
     "string": None, "textwrap": None, "__future__": None,

@@ -16,6 +16,9 @@ class Settings(BaseSettings):
         env_file=str(ROOT_DIR / ".env"), env_file_encoding="utf-8", extra="ignore"
     )
 
+    # "development" = running on your machine (even if PUBLIC_BASE_URL/DATABASE_URL point at a live site);
+    # "production" = a deployment; "auto" (default) decides from PUBLIC_BASE_URL.
+    environment: str = "auto"
     llm_provider: str = "gemini"  # "gemini" | "claude"
     gemini_api_key: str = ""
     anthropic_api_key: str = ""
@@ -38,6 +41,29 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from: str = "Pramaan <no-reply@pramaan.local>"
     outreach_scheduler: bool = True
+    # Background work (webhook retries, scheduled email, AI-code sandbox) runs in a worker loop. By default the
+    # API runs it too (WORKER_INLINE=true); in production run `python -m app.worker` separately and set it false.
+    worker_inline: bool = True
+    # Run `alembic upgrade head` when the API starts (outside localhost, where the schema is otherwise only checked).
+    # The Docker image already migrates before starting; this is for running the API directly against a real database.
+    auto_migrate: bool = False
+    # Where the Docker sandbox for AI-written code may run: "inline" (this API process, local dev only) or
+    # "worker" (queued; only `python -m app.worker` on a host that has Docker picks it up). "auto" = inline when
+    # the site is local, worker otherwise: a deployed API image has no Docker and must not pretend to.
+    sandbox_mode: str = "auto"
+    # Per-IP limits on login/register/search etc. Tests switch this off (they hammer one address).
+    ip_rate_limits: bool = True
+    # Applicants must prove they control their email (one-time code) before submitting a profile.
+    require_email_verification: bool = True
+    # Human approval for every owner's first public listing: Prahari may only auto-approve people who already
+    # have a profile a human approved. Until identity checks beyond email exist, keep this on.
+    human_approval_first_listing: bool = True
+    # Session cookie SameSite: "auto" = lax locally, none (cross-site web + API hosts) in production.
+    # Award claims earn the highest trust, so a human confirms them (turn off only once issuers are checked at source).
+    award_claims_need_human: bool = True
+    # Extra issuer names to accept for documents, comma-separated (e.g. "Kerala Sahitya Akademi,Tata Trusts").
+    trusted_issuers_extra: str = ""
+    cookie_samesite: str = "auto"
     # "auto" tries the local multilingual model, falling back to a lexical hash; "hash" forces it.
     embeddings: str = "auto"
 
@@ -47,7 +73,7 @@ class Settings(BaseSettings):
     def _no_default_secret_in_public(self):
         """The placeholder JWT secret is public (it is in the source). Anyone could forge logins with it,
         so a deployment on a real address must set its own."""
-        local = self.public_base_url.startswith(("http://localhost", "http://127.0.0.1"))
+        local = self.is_local
         weak = self.jwt_secret == _DEV_JWT_SECRET or self.jwt_secret.startswith("change-me") or len(self.jwt_secret) < 32
         if not local and weak:
             raise ValueError("JWT_SECRET is a public placeholder or too short: set a strong random JWT_SECRET (32+ chars)")
@@ -71,11 +97,25 @@ class Settings(BaseSettings):
     api_base_url: str = "http://localhost:8000"
     jwt_secret: str = _DEV_JWT_SECRET
     signing_key_b64: str = ""
+    # Comma-separated base64 public keys of past signing keys, so old certificates keep verifying after rotation.
+    signing_retired_public_keys: str = ""
 
     unsplash_access_key: str = ""
     # Wikimedia's bot policy requires a real contact (email or URL) in the User-Agent.
     # Without one, lookups are refused (403) and Pariksha simply finds no public evidence.
     wikimedia_contact: str = ""
+
+    @property
+    def is_local(self) -> bool:
+        """Development mode: localhost CORS/origins, SameSite=lax cookie, optional signing key, create_all.
+        ENVIRONMENT=development|production forces it; "auto" guesses from PUBLIC_BASE_URL."""
+        if self.environment in ("development", "production"):
+            return self.environment == "development"
+        return self.public_base_url.startswith(("http://localhost", "http://127.0.0.1"))
+
+    @property
+    def sandbox_in_api(self) -> bool:
+        return self.sandbox_mode == "inline" or (self.sandbox_mode == "auto" and self.is_local)
 
     @property
     def data_dir(self) -> Path:

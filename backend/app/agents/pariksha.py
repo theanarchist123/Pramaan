@@ -8,6 +8,7 @@ import json
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.events import RunContext
+from app.agents.identity import corroborates, is_common_name
 from app.agents.schemas import ClaimVerdict, FactCheckReport
 from app.agents.textutil import quote_in_source
 from app.domain import STATUS_SELF, STATUS_WEB, WEB_CONFIDENCE_CAP
@@ -67,7 +68,7 @@ async def fact_check(
         claim = by_id.get(verdict.claim_id)
         if claim is None:
             continue  # model referenced an id we never gave it
-        await _apply_verdict(ctx, claim, verdict, sources, counts)
+        await _apply_verdict(ctx, claim, verdict, sources, counts, profile)
     return counts
 
 
@@ -77,6 +78,7 @@ async def _apply_verdict(
     verdict: ClaimVerdict,
     sources: list[Source],
     counts: dict[str, int],
+    profile: Profile | None = None,
 ) -> None:
     label = f"“{claim.value[:70]}”"
     if verdict.verdict == "supported":
@@ -92,6 +94,19 @@ async def _apply_verdict(
             )
             return
         confidence = round(min(max(verdict.confidence, 0.0), WEB_CONFIDENCE_CAP), 2)
+        if profile is not None and is_common_name(profile.full_name):
+            # Same name != same person. A common name needs a second matching detail in the source.
+            could_check, matched = corroborates(profile, source.text)
+            if could_check and not matched:
+                counts["unverifiable"] += 1
+                await ctx.emit(
+                    "Pariksha", "warning",
+                    f"Not accepted: {label} - the source never mentions the applicant's institution, city or state, "
+                    f"and this is a common name (possible namesake)",
+                )
+                return
+            if not could_check:
+                confidence = min(confidence, 0.6)  # nothing to tell this person from a namesake
         claim.status = STATUS_WEB
         claim.confidence = confidence
         claim.evidence.append(

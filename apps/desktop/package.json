@@ -6,12 +6,87 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "package": "node scripts/package.mjs",
+    "package": "electron-builder",
+    "package:dir": "electron-builder --dir",
     "test": "node scripts/test.mjs"
   },
   "devDependencies": {
-    "@electron/packager": "^18.3.6",
     "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
     "playwright": "^1.50.1"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "author": "Pramaan",
+  "build": {
+    "appId": "in.pramaan.desktop",
+    "productName": "Pramaan",
+    "copyright": "Pramaan",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "config.default.json",
+        "to": "config.json"
+      }
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "theanarchist123",
+        "repo": "Pramaan"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "Pramaan",
+        "schemes": [
+          "pramaan"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "signtoolOptions": {
+        "publisherName": "Pramaan"
+      }
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.reference",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Network",
+      "icon": "assets/icon.png"
+    }
   }
 }

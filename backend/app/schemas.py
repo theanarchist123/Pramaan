@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ORM(BaseModel):
@@ -29,6 +29,15 @@ class UserOut(ORM):
     email: str
     name: str
     role: str
+    email_verified: bool = False
+
+    @model_validator(mode="before")
+    @classmethod
+    def _from_user(cls, v):
+        if hasattr(v, "email_verified_at"):  # an ORM User
+            return {"id": v.id, "email": v.email, "name": v.name, "role": v.role,
+                    "email_verified": v.email_verified_at is not None}
+        return v
 
 
 class TokenOut(BaseModel):

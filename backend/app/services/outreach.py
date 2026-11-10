@@ -118,7 +118,11 @@ async def send_due() -> int:
     async with get_sessionmaker()() as session:
         due = (
             await session.execute(
-                select(OutboxMessage).where(OutboxMessage.status == "scheduled", OutboxMessage.scheduled_for <= _now())
+                select(OutboxMessage)
+                .where(OutboxMessage.status == "scheduled", OutboxMessage.scheduled_for <= _now())
+                # Row locks: with several replicas/workers each message is claimed by exactly one of them,
+                # the others skip it, so nobody gets the same email twice.
+                .with_for_update(skip_locked=True)
             )
         ).scalars().all()
         for m in due:
@@ -127,7 +131,7 @@ async def send_due() -> int:
         return len(due)
 
 
-async def scheduler_loop(interval: float = 30.0) -> None:
+async def scheduler_loop(interval: float = 30.0) -> None:  # kept for callers that only want email
     while True:
         try:
             await send_due()

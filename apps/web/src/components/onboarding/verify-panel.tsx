@@ -5,6 +5,7 @@ import { Award, BadgeCheck, Clock, Download, ExternalLink, ShieldCheck } from "l
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AgentFeed } from "@/components/agent-feed";
+import { EmailVerify } from "@/components/onboarding/email-verify";
 import { Certificate } from "@/components/certificate/certificate";
 import { ScaledTilt } from "@/components/certificate/scaled-tilt";
 import { toCertificateData, useCertificate } from "@/hooks/use-certificate";
@@ -59,6 +60,7 @@ export function VerifyPanel({
 
   return (
     <div className="space-y-4">
+      <EmailVerify />
       {profile.status === "approved" ? (
         <div className="flex gap-3 rounded-2xl bg-verified-soft p-4">
           <BadgeCheck className="size-6 shrink-0 text-verified" />

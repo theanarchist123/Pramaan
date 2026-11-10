@@ -13,9 +13,10 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 
 from app.config import BACKEND_DIR, get_settings
+from app.core.ratelimit import ip_limit
 from app.services.code_guard import SLUG_RE, check_source
 
 log = logging.getLogger("pramaan.plugins")
@@ -55,7 +56,8 @@ def load_plugin(app: FastAPI, slug: str) -> dict[str, Any]:
     if any(not r.path.startswith(prefix) for r in router.routes):  # type: ignore[attr-defined]
         raise PluginRejected("every route must live under the plugin's prefix")
 
-    app.include_router(router)
+    # Plugin routes are public: give them an IP rate limit the plugin cannot opt out of.
+    app.include_router(router, dependencies=[Depends(ip_limit(f"plugin:{slug}", 60))])
     app.openapi_schema = None  # so /docs and the SDK generator see the new endpoints
     info = {"slug": slug, "prefix": prefix, "routes": len(router.routes), "doc": (module.__doc__ or "").strip()}
     loaded[slug] = info

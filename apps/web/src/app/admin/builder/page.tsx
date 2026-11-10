@@ -38,7 +38,7 @@ export default function BuilderPage() {
   const { user, ready } = useAuth();
   const router = useRouter();
   useEffect(() => {
-    if (ready && !user) router.replace("/auth?next=/admin/builder");
+    if (ready && !user) router.replace("/auth?mode=login&next=/admin/builder");
   }, [ready, user, router]);
   if (!ready) return <div className="mx-auto max-w-5xl px-4 py-12"><Skeleton className="h-64 rounded-2xl" /></div>;
   if (user && user.role !== "admin") return <p className="p-16 text-center text-muted-foreground">Administrators only.</p>;

@@ -68,7 +68,7 @@ async def field_proposal(
 
 
 # --------------------------------------------------------------------------- plugins (code)
-async def _process(change_id: uuid.UUID, ctx: RunContext) -> None:
+async def process_change(change_id: uuid.UUID, ctx: RunContext) -> None:
     """propose → guard → sandbox. Always lands in a terminal state a human can read."""
 
     async def save(**fields: Any) -> None:
@@ -151,12 +151,17 @@ async def propose_change(
     session: AsyncSession = Depends(get_session),
 ):
     _limit(principal)
-    change = CodeChange(request=body.request.strip(), slug="pending")
+    ctx = await start_run("shilpkar_plugin")
+    inline = get_settings().sandbox_in_api
+    # The sandbox needs Docker, which the deployed API image does not (and should not) have. Outside local
+    # development the job is queued and a separate worker (`python -m app.worker`) runs it.
+    change = CodeChange(request=body.request.strip(), slug="pending", run_id=ctx.run_id,
+                        status="proposed" if inline else "queued")
     session.add(change)
     await session.commit()
-    ctx = await start_run("shilpkar_plugin")
-    background.add_task(_process, change.id, ctx)
-    return {"id": str(change.id), "run_id": str(ctx.run_id)}
+    if inline:
+        background.add_task(process_change, change.id, ctx)
+    return {"id": str(change.id), "run_id": str(ctx.run_id), "queued": not inline}
 
 
 @router.get("/changes", response_model=list[ChangeOut])

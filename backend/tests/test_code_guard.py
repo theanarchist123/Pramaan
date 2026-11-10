@@ -12,8 +12,8 @@ SLUG = "demo_plugin"
 HEAD = '''from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db import get_session
-from app.models import Profile
+from app.plugin_api import get_readonly_session
+from app.public_views import PublicProfile as Profile
 
 router = APIRouter(prefix="/v1/plugins/demo_plugin")
 '''
@@ -38,7 +38,7 @@ def top(rows):
     return sorted(rows, key=lambda r: -r[1])[:5]
 
 @router.get("")
-async def go(session: AsyncSession = Depends(get_session)):
+async def go(session: AsyncSession = Depends(get_readonly_session)):
     rows = (await session.execute(select(Profile.sector, func.count()).group_by(Profile.sector))).all()
     return top(rows)
 ''') == []
@@ -52,8 +52,10 @@ async def go(session: AsyncSession = Depends(get_session)):
     ("import os.path\n", "import of 'os.path'"),
     ("from os import system\n", "import from 'os'"),
     ("from app.config import get_settings\n", "import from 'app.config'"),
-    ("from app.models import User\n", "'User' may not be imported"),
-    ("from app.models import ApiKey, Webhook\n", "may not be imported"),
+    ("from app.models import User\n", "import from 'app.models'"),
+    ("from app.models import Profile\n", "import from 'app.models'"),
+    ("from app.db import get_session\n", "import from 'app.db'"),
+    ("from app.public_views import PublicBase\n", "'PublicBase' may not be imported"),
     ("from sqlalchemy import text\n", "'text' may not be imported"),
     ("from sqlalchemy import delete\n", "'delete' may not be imported"),
     ("from fastapi import *\n", "star imports"),

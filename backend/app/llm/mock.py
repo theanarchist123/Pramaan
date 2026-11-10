@@ -320,8 +320,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db import get_session
-from app.models import Profile
+from app.plugin_api import get_readonly_session
+from app.public_views import PublicProfile
 
 router = APIRouter(prefix="/v1/plugins/{slug}", tags=["plugin:{slug}"])
 
@@ -332,10 +332,10 @@ def summarise(rows):
 
 
 @router.get("")
-async def handler(session: AsyncSession = Depends(get_session)):
+async def handler(session: AsyncSession = Depends(get_readonly_session)):
     rows = (
         await session.execute(
-            select(Profile.state, func.count()).where(Profile.status == "approved").group_by(Profile.state)
+            select(PublicProfile.state, func.count()).group_by(PublicProfile.state)
         )
     ).all()
     return {{"plugin": "{slug}", "data": summarise(rows)}}

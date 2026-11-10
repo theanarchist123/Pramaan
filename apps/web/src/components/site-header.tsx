@@ -8,6 +8,7 @@ import { Command as CommandIcon, Languages, LogOut, Menu, Moon, Sun, Type } from
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/command-palette";
+import { InstallButton } from "@/components/install-button";
 import { useAuth } from "@/lib/auth";
 import { useI18n, type Key } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -88,6 +89,7 @@ export function SiteHeader() {
           >
             <Menu />
           </Button>
+          <InstallButton />
           <Button
             variant="ghost"
             size="sm"
@@ -119,7 +121,7 @@ export function SiteHeader() {
               </Button>
             </>
           ) : (
-            <Button size="sm" render={<Link href="/auth" />} nativeButton={false}>
+            <Button size="sm" render={<Link href="/auth?mode=login" />} nativeButton={false}>
               {t("nav.signin")}
             </Button>
           )}

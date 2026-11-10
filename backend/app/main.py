@@ -29,16 +29,18 @@ async def lifespan(_: FastAPI):
         from app.plugins_loader import load_all
 
         load_all(app)
-    scheduler = None
-    if get_settings().outreach_scheduler:
+    worker = None
+    if get_settings().worker_inline:
         import asyncio
 
-        from app.services.outreach import scheduler_loop
+        from app.worker import run_forever
 
-        scheduler = asyncio.create_task(scheduler_loop())  # sends only messages an admin SCHEDULED
+        # Webhook retries + scheduled email (only messages an admin SCHEDULED). The Docker sandbox is NOT run
+        # here: the API image has no Docker, so those jobs wait for `python -m app.worker`.
+        worker = asyncio.create_task(run_forever(sandbox=False))
     yield
-    if scheduler:
-        scheduler.cancel()
+    if worker:
+        worker.cancel()
     await dispose_engine()
 
 
@@ -52,9 +54,9 @@ app = FastAPI(
 settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.public_base_url, "tauri://localhost", "http://tauri.localhost"],
-    # Any local port in development (web dev server, desktop shell, examples).
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_origins=[settings.public_base_url],
+    # Any local port, only when the site itself is served locally (dev).
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?" if settings.is_local else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -69,25 +71,17 @@ for r in (
 
 @app.get("/healthz", tags=["meta"])
 async def healthz():
-    llm = get_llm()
-    from app.services.embeddings import get_embedder
-
-    return {"status": "ok", "llm_mode": llm.mode, "llm_provider": llm.provider,
-            "models": llm.model_names, "embeddings": get_embedder().kind}
+    return {"status": "ok"}
 
 
 @app.get("/.well-known/pramaan-keys.json", tags=["meta"])
 async def public_keys():
     """Anyone can verify a certificate offline using this Ed25519 public key."""
-    signer = get_signer()
+    from app.core.keys import public_keyring
+
     return {
         "keys": [
-            {
-                "kid": signer.key_id,
-                "kty": "OKP",
-                "crv": "Ed25519",
-                "x": signer.public_key_b64,
-                "use": "sig",
-            }
+            {"kid": kid, "kty": "OKP", "crv": "Ed25519", "x": pub, "use": "sig"}
+            for kid, pub in public_keyring().items()
         ]
     }

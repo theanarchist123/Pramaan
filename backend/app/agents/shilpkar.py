@@ -34,11 +34,14 @@ plugins/<slug>.py MUST:
     from pydantic import BaseModel, Field
     from sqlalchemy import select, func, and_, or_, desc, asc, case, distinct
     from sqlalchemy.ext.asyncio import AsyncSession
-    from app.db import get_session
-    from app.models import Profile, Claim, Evidence, Certificate        # public registry data only
+    from app.plugin_api import get_readonly_session
+    from app.public_views import PublicProfile, PublicClaim, PublicEvidence, PublicCertificate  # read-only views
     plus stdlib: typing, datetime, collections, itertools, statistics, decimal, enum, dataclasses, math, re, json
 - define exactly:   router = APIRouter(prefix="/v1/plugins/<slug>", tags=["plugin:<slug>"])
-- be read-only: only `select(...)`; always filter Profile.status == "approved". No commit/add/delete.
+- be read-only: only `select(...)` on the Public* views (they already contain only approved, consented,
+  verified data: PublicProfile{id,slug,full_name,headline,sector,state,city,bio,languages,institutions},
+  PublicClaim{profile_id,field,value,year,status,confidence}, PublicEvidence{claim_id,kind,url,quote},
+  PublicCertificate{code,profile_id,issued_at,key_id}). Use `Depends(get_readonly_session)`. No commit/add/delete.
 - use only these SQL functions: func.count, sum, avg, min, max, lower, upper, coalesce, round, length, abs.
 - put the real logic in small PURE functions (taking plain lists/dicts) so it can be tested without a database.
 - NEVER use: os, sys, subprocess, socket, open, eval, exec, getattr, while loops, global, anything with a

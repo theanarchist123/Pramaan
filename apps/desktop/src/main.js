@@ -3,18 +3,27 @@ const { app, BrowserWindow, Menu, Tray, globalShortcut, shell, ipcMain, nativeIm
 const fs = require("node:fs");
 const path = require("node:path");
 const { PROTOCOL, resolveDeepLink, findDeepLink } = require("./links");
+const { startAutoUpdates } = require("./updater");
 
 const TEST = process.env.PRAMAAN_TEST === "1";
 if (process.env.PRAMAAN_USER_DATA) app.setPath("userData", process.env.PRAMAAN_USER_DATA);
 
 function configuredUrl() {
   if (process.env.PRAMAAN_URL) return process.env.PRAMAAN_URL;
-  try {
-    // A config.json next to the executable lets an organisation point the app at its own server.
-    const cfg = JSON.parse(fs.readFileSync(path.join(path.dirname(process.execPath), "config.json"), "utf8"));
-    if (typeof cfg.url === "string") return cfg.url;
-  } catch {
-    /* no config: use the default */
+  // A config.json lets an organisation point the app at its own server. Checked in order: the user's data folder
+  // (survives auto-updates, which replace the install folder), beside the executable, then the bundled default.
+  const candidates = [
+    path.join(app.getPath("userData"), "config.json"),
+    path.join(path.dirname(process.execPath), "config.json"),
+    process.resourcesPath ? path.join(process.resourcesPath, "config.json") : "",
+  ].filter(Boolean);
+  for (const file of candidates) {
+    try {
+      const cfg = JSON.parse(fs.readFileSync(file, "utf8"));
+      if (typeof cfg.url === "string") return cfg.url;
+    } catch {
+      /* not there: try the next */
+    }
   }
   return "http://localhost:3100";
 }
@@ -205,6 +214,7 @@ if (!gotLock) {
     buildMenu();
     pendingLink = resolveDeepLink(findDeepLink(process.argv));
     createWindow();
+    startAutoUpdates(app);
     if (!TEST) {
       buildTray();
       globalShortcut.register("CommandOrControl+Shift+P", () => (win && win.isVisible() && win.isFocused() ? win.hide() : showWindow()));

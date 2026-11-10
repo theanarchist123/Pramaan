@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { FileCheck2, FileWarning, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { API_URL, ApiError, getToken } from "@/lib/api";
+import { API_URL, ApiError } from "@/lib/api";
 import type { DocumentResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +28,7 @@ export function DocumentDrop({ profileId, onDone }: { profileId: string; onDone:
       fd.append("file", file);
       const res = await fetch(`${API_URL}/v1/onboarding/${profileId}/documents`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${getToken()}` },
+        credentials: "include",
         body: fd,
       });
       const body = await res.json().catch(() => null);

@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.agents.events import bus, recent_events
 from app.core.security import decode_access_token
 from app.db import get_session, get_sessionmaker
-from app.deps import Principal, require_admin
+from app.deps import SESSION_COOKIE, Principal, require_admin
 from app.models import AgentRun, Profile, User
 
 router = APIRouter(prefix="/v1/agents", tags=["agents"])
@@ -69,15 +69,22 @@ async def run_events(
              "data": e.data, "confidence": e.confidence, "ts": e.created_at} for e in rows]
 
 
-async def _authorize_stream(token: str, profile_id: uuid.UUID | None) -> bool:
-    """EventSource can't send headers, so the JWT arrives as ?token=. Admins may watch
-    everything; anyone else only the profile they own."""
-    claims = decode_access_token(token)
+async def _authorize_stream(request: Request, profile_id: uuid.UUID | None) -> bool:
+    """EventSource can't send headers, so the browser authenticates with its httpOnly session cookie (never a
+    token in the URL, which would end up in logs and history). Admins may watch everything; anyone else
+    only the profile they own."""
+    token = request.cookies.get(SESSION_COOKIE)
+    auth = request.headers.get("authorization", "")
+    if not token and auth.lower().startswith("bearer "):
+        token = auth[7:].strip()  # non-browser clients
+    claims = decode_access_token(token) if token else None
     if not claims or "purpose" in claims:
         return False
     async with get_sessionmaker()() as session:
         user = await session.get(User, uuid.UUID(claims["sub"]))
         if user is None:
+            return False
+        if user.tokens_valid_after is not None and float(claims.get("iatf", 0)) < user.tokens_valid_after.timestamp():
             return False
         if user.role == "admin":
             return True
@@ -88,27 +95,43 @@ async def _authorize_stream(token: str, profile_id: uuid.UUID | None) -> bool:
 
 
 @router.get("/stream")
-async def stream(request: Request, token: str, profile_id: uuid.UUID | None = None):
-    if not await _authorize_stream(token, profile_id):
+async def stream(request: Request, profile_id: uuid.UUID | None = None):
+    if not await _authorize_stream(request, profile_id):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not allowed to watch this stream")
 
     history = list(reversed(await recent_events(profile_id=profile_id, limit=40)))
     queue = bus.subscribe()
     wanted = str(profile_id) if profile_id else None
+    last_id = max((e["id"] for e in history if e.get("id")), default=0)
 
     async def gen():
+        nonlocal last_id
         try:
             yield "retry: 3000\n\n"
             for event in history:
                 yield f"event: history\ndata: {json.dumps(event, default=str)}\n\n"
+            idle = 0
             while True:
                 if await request.is_disconnected():
                     break
                 try:
-                    event = await asyncio.wait_for(queue.get(), timeout=15)
+                    event = await asyncio.wait_for(queue.get(), timeout=3)
                 except asyncio.TimeoutError:
-                    yield ": keepalive\n\n"
+                    idle += 3
+                    # Events written by ANOTHER process (the worker) never reach this process's in-memory bus,
+                    # so also tail the table.
+                    for ev in reversed(await recent_events(profile_id=profile_id, limit=20)):
+                        if ev["id"] and ev["id"] > last_id:
+                            last_id = ev["id"]
+                            yield f"data: {json.dumps(ev, default=str)}\n\n"
+                    if idle >= 15:
+                        idle = 0
+                        yield ": keepalive\n\n"
                     continue
+                if event.get("id"):
+                    if event["id"] <= last_id:
+                        continue
+                    last_id = event["id"]
                 if wanted and event.get("profile_id") != wanted:
                     continue
                 yield f"data: {json.dumps(event, default=str)}\n\n"

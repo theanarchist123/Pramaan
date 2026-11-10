@@ -1,0 +1,50 @@
+# Builds signed desktop installers and publishes them (plus the update manifests the app checks) to a GitHub Release.
+#   Tag a release:   git tag desktop-v1.0.1 && git push --tags
+# The installed app finds the new version itself (electron-updater) and verifies it before installing.
+#
+# Secrets (Settings -> Secrets and variables -> Actions). Without them the build still runs, UNSIGNED.
+#   Windows:  WIN_CSC_LINK (base64 .pfx), WIN_CSC_KEY_PASSWORD
+#   macOS:    CSC_LINK (base64 .p12 Developer ID), CSC_KEY_PASSWORD, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID
+name: desktop-release
+on:
+  push:
+    tags: ["desktop-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: apps/desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/desktop/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: node node_modules/electron/install.js
+      - name: Tests
+        run: pnpm test
+        if: matrix.os == 'windows-latest'
+      - name: Build, sign and publish
+        run: pnpm exec electron-builder --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ matrix.os == 'windows-latest' && secrets.WIN_CSC_LINK || secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ matrix.os == 'windows-latest' && secrets.WIN_CSC_KEY_PASSWORD || secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}

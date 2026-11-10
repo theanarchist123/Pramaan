@@ -70,7 +70,7 @@ export function CommandPalette({
             <CommandItem onSelect={() => go("/developers")}>
               <Code2 /> Developers & API
             </CommandItem>
-            <CommandItem onSelect={() => go("/auth")}>
+            <CommandItem onSelect={() => go("/auth?mode=login")}>
               <LogIn /> Sign in
             </CommandItem>
             <CommandItem onSelect={() => go("/me")}>

@@ -5,7 +5,8 @@ import { Loader2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { API_URL, getToken } from "@/lib/api";
+import { API_URL } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { CodeBlock, CopyButton } from "./code";
 
@@ -27,6 +28,7 @@ const BASE_PRESETS: Preset[] = [
 interface Result { status: number; ms: number; headers: [string, string][]; body: string }
 
 export function Playground() {
+  const { user } = useAuth();
   const [code, setCode] = useState("PRM-XXXXXXXXXX");
   const [idx, setIdx] = useState(0);
   const [shell, setShell] = useState<"curl" | "powershell">("curl");
@@ -53,14 +55,13 @@ export function Playground() {
     setMethod(p.method);
     setPath(p.path);
     setBody(p.body ?? "");
-    if (p.auth && authMode === "none") setAuthMode(getToken() ? "session" : "key");
+    if (p.auth && authMode === "none") setAuthMode(user ? "session" : "key");
   }
   useEffect(() => pick(idx), [code]); // eslint-disable-line react-hooks/exhaustive-deps -- re-apply the preset when the real code arrives
 
   const headers = useMemo(() => {
     const h: Record<string, string> = {};
     if (body && method !== "GET") h["Content-Type"] = "application/json";
-    if (authMode === "session" && getToken()) h["Authorization"] = `Bearer ${getToken()}`;
     if (authMode === "key" && key) h["X-API-Key"] = key;
     return h;
   }, [authMode, key, body, method]);
@@ -87,6 +88,8 @@ export function Playground() {
     try {
       const r = await fetch(`${API_URL}${fill(path)}`, {
         method, headers, body: body && method !== "GET" ? fill(body) : undefined,
+        credentials: authMode === "session" ? "include" : "omit", // "My session" = the httpOnly cookie
+
       });
       const text = await r.text();
       let pretty = text;
@@ -125,7 +128,7 @@ export function Playground() {
           <span className="font-medium">Auth:</span>
           {([["none", "None (public)"], ["session", "My session"], ["key", "API key"]] as const).map(([m, label]) => (
             <label key={m} className="flex cursor-pointer items-center gap-1.5">
-              <input type="radio" name="auth" checked={authMode === m} onChange={() => setAuthMode(m)} disabled={m === "session" && !getToken()} /> {label}
+              <input type="radio" name="auth" checked={authMode === m} onChange={() => setAuthMode(m)} disabled={m === "session" && !user} /> {label}
             </label>
           ))}
         </fieldset>

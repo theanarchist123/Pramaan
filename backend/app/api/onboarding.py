@@ -19,7 +19,7 @@ from app.agents.workflows import run_verification
 from app.config import get_settings
 from app.core.ratelimit import check_rate_limit
 from app.db import get_session
-from app.deps import Principal, require_scope
+from app.deps import Principal, require_scope, require_verified_email
 from app.llm.client import LLMError, LLMRefusal, get_llm
 from app.models import ChatMessage, Consent, Document, Profile, ReviewItem
 from app.schemas import ClaimOut, ProfileOut
@@ -337,6 +337,7 @@ async def verify(
 ):
     """Kick off Pariksha → Prahari. Returns at once; follow progress on the agent stream."""
     profile = await _owned(session, profile_id, principal)
+    require_verified_email(principal)
     consent = (
         await session.execute(
             select(Consent).where(Consent.profile_id == profile.id, Consent.kind == "public_listing")

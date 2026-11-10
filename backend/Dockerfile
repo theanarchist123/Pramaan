@@ -25,6 +25,8 @@ RUN if [ "$WITH_EMBEDDINGS" = "true" ]; then \
     fi
 
 COPY app ./app
+COPY alembic.ini ./
+COPY migrations ./migrations
 COPY plugins ./plugins
 COPY scripts ./scripts
 
@@ -36,4 +38,5 @@ USER pramaan
 ENV PORT=8000
 EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=5s --retries=8 CMD python -c "import os,urllib.request as u; u.urlopen('http://127.0.0.1:%s/healthz' % os.environ['PORT'], timeout=4)"
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips='*'"]
+# Schema first (Alembic), then the API. A separate worker service runs:  python -m app.worker
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips='*'"]

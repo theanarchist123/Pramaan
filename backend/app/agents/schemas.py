@@ -78,7 +78,7 @@ class FactCheckReport(BaseModel):
 # ----- Lipik (document reader) -----
 class DocumentExtraction(BaseModel):
     doc_type: str = Field(description="certificate, award letter, degree, ID, press clipping, other")
-    holder_name: str = Field(description="Full name of the person the document is issued to/about")
+    holder_name: str = Field(description="Full name of the person the document was issued TO; empty if it is only about someone")
     issuer: str
     title: str = Field(description="What the document certifies, e.g. 'Padma Shri' or 'PhD in Physics'")
     issued_year: int | None

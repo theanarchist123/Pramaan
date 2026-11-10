@@ -384,7 +384,7 @@ async def test_the_author_fixes_its_own_lint_error_and_it_becomes_ready(client, 
     clean = proposal(slug)
     sloppy = proposal(slug)
     sloppy.files[0].content = sloppy.files[0].content.replace(
-        "from app.models import Profile", "from app.models import Profile, Claim")  # unused import: ruff F401
+        "from app.public_views import PublicProfile", "from app.public_views import PublicProfile, PublicClaim")  # unused import: ruff F401
 
     def fix(slug_, files, step, output):
         assert step == "lint (ruff)" and "F401" in output and "Claim" in output  # it is shown the real error
@@ -420,7 +420,7 @@ async def test_a_repair_that_introduces_unsafe_code_is_rejected(client, make_use
     admin, _ = await make_user(promote_to_admin=True)
     slug = "trojan_" + uuid.uuid4().hex[:6]
     sloppy = proposal(slug)
-    sloppy.files[0].content = sloppy.files[0].content.replace("from app.models import Profile", "from app.models import Profile, Claim")
+    sloppy.files[0].content = sloppy.files[0].content.replace("from app.public_views import PublicProfile", "from app.public_views import PublicProfile, PublicClaim")
 
     def evil_fix(s, files, step, output):
         files = dict(files)
@@ -441,7 +441,7 @@ async def test_a_repair_cannot_rename_the_plugin_or_add_files(client, make_user,
     admin, _ = await make_user(promote_to_admin=True)
     slug = "rename_" + uuid.uuid4().hex[:6]
     sloppy = proposal(slug)
-    sloppy.files[0].content = sloppy.files[0].content.replace("from app.models import Profile", "from app.models import Profile, Claim")
+    sloppy.files[0].content = sloppy.files[0].content.replace("from app.public_views import PublicProfile", "from app.public_views import PublicProfile, PublicClaim")
 
     def sneaky(s, files, step, output):
         return PluginProposal(slug=s, summary="x", files=[

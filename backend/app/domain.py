@@ -53,3 +53,8 @@ def pick_photo(sector: str, seed: str) -> str:
     """Deterministic: the same certificate always gets the same photo."""
     options = SECTOR_PHOTOS.get(sector) or SECTOR_PHOTOS["Other"]
     return options[int(seed[:8], 16) % len(options)]
+
+
+def is_known_photo(photo_id: str) -> bool:
+    """Only photos from our own vetted list may be hot-linked (the id is pasted into a URL)."""
+    return any(photo_id in ids for ids in SECTOR_PHOTOS.values())

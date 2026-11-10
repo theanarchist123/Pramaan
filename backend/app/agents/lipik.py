@@ -11,6 +11,7 @@ from PIL import Image, UnidentifiedImageError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.events import RunContext
+from app.agents.identity import is_credential, issuer_is_recognised
 from app.agents.schemas import DocumentExtraction
 from app.agents.textutil import name_similarity, token_overlap
 from app.domain import DOCUMENT_CONFIDENCE, STATUS_DOCUMENT
@@ -26,7 +27,8 @@ NAME_MISMATCH = 0.6
 SYSTEM = """You are Lipik, a careful document clerk. Read the attached credential (certificate,
 award letter, degree, press clipping or ID) and extract exactly what it says.
 
-- holder_name: the person the document is issued to or about, exactly as printed.
+- holder_name: the person the document was issued TO (the recipient), exactly as printed. If the
+  document is only ABOUT someone (press clipping, article, third-party mention), leave it empty.
 - title: what is certified (e.g. 'Padma Shri', 'PhD in Physics'); issuer: who issued it.
 - legibility 0-1: how clearly you could read it. suspicious=true if it looks edited, mismatched
   fonts, inconsistent dates, or obviously templated. Do not guess unreadable text — leave it empty.
@@ -104,12 +106,18 @@ async def read_document(
 
     score = name_similarity(extraction.holder_name, profile.full_name) if extraction.holder_name else 0.0
     flags: list[str] = []
-    if extraction.legibility < 0.6:
+    if not is_credential(extraction.doc_type):
+        # A press clipping or article about a person proves nothing about who is applying.
+        score = 0.0
+        flags.append("not_a_credential")
+    elif extraction.legibility < 0.6:
         flags.append("unreadable")
     elif score < NAME_MISMATCH:
         flags.append("identity_mismatch")
     if extraction.suspicious:
         flags.append("suspicious")
+    if extraction.title and not issuer_is_recognised(extraction.issuer):
+        flags.append("issuer_unrecognised")  # never upgrades a claim on its own; a human decides
 
     doc.extracted = {**extraction.model_dump(), "flags": flags, "sha256": hashlib.sha256(data).hexdigest()}
     doc.match_score = round(score, 3)
