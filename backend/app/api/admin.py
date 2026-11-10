@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from app.deps import Principal, require_admin
+from app.deps import Principal, require_admin, require_permission
 from app.core import redis as rd
 from app.domain import HUMAN_CONFIDENCE_CAP, STATUS_HUMAN
 from app.models import Claim, Evidence, Profile, ReviewItem
@@ -49,7 +49,7 @@ def _no_self_review(principal: Principal, profile: Profile | None) -> None:
 
 
 @router.get("/system")
-async def system_status(_: Principal = Depends(require_admin)):
+async def system_status(_: Principal = Depends(require_permission("agent_run.read"))):
     """What the running server is really doing. Admin-only (the public /healthz reveals nothing).
     `degraded` lists features that silently fell back to something weaker."""
     from app.config import get_settings
@@ -86,7 +86,7 @@ async def agent_runs(
     workflow: str | None = None,
     status_filter: str | None = None,
     limit: int = 50,
-    _: Principal = Depends(require_admin),
+    _: Principal = Depends(require_permission("agent_run.read")),
     session: AsyncSession = Depends(get_session),
 ):
     """Every agent run with its model usage: calls, tokens, latency and errors (from the llm_calls table), plus how many
@@ -197,6 +197,11 @@ async def set_status(
     if profile is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Profile not found")
     _no_self_review(principal, profile)
+    from app.services import audit
+
+    await audit.record(session, actor_id=principal.user.id, actor_role="admin", action="profile.status",
+                       target_type="profile", target_id=str(profile.id), before={"status": profile.status},
+                       after={"status": body.status})
     profile.status = body.status
     profile.decision_basis = "reviewer" if body.status == "approved" else ""
     open_items = (
@@ -243,7 +248,7 @@ async def reindex(_: Principal = Depends(require_admin), session: AsyncSession =
 async def set_claim_verification(
     claim_id: uuid.UUID,
     body: ClaimVerifyIn,
-    principal: Principal = Depends(require_admin),
+    principal: Principal = Depends(require_permission("claim.override")),
     session: AsyncSession = Depends(get_session),
 ):
     """Manual override of a claim's verification (agents do this automatically in Phase 2)."""
@@ -251,6 +256,7 @@ async def set_claim_verification(
     if claim is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Claim not found")
     _no_self_review(principal, await session.get(Profile, claim.profile_id))
+    before = {"status": claim.status, "confidence": claim.confidence}
     claim.status = body.status
     if body.status == STATUS_HUMAN:
         claim.confidence = min(body.confidence, HUMAN_CONFIDENCE_CAP)
@@ -258,6 +264,12 @@ async def set_claim_verification(
                                        source_hash=f"reviewer:{principal.user.id}"))
     else:
         claim.confidence = 0.0
+    from app.services import audit
+
+    await audit.record(session, actor_id=principal.user.id, actor_role="admin", action="claim.override",
+                       target_type="claim", target_id=str(claim.id), before=before,
+                       after={"status": claim.status, "confidence": claim.confidence, "evidence_ref": body.evidence_ref},
+                       reason=body.reason)
     await session.commit()
     await session.refresh(claim)
     return claim

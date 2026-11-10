@@ -438,6 +438,56 @@ class ImageAsset(Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class UserRole(Base):
+    """A staff role granted to a user (spec 7.2). Permissions come from core/rbac.py."""
+
+    __tablename__ = "user_roles"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    role_key: Mapped[str] = mapped_column(String(32), primary_key=True)
+    granted_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    granted_at: Mapped[datetime] = ts()
+
+
+class AdminAuditLog(Base):
+    """Append-only, hash-chained record of staff actions (a DB trigger refuses UPDATE/DELETE)."""
+
+    __tablename__ = "admin_audit_log"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    at_iso: Mapped[str] = mapped_column(String(32))  # the exact string that is hashed
+    actor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    actor_role: Mapped[str] = mapped_column(String(64), default="")
+    action: Mapped[str] = mapped_column(String(80), index=True)
+    target_type: Mapped[str] = mapped_column(String(40), default="")
+    target_id: Mapped[str] = mapped_column(String(80), default="")
+    before: Mapped[Any] = mapped_column(JSONB, nullable=True)
+    after: Mapped[Any] = mapped_column(JSONB, nullable=True)
+    reason: Mapped[str] = mapped_column(Text, default="")
+    ip: Mapped[str] = mapped_column(String(64), default="")
+    request_id: Mapped[str] = mapped_column(String(64), default="")
+    prev_hash: Mapped[str] = mapped_column(String(64))
+    entry_hash: Mapped[str] = mapped_column(String(64), unique=True)
+
+
+class ApprovalRequest(Base):
+    """A four-eyes action waiting for a SECOND authorised person (spec 7.6)."""
+
+    __tablename__ = "approval_requests"
+
+    id: Mapped[uuid.UUID] = pk()
+    action: Mapped[str] = mapped_column(String(40), index=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    reason: Mapped[str] = mapped_column(Text, default="")
+    requested_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    status: Mapped[str] = mapped_column(String(10), default="pending", index=True)  # pending|approved|rejected|expired
+    decided_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = ts()
+
+
 class CodeChange(Base):
     """An AI-written plugin proposed by Shilpkar. It only ever goes live after passing the code guard,
     the sandbox checks, and a human clicking approve."""

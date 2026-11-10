@@ -74,6 +74,10 @@ async def init_db() -> None:
         await conn.run_sync(Base.metadata.create_all)
         for stmt in LOCAL_PATCHES:
             await conn.execute(text(stmt))
+        from app.services.audit import TRIGGER_SQL
+
+        for stmt in TRIGGER_SQL:
+            await conn.execute(text(stmt))
         for stmt in VIEW_SQL:
             await conn.execute(text(stmt))
     if get_settings().job_backend == "procrastinate":

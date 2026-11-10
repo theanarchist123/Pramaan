@@ -1,11 +1,12 @@
 import asyncio
+import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import jobs
-from app.api import admin, agents, apikeys, auth, badges, builder, directory, fields, images, onboarding, outreach, profiles, verify, webhooks
+from app.api import admin, agents, apikeys, auth, badges, builder, directory, fields, images, onboarding, outreach, profiles, staff, verify, webhooks
 from app.agents.events import relay_from_redis
 from app.config import get_settings
 from app.core import redis as rd
@@ -100,11 +101,42 @@ app.add_middleware(
 
 from app.core import telemetry  # noqa: E402
 
+
+@app.middleware("http")
+async def audit_admin_writes(request, call_next):
+    """Every state-changing request under /v1/admin is recorded (who, what, outcome). Handlers that know more (before/after,
+    a reason) also write their own richer entries; this is the net that catches everything else."""
+    response = await call_next(request)
+    if request.url.path.startswith("/v1/admin/") and request.method not in ("GET", "HEAD", "OPTIONS"):
+        try:
+            from app.core.security import decode_access_token
+            from app.db import get_sessionmaker
+            from app.deps import SESSION_COOKIE
+            from app.services import audit
+
+            auth = request.headers.get("authorization", "")
+            token = request.cookies.get(SESSION_COOKIE) or (auth[7:].strip() if auth.lower().startswith("bearer ") else "")
+            claims = decode_access_token(token) if token else None
+            actor = claims["sub"] if claims and "purpose" not in claims else None
+            async with get_sessionmaker()() as s:
+                await audit.record(
+                    s, actor_id=uuid.UUID(actor) if actor else None, actor_role=(claims or {}).get("role", ""),
+                    action=f"http.{request.method}", target_type="path", target_id=request.url.path[:80],
+                    after={"status": response.status_code}, ip=request.client.host if request.client else "",
+                )
+                await s.commit()
+        except Exception:  # noqa: BLE001 - auditing must never turn a finished request into an error
+            import logging
+
+            logging.getLogger("pramaan.audit").exception("could not write the audit entry")
+    return response
+
+
 telemetry.setup(app)  # OTLP export only if OTEL_EXPORTER_OTLP_ENDPOINT is set
 
 for r in (
     auth.router, profiles.router, onboarding.router, agents.router, directory.router,
-    images.public, images.admin, verify.router, apikeys.router, webhooks.router, badges.router, fields.router, builder.router, outreach.router, admin.router,
+    staff.router, images.public, images.admin, verify.router, apikeys.router, webhooks.router, badges.router, fields.router, builder.router, outreach.router, admin.router,
 ):
     app.include_router(r)
 

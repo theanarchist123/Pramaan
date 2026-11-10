@@ -155,7 +155,25 @@ def require_verified_email(principal: Principal) -> None:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Verify your email address first")
 
 
-async def require_admin(principal: Principal = Depends(get_principal)) -> Principal:
-    if not principal.is_admin or principal.via != "jwt":
+async def require_admin(principal: Principal = Depends(get_principal), session: AsyncSession = Depends(get_session)) -> Principal:
+    """Any staff member: the legacy admin flag or at least one staff role. Specific actions use require_permission()."""
+    from app.core.rbac import staff_roles
+
+    if principal.via != "jwt":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin access required")
-    return principal
+    if principal.is_admin or await staff_roles(session, principal.user.id):
+        return principal
+    raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin access required")
+
+
+def require_permission(permission: str):
+    """The caller must be a signed-in staff member whose roles grant `permission` (the legacy admin has them all)."""
+
+    async def _dep(principal: Principal = Depends(get_principal), session: AsyncSession = Depends(get_session)) -> Principal:
+        from app.core.rbac import permissions_for_user
+
+        if principal.via != "jwt" or permission not in await permissions_for_user(session, principal.user):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, f"Your role does not allow this ({permission})")
+        return principal
+
+    return _dep
