@@ -162,8 +162,24 @@ async def require_admin(principal: Principal = Depends(get_principal), session: 
     if principal.via != "jwt":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin access required")
     if principal.is_admin or await staff_roles(session, principal.user.id):
+        _require_mfa(principal)
         return principal
     raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin access required")
+
+
+def _require_mfa(principal: Principal) -> None:
+    """Staff without an enrolled authenticator app get nothing but the enrolment endpoints."""
+    if get_settings().staff_mfa_required and principal.user.mfa_enrolled_at is None:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": "mfa_required", "message": "Set up your authenticator app first"})
+
+
+def require_stepup(principal: Principal) -> None:
+    """Sensitive staff actions need an MFA code entered in the last few minutes (POST /v1/auth/mfa/stepup)."""
+    if not get_settings().staff_mfa_required:
+        return
+    until = principal.user.stepup_until
+    if until is None or until < datetime.now(timezone.utc):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": "stepup_required", "message": "Confirm with your authenticator code"})
 
 
 def require_permission(permission: str):
@@ -174,6 +190,7 @@ def require_permission(permission: str):
 
         if principal.via != "jwt" or permission not in await permissions_for_user(session, principal.user):
             raise HTTPException(status.HTTP_403_FORBIDDEN, f"Your role does not allow this ({permission})")
+        _require_mfa(principal)
         return principal
 
     return _dep

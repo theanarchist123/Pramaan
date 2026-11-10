@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import ACTION_PERMISSION, ROLE_PERMISSIONS, permissions_for_user, staff_roles
 from app.db import get_session
-from app.deps import Principal, get_principal, require_admin, require_permission
+from app.deps import Principal, get_principal, require_admin, require_permission, require_stepup
 from app.models import ApprovalRequest, Certificate, User, UserRole
 from app.services import audit
 
@@ -62,6 +62,7 @@ async def request_role(
     principal: Principal = Depends(require_permission("role.assign")), session: AsyncSession = Depends(get_session),
 ):
     """Granting a role is a four-eyes action: this files the request; a second person approves it."""
+    require_stepup(principal)
     if body.role not in ROLE_PERMISSIONS:
         raise HTTPException(422, f"Unknown role. Choose one of: {', '.join(sorted(ROLE_PERMISSIONS))}")
     if await session.get(User, user_id) is None:
@@ -80,6 +81,7 @@ async def request_revocation(
     principal: Principal = Depends(require_permission("certificate.revoke")), session: AsyncSession = Depends(get_session),
 ):
     """Revoking a certificate is public and permanent for that code, so it needs two people."""
+    require_stepup(principal)
     cert = (await session.execute(select(Certificate).where(Certificate.code == code))).scalar_one_or_none()
     if cert is None:
         raise HTTPException(404, "Certificate not found")
@@ -143,6 +145,7 @@ async def approve(approval_id: uuid.UUID, request: Request, principal: Principal
                   session: AsyncSession = Depends(get_session)):
     if principal.via != "jwt":
         raise HTTPException(403, "Staff session required")
+    require_stepup(principal)
     a = await _load_decidable(session, approval_id, principal)
     result = await _execute(session, a)
     a.status, a.decided_by = "approved", principal.user.id
@@ -159,6 +162,7 @@ async def reject(approval_id: uuid.UUID, body: DecideIn, request: Request, princ
                  session: AsyncSession = Depends(get_session)):
     if principal.via != "jwt":
         raise HTTPException(403, "Staff session required")
+    require_stepup(principal)
     a = await _load_decidable(session, approval_id, principal)
     a.status, a.decided_by, a.decided_at = "rejected", principal.user.id, datetime.now(timezone.utc)
     await audit.record(session, actor_id=principal.user.id, actor_role=await _actor_role(session, principal),

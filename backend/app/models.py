@@ -56,6 +56,11 @@ class User(Base):
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Tokens issued before this moment are dead (logout / "sign out everywhere" / password change).
     tokens_valid_after: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Staff MFA (TOTP). The secret is encrypted at rest; a pending secret becomes active when a first code is confirmed.
+    totp_secret_enc: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    mfa_enrolled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Step-up: a fresh MFA code proves presence for sensitive actions until this moment.
+    stepup_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = ts()
 
 

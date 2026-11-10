@@ -162,3 +162,61 @@ async def otp_verify(
     otp.used_at = user.email_verified_at = datetime.now(timezone.utc)
     await session.commit()
     return {"verified": True}
+
+
+# --------------------------------------------------------------------------- staff MFA (authenticator app)
+class MfaCodeIn(BaseModel):
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+
+
+@router.get("/mfa/status")
+async def mfa_status(principal: Principal = Depends(get_principal)):
+    u = principal.user
+    now = datetime.now(timezone.utc)
+    return {"enrolled": u.mfa_enrolled_at is not None, "stepup_active": bool(u.stepup_until and u.stepup_until > now),
+            "required": get_settings().staff_mfa_required}
+
+
+@router.post("/mfa/enroll", dependencies=[Depends(ip_limit("mfa", 10))])
+async def mfa_enroll(principal: Principal = Depends(get_principal), session: AsyncSession = Depends(get_session)):
+    """Start (or restart, before confirming) enrolment: returns the secret and an otpauth:// link to scan. Shown once."""
+    from app.core import totp
+
+    user = await session.get(User, principal.user.id)
+    if user.mfa_enrolled_at is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Already enrolled. Ask a super admin to reset it if you lost your device.")
+    secret = totp.new_secret()
+    user.totp_secret_enc = totp.seal(secret)
+    await session.commit()
+    return {"secret": secret, "otpauth_uri": totp.otpauth_uri(secret, user.email)}
+
+
+@router.post("/mfa/confirm", dependencies=[Depends(ip_limit("mfa", 10))])
+async def mfa_confirm(body: MfaCodeIn, principal: Principal = Depends(get_principal), session: AsyncSession = Depends(get_session)):
+    from app.core import totp
+
+    user = await session.get(User, principal.user.id)
+    secret = totp.unseal(user.totp_secret_enc or "")
+    if secret is None or not totp.verify(secret, body.code):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "That code is not right (or enrolment was not started)")
+    now = datetime.now(timezone.utc)
+    user.mfa_enrolled_at = now
+    user.stepup_until = now + timedelta(minutes=get_settings().stepup_minutes)
+    await session.commit()
+    return {"enrolled": True}
+
+
+@router.post("/mfa/stepup", dependencies=[Depends(ip_limit("mfa", 10))])
+async def mfa_stepup(body: MfaCodeIn, principal: Principal = Depends(get_principal), session: AsyncSession = Depends(get_session)):
+    """Prove you are present: unlocks sensitive staff actions for a few minutes."""
+    from app.core import totp
+
+    user = await session.get(User, principal.user.id)
+    secret = totp.unseal(user.totp_secret_enc or "") if user.mfa_enrolled_at else None
+    if secret is None or not totp.verify(secret, body.code):
+        await login_failed(f"mfa:{user.id}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "That code is not right")
+    until = datetime.now(timezone.utc) + timedelta(minutes=get_settings().stepup_minutes)
+    user.stepup_until = until
+    await session.commit()
+    return {"stepup_until": until}
