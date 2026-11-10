@@ -36,7 +36,7 @@ GREETING = (
 
 def _slug(name: str) -> str:
     base = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "profile"
-    return f"{base[:60]}-{secrets.token_hex(2)}"
+    return f"{base[:60]}-{secrets.token_hex(4)}"
 
 
 def normalize_state(value: str | None) -> str | None:
