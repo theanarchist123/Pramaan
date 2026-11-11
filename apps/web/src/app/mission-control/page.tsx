@@ -38,7 +38,7 @@ export default function MissionControl() {
         </div>
         {isAdmin && (
           <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm", connected ? "bg-verified-soft text-verified" : "bg-muted text-muted-foreground")}>
-            <Radio className="size-4" /> {connected ? "Live" : "Connecting…"}
+            <Radio aria-hidden className="size-4" /> {connected ? "Live" : "Connecting"}
           </span>
         )}
       </div>
@@ -53,10 +53,13 @@ export default function MissionControl() {
                   <p className="text-sm font-semibold">{a.name}</p>
                   <p className="truncate text-xs text-muted-foreground">{a.role}</p>
                 </div>
-                <span role="img" className={cn("size-2 rounded-full", active.has(a.name) ? "animate-pulse bg-primary" : "bg-muted-foreground/30")} aria-label={active.has(a.name) ? "active" : "idle"} />
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span aria-hidden className={cn("size-2 rounded-full", active.has(a.name) ? "bg-primary motion-safe:animate-pulse" : "bg-muted-foreground/30")} />
+                  {active.has(a.name) ? "Working" : "Idle"}
+                </span>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">{a.does}</p>
-              {counts[a.name] ? <p className="mt-1 text-[11px] tabular-nums text-muted-foreground">{counts[a.name]} recent events</p> : null}
+              {counts[a.name] ? <p className="mt-1 text-xs tabular-nums text-muted-foreground">{counts[a.name]} recent events</p> : null}
             </li>
           ))}
         </ul>

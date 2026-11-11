@@ -11,3 +11,4 @@ gets a polish pass: compare against the references, adjust timings and compositi
 | Profile | PG-09 | built (claim cards, paper slip), dossier two-column layout not done | patterns/profile.md | sticky rail, share card, Hindi copy |
 | Directory | PG-10 | shelves + FLIP built; search-mode layout and card seals not done | patterns/directory.md | list endpoint needs claim counts |
 | Home | PG-11 | proof-table hero built; audience split, ledger tape not done | patterns/home.md | hero composition, Hindi, mobile |
+| Agent Floor | PG-12 | status text + motion-safe only; floor layout and handoff lines not built | patterns/agent-floor.md | stations, handoffs, replay |
