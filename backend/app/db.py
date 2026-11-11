@@ -104,6 +104,8 @@ LOCAL_PATCHES = [
     "ALTER TABLE outbox ADD COLUMN IF NOT EXISTS error VARCHAR(300) NOT NULL DEFAULT ''",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS tokens_valid_after TIMESTAMPTZ",
+    "ALTER TABLE certificates ADD COLUMN IF NOT EXISTS status_index INTEGER",
+    "CREATE UNIQUE INDEX IF NOT EXISTS certificates_status_index_key ON certificates (status_index)",
 ]
 
 

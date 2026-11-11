@@ -135,6 +135,10 @@ class Signer:
     def sign_digest(self, digest_hex: str) -> str:
         return _b64e(self._private.sign(bytes.fromhex(digest_hex)))
 
+    def sign_raw(self, data: bytes) -> bytes:
+        """Sign arbitrary bytes (used by the Verifiable Credential proofs). The key itself never leaves this object (I-6)."""
+        return self._private.sign(data)
+
 
 def verify_signature(digest_hex: str, signature_b64: str, public_key_b64: str) -> bool:
     try:

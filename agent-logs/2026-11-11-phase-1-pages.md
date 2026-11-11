@@ -131,3 +131,21 @@ Web now uses it (lib/offline-verify.ts); Verify browser test still passes 12/12.
 NOT done: the <pramaan-verify> web component and docs; moving apps/desktop onto the package (the desktop app is outside the pnpm
 workspace and its verifier is synchronous CommonJS; its own 9 vectors still pass but it is a second copy); pinning a key fingerprint
 inside the desktop app; checkpoint/revocation sync.
+
+# Phase 3: TRU-08 Verifiable Credentials 2.0 (v2/tru-08-vc, off tru-10)
+ADR docs/adr/0003 records what was checked at w3.org on 2026-11-11: VC DM 2.0, Data Integrity EdDSA and Bitstring Status List are W3C
+Recommendations (15 May 2025); did:web is a Community Group DRAFT with "no official standing" (so it is a replaceable choice; the key
+is also in /.well-known/pramaan-keys.json).
+Built: core/vc.py (eddsa-jcs-2022 proofs, Multikey, base58btc, Bitstring Status List), services/credentials.py, api/vc.py:
+GET /.well-known/did.json, GET /v1/certificates/{code}/vc, GET /v1/status/revocation/1 (signed). Migration 0013 (certificates.status_index;
+human-review path; rehearsal passes). Signer.sign_raw added (core/signing.py is a human-review path: 3 lines).
+CONFORMANCE: the signature reproduces the W3C's published eddsa-jcs-2022 worked example byte for byte (hashes + proofValue).
+Tests: tests/test_vc.py 14 passed (W3C vector, tamper cases, outsider verification over HTTP using only did.json, revocation list agrees
+with /v1/verify, unique indexes). Migration rehearsal passes.
+A bug the rehearsal found in MY work, fixed: (1) DROP INDEX cannot remove a unique CONSTRAINT's index (DBs built from models have a constraint,
+upgraded DBs an index): downgrade now drops the column; (2) rehearsal's hand-kept ADDED_COLUMNS list lacked the new column.
+NOT verified: interoperability with an independent third-party VC verifier (the W3C vector match is strong evidence, not an interop
+test); did:web behind the production CDN; DNSSEC (ops). The @vocab namespace is a placeholder that does not resolve.
+NOT built: a web UI for "download as verifiable credential"; the VC in the desktop/web verifier (verify-js verifies the legacy
+certificate and log proofs, not Data Integrity proofs yet); a second status list when 131,072 certificates are exceeded (the code
+refuses with a clear error instead).
