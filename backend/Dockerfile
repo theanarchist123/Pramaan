@@ -10,7 +10,9 @@ RUN python - <<'PY' > requirements.txt
 import tomllib
 print("\n".join(tomllib.load(open("pyproject.toml", "rb"))["project"]["dependencies"]))
 PY
-RUN pip install -r requirements.txt \
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libatomic1 \
+ && pip install -r requirements.txt \
  && playwright install --with-deps chromium \
  && rm -rf /var/lib/apt/lists/*
 
