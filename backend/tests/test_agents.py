@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import uuid
 
 import pytest
 
@@ -293,7 +294,8 @@ async def test_flagged_document_on_a_published_profile_reaches_the_admin_queue(c
     admin, _ = await make_user(promote_to_admin=True)
     profile = await _start(client, person)
     await _interview(client, person, profile["id"])
-    good = b"Type: award letter\nName: Meera Iyer\nTitle: Sagar Samman award\nIssuer: Ministry of Earth Sciences\nYear: 2024\n"
+    # Unique per run: byte-identical files on two profiles are (rightly) flagged as duplicates by TRU-03.
+    good = b"Type: award letter\nName: Meera Iyer\nTitle: Sagar Samman award\nIssuer: Ministry of Earth Sciences\nYear: 2024\nReference: " + uuid.uuid4().hex.encode() + b"\n"
     await client.post(f"/v1/onboarding/{profile['id']}/documents", headers=person, files={"file": ("a.txt", io.BytesIO(good), "text/plain")})
     await client.post(f"/v1/onboarding/{profile['id']}/verify", headers=person)
     assert (await client.get("/v1/profiles/mine", headers=person)).json()[0]["status"] == "approved"
@@ -331,3 +333,17 @@ async def test_applicant_can_request_a_manual_review(client, make_user):
     assert (await client.post(f"/v1/onboarding/{profile['id']}/request-review", headers=person)).json()["status"] == "already_in_queue"
     queue = (await client.get("/v1/admin/review", headers=admin)).json()
     assert sum(1 for i in queue if i["profile_id"] == profile["id"]) == 1
+
+
+async def test_the_same_file_on_two_profiles_is_flagged_and_not_upgraded(client, make_user, fake_wikipedia):
+    """TRU-03: a credential file already attached to someone else is never auto-accepted; a person looks at it."""
+    doc = b"Type: award letter\nName: Meera Iyer\nTitle: Sagar Samman award\nIssuer: Ministry of Earth Sciences\nYear: 2024\nReference: " + uuid.uuid4().hex.encode() + b"\n"
+    out = []
+    for _ in range(2):
+        person, _ = await make_user()
+        profile = await _start(client, person)
+        await _interview(client, person, profile["id"])
+        r = await client.post(f"/v1/onboarding/{profile['id']}/documents", headers=person, files={"file": ("a.txt", io.BytesIO(doc), "text/plain")})
+        out.append(r.text)
+    assert "duplicate_document" not in out[0]
+    assert "duplicate_document" in out[1]
