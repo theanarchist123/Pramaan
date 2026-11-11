@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Check, Circle, Loader2 } from "lucide-react";
+import { AlertCircle, Check, Circle, CircleDot, Loader2 } from "lucide-react";
 import { stagesOf } from "@/lib/onboarding-stage";
 import type { Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,8 @@ export function StatusStepper({ profile }: { profile: Profile }) {
     <ol aria-label="Progress" className="flex flex-wrap items-start gap-x-6 gap-y-2">
       {stages.map((s, i) => {
         const bad = rejected && s.key === "decided";
-        const Icon = bad ? AlertCircle : s.state === "done" ? Check : s.state === "current" ? Loader2 : Circle;
+        // Only the checking stage spins (work is really happening); the stage a person is simply at gets a still marker.
+        const Icon = bad ? AlertCircle : s.state === "done" ? Check : s.state === "current" ? (s.key === "submitted" ? Loader2 : CircleDot) : Circle;
         return (
           <li key={s.key} aria-current={s.state === "current" ? "step" : undefined} className="flex items-start gap-2">
             <Icon

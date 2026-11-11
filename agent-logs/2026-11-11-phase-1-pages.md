@@ -168,3 +168,10 @@ Looked at: Profile, certificate result, Transparency, Agent Floor, Developers (d
 Not changed / noted: the Developers code block is a light panel in dark mode (readable, a little jarring); the certificate keeps its
 tracked all-caps label (it is the artwork, not UI chrome); Profile leaves empty space under a short claim list (the sticky rail is fine).
 Not yet reviewed: Directory (light), Onboarding signed in, staff console in the new composition, the other phone pages beyond Home.
+
+# Visual review, second batch
+Reviewed (screenshots): Directory + certificate result + Agent Floor at 390px; signed-in Onboarding consent + chat/profile on desktop and phone.
+Fixed: (1) Agent Floor pipeline wrapped badly on phones (a dangling connector, a second row with none): now a vertical list with vertical
+connectors under sm, horizontal from sm up. (2) Onboarding stepper showed a half-spinner on "Tell us about yourself", which reads as loading;
+only the checking stage spins now, the current stage gets a still marker. Pages smoke 7/7 after the changes.
+Still not reviewed visually: the staff console in the new composition; Transparency/Developers/Profile at 390px individually; Hindi layout.
