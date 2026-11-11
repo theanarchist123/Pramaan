@@ -30,6 +30,8 @@ GOVERNED: dict[str, Spec] = {
                                          "Every owner's first public listing is approved by a person"),
     "award_claims_need_human": Spec(bool, lambda: get_settings().award_claims_need_human,
                                     "Award claims are confirmed by a human reviewer"),
+    "claim_override_four_eyes": Spec(bool, lambda: get_settings().claim_override_four_eyes,
+                                     "A second person approves raising a claim to 'confirmed by a reviewer'"),
     "require_email_verification": Spec(bool, lambda: get_settings().require_email_verification,
                                        "Applicants confirm their email with a one-time code before verification"),
     "auto_approve_threshold": Spec(float, lambda: AUTO_APPROVE_THRESHOLD,

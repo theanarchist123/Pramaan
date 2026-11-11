@@ -31,7 +31,8 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
 ALL_PERMISSIONS: set[str] = set().union(*ROLE_PERMISSIONS.values())
 
 # Four-eyes actions: the permission both the requester and the approver need.
-ACTION_PERMISSION = {"certificate.revoke": "certificate.revoke", "role.assign": "role.assign", "setting.change": "settings.write"}
+ACTION_PERMISSION = {"certificate.revoke": "certificate.revoke", "role.assign": "role.assign", "setting.change": "settings.write",
+                     "claim.override": "claim.override"}
 
 
 async def staff_roles(session: AsyncSession, user_id: uuid.UUID) -> set[str]:
