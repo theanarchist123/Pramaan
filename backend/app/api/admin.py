@@ -52,6 +52,54 @@ def _no_self_review(principal: Principal, profile: Profile | None) -> None:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "You cannot review your own profile")
 
 
+@router.get("/overview")
+async def overview(principal: Principal = Depends(require_permission("review.read")), session: AsyncSession = Depends(get_session)):
+    """Numbers for the command-centre tiles. Every figure is counted from the database now; sections a role cannot see are omitted
+    entirely (not zeroed), so the console never implies a count the person is not allowed to know."""
+    from datetime import timedelta
+
+    from sqlalchemy import func
+
+    from app.agents.reasons import codes_for
+    from app.core.rbac import permissions_for_user
+    from app.models import ApprovalRequest, Certificate, LlmCall
+
+    perms = await permissions_for_user(session, principal.user)
+    now = datetime.now(timezone.utc)
+    open_items = (await session.execute(select(ReviewItem).where(ReviewItem.status == "open"))).scalars().all()
+    by_code: dict[str, int] = {}
+    for i in open_items:
+        for c in ((i.details or {}).get("reason_codes") or codes_for([i.reason])):
+            by_code[c] = by_code.get(c, 0) + 1
+    held = lambda i: bool(i.assigned_to and i.locked_until and i.locked_until > now)  # noqa: E731
+    out: dict = {
+        "queue": {
+            "open": len(open_items),
+            "unassigned": sum(1 for i in open_items if not held(i)),
+            "held": sum(1 for i in open_items if held(i)),
+            "overdue": sum(1 for i in open_items if i.sla_due_at and i.sla_due_at < now),
+            "oldest_hours": round((now - min(i.created_at for i in open_items)).total_seconds() / 3600, 1) if open_items else None,
+            "by_reason_code": by_code,
+        },
+    }
+    if "approval.read" in perms:
+        pending = (await session.execute(select(ApprovalRequest).where(ApprovalRequest.status == "pending"))).scalars().all()
+        out["approvals"] = {"pending": len(pending),
+                            "oldest_hours": round((now - min(a.created_at for a in pending)).total_seconds() / 3600, 1) if pending else None}
+        out["registry"] = {
+            "profiles": {st: n for st, n in (await session.execute(select(Profile.status, func.count()).group_by(Profile.status))).all()},
+            "certificates": (await session.execute(select(func.count()).select_from(Certificate))).scalar_one(),
+            "revoked": (await session.execute(select(func.count()).select_from(Certificate).where(Certificate.revoked_at.is_not(None)))).scalar_one(),
+        }
+    if "agent_run.read" in perms:
+        day = now - timedelta(hours=24)
+        out["agents"] = {
+            "calls_24h": (await session.execute(select(func.count()).select_from(LlmCall).where(LlmCall.at >= day))).scalar_one(),
+            "failed_24h": (await session.execute(select(func.count()).select_from(LlmCall).where(LlmCall.at >= day, LlmCall.ok.is_(False)))).scalar_one(),
+        }
+    return out
+
+
 @router.get("/system")
 async def system_status(_: Principal = Depends(require_permission("agent_run.read"))):
     """What the running server is really doing. Admin-only (the public /healthz reveals nothing).

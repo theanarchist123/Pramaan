@@ -28,3 +28,7 @@ blockquote { margin: 6px 0 6px 12px; }
 select, textarea { background: var(--bond); color: var(--ink); border: 1px solid var(--rule); border-radius: var(--radius-control); font: inherit; padding: 6px 8px; }
 textarea { width: 100%; }
 label.inline { display: inline-flex; gap: 6px; align-items: center; margin: 0; font-weight: 500; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius-panel); padding: 12px 14px; }
+.tile-n { font-size: 28px; font-weight: 700; line-height: 1.2; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

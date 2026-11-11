@@ -104,3 +104,10 @@ the DB (profile approved by reviewer, claim human). Bug found by it and fixed: t
 security page even when MFA is not required (it would trap deployments that have not enforced MFA); login now returns mfa_required.
 NOT done: opening the original document (separate audited step), claim-level evidence side-by-side, command centre, registry,
 compliance modules.
+
+# Phase 2: command-centre tiles (v2/adm-03-command-centre, off adm-02)
+GET /v1/admin/overview: queue (open, unassigned, held, overdue, oldest hours, counts per reason code) for anyone with review.read;
+approvals + registry counts only with approval.read; model call/failure counts only with agent_run.read. Sections a role cannot see
+are omitted, not zeroed. Console front page shows them as tiles (warnings are text + number, not colour alone). 1 backend test
+(review workbench file: 9 passed); the browser test now also checks the tiles (a reviewer sees Open cases, not Approvals): passes 4/4.
+NOT done: trend lines/history (needs stored snapshots), SLA breach notifications, registry and compliance modules.
