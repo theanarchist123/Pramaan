@@ -30,8 +30,9 @@ await step("HOME: hero proof table checks a real certificate (or says there is n
 await step("DIRECTORY: shelves per field when unfiltered, a filter switches to one grid", async () => {
   await page.goto(`${WEB}/directory`);
   await page.getByRole("heading", { level: 1 }).waitFor();
-  const shelves = await page.locator("section[aria-label*=' person'], section[aria-label*=' people']").count();
-  if (people.length >= 6) assert.ok(shelves >= 1, "shelves shown for a populated directory");
+  const shelf = page.locator("section[aria-label*=' person'], section[aria-label*=' people']");
+  if (people.length >= 6) await shelf.first().waitFor({ timeout: 10000 });
+  else await page.getByRole("link", { name: /./ }).first().waitFor();
   await shot("directory");
 });
 if (slug) {
@@ -61,10 +62,10 @@ await step("TRANSPARENCY: chain is re-computed in the browser; altering an entry
 await step("DEVELOPERS: sections deep-link and tabs follow arrow keys", async () => {
   await page.goto(`${WEB}/developers#play`);
   await page.getByRole("tab", { name: /Playground/ }).waitFor();
-  assert.equal(await page.getByRole("tab", { name: /Playground/ }).getAttribute("aria-selected"), "true");
+  await page.waitForFunction(() => [...document.querySelectorAll('[role=tab]')].some((t) => /Playground/.test(t.textContent) && t.getAttribute("aria-selected") === "true"), null, { timeout: 8000 });
   await page.getByRole("tab", { name: /Playground/ }).focus();
   await page.keyboard.press("ArrowRight");
-  assert.match(page.url(), /#keys$/);
+  await page.waitForFunction(() => location.hash === "#keys", null, { timeout: 4000 });
 });
 await step("AGENT FLOOR: pipeline lists the five agents in order, each with a text status", async () => {
   await page.goto(`${WEB}/mission-control`);
@@ -75,7 +76,7 @@ await step("AGENT FLOOR: pipeline lists the five agents in order, each with a te
   await shot("agent-floor");
 });
 await step("ONBOARDING (signed out): sends the visitor to sign in rather than showing a broken page", async () => {
-  await page.goto(`${WEB}/onboard`);
+  await page.goto(`${WEB}/onboard`, { timeout: 90000, waitUntil: "commit" });
   await page.waitForURL(/\/auth/);
 });
 

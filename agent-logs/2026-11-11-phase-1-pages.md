@@ -65,3 +65,9 @@ Still not built in Phase 1: directory search mode, Developers docs shell, the ot
 - The remaining steps (Directory, Profile, Transparency chain + tamper demo, Developers keys, Agent Floor pipeline, Onboarding redirect)
   are written but have NOT run: the Docker engine crashed mid-run (pramaan-db and pramaan-redis "Exited (255)"), the API then returned
   500 for DB-backed endpoints. Environmental, not a code result. Re-run once `docker compose up -d db redis` stays up.
+
+# Pages smoke test: PASSES 7/7 (Docker stable)
+Home, Directory (shelves), Profile ("confirmed" counts, evidence slip), Transparency (chain re-computed in browser, tamper demo breaks it,
+undo restores), Developers (deep link + arrow keys), Agent Floor (five stations, text status), Onboarding signed-out redirect. No
+browser console errors. Test fixes were races in the test (waiting for hydration/data), not page bugs.
+Still browser-untested: signed-in Onboarding (chat, stepper, fact capture), the QR scanner camera path.
