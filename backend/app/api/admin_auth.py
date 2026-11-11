@@ -80,7 +80,7 @@ async def admin_login(body: AdminLoginIn, response: Response, session: AsyncSess
         admin_cookie_name(), create_access_token(str(user.id), user.role, minutes), max_age=minutes * 60, httponly=True,
         secure=not s.is_local, samesite="strict", path="/",
     )
-    return {"user": UserOut.model_validate(user), "mfa_enrolled": user.mfa_enrolled_at is not None, "session_minutes": minutes}
+    return {"user": UserOut.model_validate(user), "mfa_enrolled": user.mfa_enrolled_at is not None, "mfa_required": s.staff_mfa_required, "session_minutes": minutes}
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

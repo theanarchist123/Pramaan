@@ -67,7 +67,7 @@ export default function QueuePage() {
                 const held = i.assigned_to && i.locked_until && new Date(i.locked_until) > new Date();
                 return (
                   <tr key={i.id}>
-                    <td>{i.profile?.full_name ?? "(removed)"}<div className="muted">{[i.profile?.sector, i.profile?.state].filter(Boolean).join(" · ")}</div></td>
+                    <td><Link href={`/case/${i.id}`}>{i.profile?.full_name ?? "(removed)"}</Link><div className="muted">{[i.profile?.sector, i.profile?.state].filter(Boolean).join(" · ")}</div></td>
                     <td>{(i.details.reason_codes ?? []).map((c) => <span className="chip" key={c}>{c}</span>)}<div className="muted">{i.reason}</div></td>
                     <td className={overdue(i) ? "warn" : "muted"}>{i.sla_due_at ? new Date(i.sla_due_at).toLocaleString() : ""}{overdue(i) ? " (overdue)" : ""}</td>
                     <td>{held ? <span className="muted">Being reviewed</span> : perms.includes("review.claim") ? <button className="secondary" onClick={() => take(i.id)}>Take case</button> : <span className="muted">View only</span>}</td>

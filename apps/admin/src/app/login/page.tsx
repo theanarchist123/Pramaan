@@ -18,8 +18,9 @@ export default function LoginPage() {
     setBusy(true);
     setError("");
     try {
-      const r = await api<{ mfa_enrolled: boolean }>("/v1/admin/auth/login", { method: "POST", json: { email, password, code } });
-      router.push(r.mfa_enrolled ? "/" : "/security");
+      const r = await api<{ mfa_enrolled: boolean; mfa_required: boolean }>("/v1/admin/auth/login", { method: "POST", json: { email, password, code } });
+      // Straight to set-up only when it is mandatory and not done; otherwise the queue (set-up stays one click away).
+      router.push(r.mfa_required && !r.mfa_enrolled ? "/security" : "/");
     } catch (err) {
       if (err instanceof ApiError && err.code === "mfa_code_required") {
         setNeedCode(true); // not an error: the password was right and the authenticator code is the next step

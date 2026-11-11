@@ -93,3 +93,14 @@ claim.override approves it, and the approver may not be the profile's owner (I-1
 One function (`apply_claim_override`) changes claim status for both paths; the audit action is `claim.override.approved` for the second.
 3 new tests; related suites 63 passed. NOT done: console UI for filing/approving this action (the generic approvals screen may list
 it; not checked in a browser), and nothing turns the setting on, that is your decision.
+
+# Phase 2: reviewer workbench (v2/adm-02-workbench, off adm-07)
+Backend: GET /v1/admin/review/{id} (case detail: claims+evidence, documents as metadata + forensic flags only, never file/path/hash,
+permissions incl. whether you hold the lock), GET /v1/admin/review/{id}/namesakes (Wikidata candidates beside the confirmed item).
+Console: /case/[id] with claims + evidence, documents + flags, namesake panel, per-claim decisions (verify requires note + evidence
+ref, shown up front), outcome + reason code + note, keyboard shortcuts (j/k, v/h/x, Ctrl+Enter), own-profile refusal.
+Tests: 2 new backend tests (review workbench file 8 passed); NEW BROWSER TEST apps/admin/scripts/smoke-case.mjs PASSES 4/4 and checks
+the DB (profile approved by reviewer, claim human). Bug found by it and fixed: the console login always sent unenrolled staff to the
+security page even when MFA is not required (it would trap deployments that have not enforced MFA); login now returns mfa_required.
+NOT done: opening the original document (separate audited step), claim-level evidence side-by-side, command centre, registry,
+compliance modules.

@@ -130,3 +130,37 @@ async def test_nobody_decides_their_own_case(client, make_user, monkeypatch):
         await s.commit()
     person, profile, item = await escalated_case(client, make_user, monkeypatch, owner=me)
     assert (await client.post(f"/v1/admin/review/{item['id']}/claim", headers=me)).status_code == 403
+
+
+# ---------------------------------------------------------------------------------- case detail for the workbench page
+async def test_the_case_detail_shows_claims_evidence_and_document_flags_but_never_file_contents(client, make_user, monkeypatch):
+    import io
+
+    person, profile, item = await escalated_case(client, make_user, monkeypatch)
+    doc = b"Type: award letter\nName: Meera Iyer\nTitle: Sagar Samman award\nIssuer: Ministry of Earth Sciences\nYear: 2024\n"
+    await client.post(f"/v1/onboarding/{profile['id']}/documents", headers=person, files={"file": ("letter.txt", io.BytesIO(doc), "text/plain")})
+    reviewer, _ = await staff(make_user, "reviewer")
+    r = await client.get(f"/v1/admin/review/{item['id']}", headers=reviewer)
+    assert r.status_code == 200, r.text
+    d = r.json()
+    assert d["item"]["id"] == item["id"] and d["profile"]["full_name"] and d["profile"]["claims"]
+    assert d["documents"] and d["documents"][0]["filename"] == "letter.txt"
+    assert {"match_score", "flags", "flag_notes"} <= set(d["documents"][0])
+    assert "path" not in d["documents"][0] and "sha256" not in d["documents"][0]  # no storage path, no raw hash
+    assert d["permissions"]["can_decide"] is False  # a reviewer with the lock is needed; the page greys the form out until it is taken
+    assert (await client.get(f"/v1/admin/review/{uuid.uuid4()}", headers=reviewer)).status_code == 404
+    member, _ = await make_user()
+    assert (await client.get(f"/v1/admin/review/{item['id']}", headers=member)).status_code in (401, 403)
+
+
+async def test_the_namesake_panel_lists_wikidata_candidates_next_to_the_confirmed_item(client, make_user, monkeypatch):
+    from app.services import wikidata
+
+    async def fake(name, limit=5):
+        return [{"qid": "Q1", "label": name, "description": "a different person"}]
+
+    monkeypatch.setattr(wikidata, "candidates", fake)
+    person, profile, item = await escalated_case(client, make_user, monkeypatch)
+    reviewer, _ = await staff(make_user, "reviewer")
+    r = (await client.get(f"/v1/admin/review/{item['id']}/namesakes", headers=reviewer)).json()
+    assert r["candidates"][0]["qid"] == "Q1" and r["confirmed_qid"] in ("", None)
