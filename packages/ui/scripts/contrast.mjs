@@ -48,6 +48,9 @@ const pairs = [
   ["caution", "caution-tint", TEXT, "caution chip"],
   ["paper-ink", "paper", TEXT, "text on a paper object (certificate, evidence slip)"],
   ["paper-ink-muted", "paper", TEXT, "secondary text on a paper object"],
+  ["paper-verified", "paper", TEXT, "verified text on a paper object"],
+  ["paper-seal", "paper", TEXT, "alert text on a paper object"],
+  ["paper-stamp", "paper", TEXT, "link text on a paper object"],
 ];
 // Sector colours are marks (spines, dots, rings): the spec requires every sector to ALSO carry an icon and a label, so
 // 3:1 (WCAG non-text contrast) is the gate; the spec's stronger claim (4.2 light / 7.6 dark) is reported, not gated.

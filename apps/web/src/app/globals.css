@@ -131,6 +131,23 @@
     radial-gradient(50rem 30rem at -10% 10%, color-mix(in oklch, var(--foil) 10%, transparent), transparent 70%);
 }
 
+/* A paper object (certificate, proof table, evidence slip): a document lying on the desk. It stays light in BOTH themes, so everything
+   inside it switches to the fixed paper inks; utilities such as text-muted-foreground then resolve to the right colour. */
+.paper-object {
+  --foreground: var(--paper-ink);
+  --card-foreground: var(--paper-ink);
+  --muted-foreground: var(--paper-ink-muted);
+  --verified: var(--paper-verified);
+  --destructive: var(--paper-seal);
+  --primary: var(--paper-stamp);
+  --border: color-mix(in srgb, var(--paper-ink) 14%, var(--paper));
+  background: var(--paper);
+  color: var(--paper-ink);
+  border: 1px solid color-mix(in srgb, var(--foil) 55%, var(--paper));
+  border-radius: var(--radius-panel);
+  box-shadow: var(--lift-1);
+}
+
 /* The certificate print route is a bare canvas for the PDF/PNG renderer: no site chrome. */
 body:has([data-print-route]) header,
 body:has([data-print-route]) a[href="#main"] {

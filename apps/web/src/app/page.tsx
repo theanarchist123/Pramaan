@@ -20,13 +20,13 @@ export default function Home() {
   const { t } = useI18n();
   return (
     <>
-      <section className="paper-glow">
+      <section className="paper-glow border-b border-border">
         <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 md:py-24 lg:grid-cols-[1.1fr_1fr]">
           <div>
             <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
               <span className="size-1.5 rounded-full bg-verified" /> {t("home.badge")}
             </p>
-            <h1 className="text-5xl leading-[1.05] font-semibold md:text-6xl">
+            <h1 className="text-balance text-5xl leading-[1.02] font-semibold tracking-tight md:text-7xl">
               {t("home.h1a")}
               <br />
               <span className="text-primary">{t("home.h1b")}</span>
@@ -50,10 +50,10 @@ export default function Home() {
       <LedgerStrip />
 
       <section className="mx-auto max-w-7xl px-4 py-16">
-        <h2 className="text-3xl font-semibold">{t("home.how")}</h2>
+        <h2 className="text-balance text-3xl font-semibold md:text-4xl">{t("home.how")}</h2>
         <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((s, i) => (
-            <li key={s.title} className="rounded-2xl border border-border bg-card p-5">
+            <li key={s.title} className="rounded-[var(--radius-panel)] border border-border border-t-[3px] border-t-primary bg-card p-5 shadow-[var(--lift-1)]">
               <div className="flex items-center gap-3">
                 <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <s.icon className="size-4.5" />

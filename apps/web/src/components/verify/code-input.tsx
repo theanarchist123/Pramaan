@@ -46,44 +46,46 @@ export function CodeInput({
   }
 
   return (
-    <div role="group" aria-label="Certificate code" className="flex flex-wrap items-center gap-1.5">
-      <span className="select-none font-mono text-lg text-muted-foreground" aria-hidden>
-        PRM-
-      </span>
-      {chars.map((c, i) => (
-        <input
-          key={i}
-          ref={(el) => {
-            refs.current[i] = el;
-          }}
-          value={c.trim()}
-          inputMode="text"
-          autoCapitalize="characters"
-          autoComplete="off"
-          spellCheck={false}
-          aria-label={`Character ${i + 1} of ${LEN}`}
-          maxLength={LEN}
-          onChange={(e) => setAt(i, e.target.value)}
-          onPaste={(e) => {
-            e.preventDefault();
-            setAt(0, e.clipboardData.getData("text"));
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Backspace" && !c.trim() && i > 0) {
-              const next = chars.map((x) => x.trim());
-              next[i - 1] = "";
-              onChange(next.join("").replace(/\s+$/, ""));
-              refs.current[i - 1]?.focus();
-            }
-            if (e.key === "Enter" && value.length === LEN) onComplete(`PRM-${value}`);
-          }}
-          className={cn(
-            "size-10 rounded-md border bg-background text-center font-mono text-lg uppercase outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/50",
-            c.trim() ? "border-primary/60" : "border-input",
-          )}
-        />
-      ))}
-      <p className={cn("basis-full text-xs", bad ? "text-muted-foreground" : "sr-only")} aria-live="polite">
+    <div role="group" aria-label="Certificate code">
+    <div className="flex flex-nowrap items-center gap-1">
+        <span className="select-none font-mono text-base text-muted-foreground sm:text-lg" aria-hidden>
+          PRM-
+        </span>
+        {chars.map((c, i) => (
+          <input
+            key={i}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            value={c.trim()}
+            inputMode="text"
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
+            aria-label={`Character ${i + 1} of ${LEN}`}
+            maxLength={LEN}
+            onChange={(e) => setAt(i, e.target.value)}
+            onPaste={(e) => {
+              e.preventDefault();
+              setAt(0, e.clipboardData.getData("text"));
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Backspace" && !c.trim() && i > 0) {
+                const next = chars.map((x) => x.trim());
+                next[i - 1] = "";
+                onChange(next.join("").replace(/\s+$/, ""));
+                refs.current[i - 1]?.focus();
+              }
+              if (e.key === "Enter" && value.length === LEN) onComplete(`PRM-${value}`);
+            }}
+            className={cn(
+              "aspect-square min-w-0 max-w-10 flex-1 rounded-md border bg-background p-0 text-center font-mono text-base uppercase outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/50 sm:text-lg",
+              c.trim() ? "border-primary/60" : "border-input",
+            )}
+          />
+        ))}
+    </div>
+      <p className={cn("mt-1.5 text-xs", bad ? "text-muted-foreground" : "sr-only")} aria-live="polite">
         {bad ? `"${bad}" never appears in a code (no 0, 1, I, L, O or U). Check the document.` : ""}
       </p>
     </div>

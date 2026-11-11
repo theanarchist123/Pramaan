@@ -149,3 +149,12 @@ test); did:web behind the production CDN; DNSSEC (ops). The @vocab namespace is 
 NOT built: a web UI for "download as verifiable credential"; the VC in the desktop/web verifier (verify-js verifies the legacy
 certificate and log proofs, not Data Integrity proofs yet); a second status list when 131,072 certificates are exceeded (the code
 refuses with a clear error instead).
+
+# Visual pass (v2/pg-16-visual-theme)
+User pointed out nothing had visibly changed. True: the public site kept its own cream/orange palette; only the staff console used the tokens. Now:
+colour system mapped to the Seal & Ink tokens (light + dark), paper-object component, stronger Home hero/steps, header underline. Contrast gate
+extended (on-stamp, paper inks) and passing. Screenshots reviewed by me for Home (light/dark), Directory (dark), Verify (light).
+Found by looking at screenshots: Verify code boxes wrapped; fixed. Tests: pages smoke 7/7 and Verify smoke 12/12 on the new theme; a Verify
+step (reduced motion) had a fragile 800 ms timeout, fixed to measure "all checks present once the first appears".
+NOT reviewed visually: Profile, Transparency, Developers, Agent Floor, Onboarding, the certificate, mobile widths, the staff console in the
+new composition. Typography (typeface) unchanged.

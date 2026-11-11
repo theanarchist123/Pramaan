@@ -14,6 +14,7 @@
   /* Text ON a paper object. Paper stays light in both themes (a document lying on the desk), so the ink on it must
      stay dark in both themes too: --ink flips to light in dark mode and would be invisible on --paper. */
   --paper-ink: #1A1B3A; --paper-ink-muted: #5A5F7A;
+  --paper-verified: #0B7A5E; --paper-seal: #B8321B; --paper-stamp: #4A2C8F;  /* the same hues, fixed, for use ON paper in either theme */
 
   /* sector palette: spines, dots, monogram rings, duotone ends, chart series. Each sector also has an icon. */
   --sector-energy: #877500;      --sector-agriculture: #578429; --sector-healthcare: #148A53;

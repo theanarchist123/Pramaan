@@ -138,7 +138,10 @@ await step("REDUCED MOTION: with the in-app switch on, every check is shown at o
   await page.goto(`${WEB}/verify/${valid.cert.code}`);
   await page.getByRole("button", { name: "Reduce motion" }).click();
   await page.reload();
-  await page.getByRole("list", { name: "How we checked" }).getByText("Confirmed it has not been revoked").waitFor({ timeout: 800 });
+  // Wait (generously) for the first check to appear; with reduced motion the rest must already be there, not arriving one by one.
+  const list = page.getByRole("list", { name: "How we checked" });
+  await list.getByRole("listitem").first().waitFor({ timeout: 30000 });
+  assert.equal(await list.getByRole("listitem").count(), 4, "all four checks are shown at once");
 });
 
 await browser.close();

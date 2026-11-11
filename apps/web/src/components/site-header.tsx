@@ -53,7 +53,7 @@ export function SiteHeader() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
         <Link href="/" aria-label="Pramaan home">
           <Logo />
@@ -64,8 +64,8 @@ export function SiteHeader() {
               key={n.href}
               href={n.href}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-                pathname.startsWith(n.href) && "bg-muted text-foreground",
+                "px-3 py-4 text-sm text-muted-foreground transition-colors hover:text-foreground",
+                pathname.startsWith(n.href) && "font-medium text-foreground shadow-[inset_0_-2px_0_var(--stamp)]",
               )}
             >
               {t(n.key)}
