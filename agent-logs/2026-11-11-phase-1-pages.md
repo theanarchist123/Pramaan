@@ -58,3 +58,10 @@ Still not built in Phase 1: directory search mode, Developers docs shell, the ot
   which the new duplicate rule rightly flags; the fixture is now unique, the rule is unchanged.
 - Still unverified in a browser: Onboarding, Profile, Directory, Home, Agent Floor, Transparency (chain check), Developers.
 - Full backend suite not re-run on the stacked tip yet.
+
+# Pages smoke test (apps/web/scripts/smoke-pages.mjs)
+- HOME step PASSED in a browser (proof table, no mock screenshot). It exposed a design flaw: with the newest certificate revoked, the
+  hero led with a failed check. The proof table now picks the newest certificate that checks out.
+- The remaining steps (Directory, Profile, Transparency chain + tamper demo, Developers keys, Agent Floor pipeline, Onboarding redirect)
+  are written but have NOT run: the Docker engine crashed mid-run (pramaan-db and pramaan-redis "Exited (255)"), the API then returned
+  500 for DB-backed endpoints. Environmental, not a code result. Re-run once `docker compose up -d db redis` stays up.

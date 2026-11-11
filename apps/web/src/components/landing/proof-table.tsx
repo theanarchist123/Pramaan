@@ -18,12 +18,16 @@ export function ProofTable() {
 
   useEffect(() => {
     let live = true;
-    api<{ certificate_code: string }[]>("/v1/transparency?limit=1", { auth: false })
+    // The newest certificate that checks out. Revoked ones are real and stay on the Verify page, but the landing page leads with a pass.
+    api<{ certificate_code: string }[]>("/v1/transparency?limit=8", { auth: false })
       .then(async (l) => {
-        const code = l[0]?.certificate_code;
-        if (!code) return live && setResult("none");
-        const v = await api<VerifyResult>(`/v1/verify/${encodeURIComponent(code)}`, { auth: false });
-        if (live) setResult(v);
+        let first: VerifyResult | null = null;
+        for (const e of l) {
+          const v = await api<VerifyResult>(`/v1/verify/${encodeURIComponent(e.certificate_code)}`, { auth: false });
+          first ??= v;
+          if (v.valid && !v.revoked) return live && setResult(v);
+        }
+        if (live) setResult(first ?? "none");
       })
       .catch(() => live && setResult("none"));
     return () => {
