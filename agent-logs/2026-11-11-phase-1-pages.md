@@ -71,3 +71,8 @@ Home, Directory (shelves), Profile ("confirmed" counts, evidence slip), Transpar
 undo restores), Developers (deep link + arrow keys), Agent Floor (five stations, text status), Onboarding signed-out redirect. No
 browser console errors. Test fixes were races in the test (waiting for hydration/data), not page bugs.
 Still browser-untested: signed-in Onboarding (chat, stepper, fact capture), the QR scanner camera path.
+
+# Full backend suite on the stacked tip (v2/pg-15-phase1-finish)
+**311 passed, 0 failed, 0 skipped (5m38s)**, Postgres+pgvector up. (Baseline before this work: 278.) The first full run found 1 failure:
+eight tests upload a byte-identical sample credential, which the new TRU-03 duplicate rule correctly flags. The `client` fixture now
+clears documents left by earlier tests; the rule is unchanged and has its own test.

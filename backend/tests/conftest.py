@@ -61,6 +61,16 @@ async def app_instance():
 
 @pytest_asyncio.fixture
 async def client(app_instance):
+    # Many tests upload the same sample credential. The duplicate-document rule (TRU-03) rightly flags a file that is already on
+    # another profile, so each test starts with no documents from earlier tests (each builds its own profiles and files).
+    from sqlalchemy import delete
+
+    from app.db import get_sessionmaker
+    from app.models import Document
+
+    async with get_sessionmaker()() as s:
+        await s.execute(delete(Document))
+        await s.commit()
     transport = httpx.ASGITransport(app=app_instance)
 
     async def forget_cookies(response):
