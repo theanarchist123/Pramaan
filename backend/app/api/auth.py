@@ -202,8 +202,9 @@ async def mfa_confirm(body: MfaCodeIn, principal: Principal = Depends(get_princi
     now = datetime.now(timezone.utc)
     user.mfa_enrolled_at = now
     user.stepup_until = now + timedelta(minutes=get_settings().stepup_minutes)
+    codes = await _issue_recovery_codes(session, user.id)  # shown ONCE, here
     await session.commit()
-    return {"enrolled": True}
+    return {"enrolled": True, "recovery_codes": codes}
 
 
 @router.post("/mfa/stepup", dependencies=[Depends(ip_limit("mfa", 10))])
@@ -220,3 +221,62 @@ async def mfa_stepup(body: MfaCodeIn, principal: Principal = Depends(get_princip
     user.stepup_until = until
     await session.commit()
     return {"stepup_until": until}
+
+
+# --------------------------------------------------------------------------- recovery codes
+async def _issue_recovery_codes(session: AsyncSession, user_id) -> list[str]:
+    """Replace every existing code with a fresh set. Returns the plaintext codes (the only time they exist)."""
+    from sqlalchemy import delete
+
+    from app.core import totp
+    from app.models import MfaRecoveryCode
+
+    await session.execute(delete(MfaRecoveryCode).where(MfaRecoveryCode.user_id == user_id))
+    codes = totp.new_recovery_codes()
+    session.add_all(MfaRecoveryCode(user_id=user_id, code_hash=totp.hash_recovery_code(c)) for c in codes)
+    return codes
+
+
+class RecoveryIn(BaseModel):
+    code: str = Field(min_length=9, max_length=12)
+
+
+@router.post("/mfa/recover", dependencies=[Depends(ip_limit("mfa", 10))])
+async def mfa_recover(body: RecoveryIn, principal: Principal = Depends(get_principal), session: AsyncSession = Depends(get_session)):
+    """Lost your authenticator? A recovery code works once, in place of a 6-digit code, for the step-up window."""
+    from sqlalchemy import select
+
+    from app.core import totp
+    from app.models import MfaRecoveryCode
+
+    user = await session.get(User, principal.user.id)
+    if user.mfa_enrolled_at is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Set up the authenticator first")
+    if await login_locked(f"mfa:{user.id}"):
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many failed attempts - try again later")
+    row = (await session.execute(select(MfaRecoveryCode).where(
+        MfaRecoveryCode.user_id == user.id, MfaRecoveryCode.code_hash == totp.hash_recovery_code(body.code),
+        MfaRecoveryCode.used_at.is_(None)))).scalar_one_or_none()
+    if row is None:
+        await login_failed(f"mfa:{user.id}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "That recovery code is not valid (or was already used)")
+    now = datetime.now(timezone.utc)
+    row.used_at = now
+    user.stepup_until = now + timedelta(minutes=get_settings().stepup_minutes)
+    left = (await session.execute(select(MfaRecoveryCode).where(MfaRecoveryCode.user_id == user.id, MfaRecoveryCode.used_at.is_(None)))).scalars().all()
+    await session.commit()
+    return {"stepup_until": user.stepup_until, "recovery_codes_left": len(left)}
+
+
+@router.post("/mfa/recovery-codes", dependencies=[Depends(ip_limit("mfa", 10))])
+async def mfa_regenerate_recovery_codes(principal: Principal = Depends(get_principal), session: AsyncSession = Depends(get_session)):
+    """A new set (the old ones stop working). Needs a fresh step-up, so a stolen session cannot mint its own backdoor."""
+    from app.deps import require_stepup
+
+    user = await session.get(User, principal.user.id)
+    if user.mfa_enrolled_at is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Set up the authenticator first")
+    require_stepup(principal)
+    codes = await _issue_recovery_codes(session, user.id)
+    await session.commit()
+    return {"recovery_codes": codes}

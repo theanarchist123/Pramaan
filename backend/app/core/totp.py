@@ -61,3 +61,18 @@ def unseal(token: str) -> str | None:
         return _fernet().decrypt(token.encode()).decode()
     except InvalidToken:
         return None
+
+
+# --------------------------------------------------------------------------- recovery codes
+RECOVERY_COUNT = 10
+_RC_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyz"  # no 0/o/1/i/l: easy to copy by hand
+
+
+def new_recovery_codes(n: int = RECOVERY_COUNT) -> list[str]:
+    """`n` codes like `k3m9-x7qd` (8 characters from a 31-letter alphabet: about 40 bits each). Shown to the person once."""
+    return [f"{''.join(secrets.choice(_RC_ALPHABET) for _ in range(4))}-{''.join(secrets.choice(_RC_ALPHABET) for _ in range(4))}" for _ in range(n)]
+
+
+def hash_recovery_code(code: str) -> str:
+    normal = code.strip().lower().replace(" ", "")
+    return hashlib.sha256(("recovery|" + get_settings().jwt_secret + "|" + normal).encode()).hexdigest()
