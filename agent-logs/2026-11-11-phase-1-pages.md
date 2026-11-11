@@ -47,3 +47,14 @@ signed checkpoints, Hindi review of new strings. PG-13 polish pass still pending
 Built: Profile two-column dossier with sticky identity rail; Agent Floor handoff pipeline (M-11, moves only on real handoff events,
 reduced-motion variant); Home ledger strip of real log entries. Verified only by tsc + eslint (Docker still down; no browser run).
 Still not built in Phase 1: directory search mode, Developers docs shell, the other 23 motions, Hindi review, moodboard polish.
+
+# Verification run (Docker up)
+- test_agents.py 17 passed (new duplicate-document test included); the new Merkle endpoint test passes (checkpoint signature checked
+  against the published key; inclusion and consistency proofs verified independently).
+- **Verify browser test now PASSES: 12/12 steps, no browser errors** (five verdicts, forge mode, code input, recent checks, offline
+  file check altered + genuine, reduced motion). It found two real bugs, fixed: (1) the "newer certificate" link was a Button rendered
+  as a link and was not exposed as a link; (2) a mistyped 0/O produced no suggestion, which hid the whole explanation.
+- Existing test fixed, with reason: test_flagged_document_on_a_published_profile... shared a byte-identical file with another test,
+  which the new duplicate rule rightly flags; the fixture is now unique, the rule is unchanged.
+- Still unverified in a browser: Onboarding, Profile, Directory, Home, Agent Floor, Transparency (chain check), Developers.
+- Full backend suite not re-run on the stacked tip yet.

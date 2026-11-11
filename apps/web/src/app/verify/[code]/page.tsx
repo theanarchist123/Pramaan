@@ -14,7 +14,7 @@ import { SealLanding } from "@/components/motion/seal-landing";
 import { toCertificateData, useCertificate, type CertificateDetail, type VerifyResult } from "@/hooks/use-certificate";
 import { API_URL, api } from "@/lib/api";
 import { rememberCheck } from "@/lib/recent-checks";
-import { VERDICT_COPY, suggestions, verdictOf, type Verdict } from "@/lib/verify-verdict";
+import { VERDICT_COPY, isCodeChar, suggestions, verdictOf, type Verdict } from "@/lib/verify-verdict";
 import { cn } from "@/lib/utils";
 
 type Claim = { field: string; value: string; status: string };
@@ -58,9 +58,9 @@ function Banner({ verdict, verify }: { verdict: Verdict; verify?: VerifyResult |
         <h1 className="text-3xl font-semibold">{copy.title}</h1>
         <p className="text-muted-foreground">{copy.sentence(verify)}</p>
         {verdict === "replaced" && verify?.superseded_by && (
-          <Button variant="link" className="h-auto p-0" render={<Link href={`/verify/${verify.superseded_by}`} />} nativeButton={false}>
+          <Link className="text-sm text-primary underline" href={`/verify/${verify.superseded_by}`}>
             View the newer certificate
-          </Button>
+          </Link>
         )}
       </div>
     </div>
@@ -73,13 +73,18 @@ function NotFound({ code, reason }: { code: string; reason?: string }) {
     <div className="mx-auto max-w-xl px-4 py-16">
       <Banner verdict="not_found" />
       <p className="mt-4 text-muted-foreground">{reason ?? `We have no certificate with the code ${code}.`}</p>
-      {fixes.length > 0 && (
+      {[...code.replace(/^PRM-/, "")].some((c) => !isCodeChar(c)) && (
         <p className="mt-3 text-sm">
-          Codes never contain 0, 1, I, L, O or U. Did you mean{" "}
-          {fixes.map((f) => (
-            <Link key={f} href={`/verify/${f}`} className="mr-2 font-mono text-primary underline">{f}</Link>
-          ))}
-          ?
+          Codes never contain 0, 1, I, L, O or U, so this one has a character that was misread or mistyped. Check it against the document.
+          {fixes.length > 0 && (
+            <>
+              {" "}Did you mean{" "}
+              {fixes.map((f) => (
+                <Link key={f} href={`/verify/${f}`} className="mr-2 font-mono text-primary underline">{f}</Link>
+              ))}
+              ?
+            </>
+          )}
         </p>
       )}
       <Button className="mt-6" variant="outline" render={<Link href="/verify" />} nativeButton={false}>Try another code</Button>
