@@ -30,3 +30,4 @@ playwright-report/
 test-results/
 .next-prod/
 smoke-shots/
+*.tsbuildinfo
