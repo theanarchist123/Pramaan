@@ -6,7 +6,7 @@
   /* light "Bond" */
   --bond: #F4F6FA;  --surface: #FFFFFF;  --paper: #FBF8F1;
   --ink: #1A1B3A;   --ink-muted: #5A5F7A;  --rule: #D9DDE8;
-  --stamp: #4A2C8F; --stamp-tint: #E9E4F7;
+  --stamp: #4A2C8F; --stamp-tint: #E9E4F7;  --on-stamp: #FFFFFF;  /* text on a filled stamp-coloured button */
   --verified: #0B7A5E; --verified-tint: #DDF3EA;
   --seal: #B8321B;  --seal-tint: #FBE5E0;
   --caution: #8A5A00; --caution-tint: #FFF1D6;
@@ -40,7 +40,7 @@
 .dark {
   --bond: #12142B;  --surface: #1A1D3A;  /* --paper stays light on purpose: documents lie on the desk */
   --ink: #ECEEF8;   --ink-muted: #A3A8C4;  --rule: rgb(255 255 255 / .12);
-  --stamp: #B6A8FF; --stamp-tint: #2A2559;
+  --stamp: #B6A8FF; --stamp-tint: #2A2559;  --on-stamp: #12142B;
   --verified: #4FD1A5; --verified-tint: #123B31;
   --seal: #FF7A63;  --seal-tint: #4A1F19;
   --caution: #F2C46D; --caution-tint: #3D2F0F;

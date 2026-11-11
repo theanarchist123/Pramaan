@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "@pramaan/ui/tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -60,86 +61,47 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Pramaan palette: paper, ink, saffron (action), indigo (trust), verified green. */
+/* Seal & Ink (packages/ui/tokens.css). The component library speaks shadcn's semantic names; they all resolve to the design tokens
+   below, so light and dark come from the tokens' own .dark overrides and the contrast gate (packages/ui/scripts/contrast.mjs) covers
+   the colour pairs used here. No colour is hard-coded in this file. */
 :root {
-  --background: oklch(0.978 0.012 85);
-  --foreground: oklch(0.22 0.015 60);
-  --card: oklch(0.995 0.006 85);
-  --card-foreground: oklch(0.22 0.015 60);
-  --popover: oklch(0.995 0.006 85);
-  --popover-foreground: oklch(0.22 0.015 60);
-  --primary: oklch(0.56 0.17 55);
-  --primary-foreground: oklch(0.99 0.01 85);
-  --secondary: oklch(0.94 0.02 80);
-  --secondary-foreground: oklch(0.28 0.02 60);
-  --muted: oklch(0.945 0.015 80);
-  --muted-foreground: oklch(0.44 0.02 60);
-  --accent: oklch(0.93 0.03 275);
-  --accent-foreground: oklch(0.32 0.12 275);
-  --destructive: oklch(0.56 0.2 27);
-  --border: oklch(0.89 0.02 80);
-  --input: oklch(0.89 0.02 80);
-  --ring: oklch(0.66 0.17 55);
-  --indigo: oklch(0.36 0.13 275);
-  --indigo-soft: oklch(0.93 0.03 275);
-  --verified: oklch(0.48 0.12 160);
-  --verified-soft: oklch(0.94 0.04 160);
-  --pending: oklch(0.7 0.14 75);
-  --pending-soft: oklch(0.95 0.05 85);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.17 0.012 60);
-  --foreground: oklch(0.95 0.01 85);
-  --card: oklch(0.21 0.014 60);
-  --card-foreground: oklch(0.95 0.01 85);
-  --popover: oklch(0.21 0.014 60);
-  --popover-foreground: oklch(0.95 0.01 85);
-  --primary: oklch(0.74 0.16 60);
-  --primary-foreground: oklch(0.18 0.02 60);
-  --secondary: oklch(0.27 0.015 60);
-  --secondary-foreground: oklch(0.95 0.01 85);
-  --muted: oklch(0.26 0.014 60);
-  --muted-foreground: oklch(0.78 0.02 80);
-  --accent: oklch(0.3 0.06 275);
-  --accent-foreground: oklch(0.88 0.06 275);
-  --destructive: oklch(0.7 0.19 25);
-  --border: oklch(1 0 0 / 11%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.74 0.16 60);
-  --indigo: oklch(0.78 0.1 275);
-  --indigo-soft: oklch(0.3 0.06 275);
-  --verified: oklch(0.75 0.13 160);
-  --verified-soft: oklch(0.3 0.05 160);
-  --pending: oklch(0.8 0.13 80);
-  --pending-soft: oklch(0.32 0.05 80);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: var(--bond);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--stamp);
+  --primary-foreground: var(--on-stamp);
+  --secondary: color-mix(in srgb, var(--ink) 7%, var(--bond));
+  --secondary-foreground: var(--ink);
+  --muted: color-mix(in srgb, var(--ink) 5%, var(--bond));
+  --muted-foreground: var(--ink-muted);
+  --accent: var(--stamp-tint);
+  --accent-foreground: var(--stamp);
+  --destructive: var(--seal);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--stamp);
+  --indigo: var(--stamp);
+  --indigo-soft: var(--stamp-tint);
+  --verified-soft: var(--verified-tint);
+  --pending: var(--caution);
+  --pending-soft: var(--caution-tint);
+  --chart-1: var(--sector-technology);
+  --chart-2: var(--sector-business);
+  --chart-3: var(--sector-education);
+  --chart-4: var(--sector-arts-culture);
+  --chart-5: var(--sector-energy);
+  --radius: var(--radius-control);
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--stamp);
+  --sidebar-primary-foreground: var(--on-stamp);
+  --sidebar-accent: var(--stamp-tint);
+  --sidebar-accent-foreground: var(--stamp);
+  --sidebar-border: var(--rule);
+  --sidebar-ring: var(--stamp);
 }
 
 @layer base {
@@ -162,11 +124,11 @@
   }
 }
 
-/* Subtle paper grain + saffron glow used behind hero sections */
+/* Soft ink-and-foil wash behind hero sections: a stamp-coloured glow top right, a foil-gold one top left. */
 .paper-glow {
   background:
-    radial-gradient(60rem 30rem at 85% -10%, color-mix(in oklch, var(--primary) 16%, transparent), transparent 70%),
-    radial-gradient(50rem 30rem at -10% 10%, color-mix(in oklch, var(--indigo) 12%, transparent), transparent 70%);
+    radial-gradient(60rem 30rem at 85% -10%, color-mix(in oklch, var(--stamp) 13%, transparent), transparent 70%),
+    radial-gradient(50rem 30rem at -10% 10%, color-mix(in oklch, var(--foil) 10%, transparent), transparent 70%);
 }
 
 /* The certificate print route is a bare canvas for the PDF/PNG renderer: no site chrome. */

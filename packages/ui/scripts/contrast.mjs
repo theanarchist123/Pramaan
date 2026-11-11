@@ -38,6 +38,8 @@ const pairs = [
   ["stamp", "bond", TEXT, "links and actions on the page"],
   ["stamp", "surface", TEXT, "links and actions on cards"],
   ["stamp", "stamp-tint", TEXT, "selected state text"],
+  ["on-stamp", "stamp", TEXT, "text on a primary button"],
+  ["ink", "stamp-tint", TEXT, "text on a selected row"],
   ["verified", "surface", TEXT, "verified text on cards"],
   ["verified", "verified-tint", TEXT, "verified chip"],
   ["seal", "surface", TEXT, "alert / revoked text on cards"],
