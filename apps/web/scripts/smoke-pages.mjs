@@ -72,6 +72,23 @@ await step("DIRECTORY: shelves per field when unfiltered, a filter switches to o
   await page.getByRole("heading", { level: 1 }).waitFor();
   const shelf = page.locator("section[aria-label*=' person'], section[aria-label*=' people']");
   if (people.length >= 6) await shelf.first().waitFor({ timeout: 10000 });
+  if (people.length >= 6) {
+    // each shelf has a cover band naming the field, and a sideways-scrolling row of people
+    await page.getByRole("list", { name: /people, scroll sideways$/ }).first().waitFor();
+    // search mode: a real question gives a ranked list where every result says why
+    const box = page.getByRole("textbox", { name: /search/i }).first();
+    await box.fill("marine scientist in Kerala");
+    await box.press("Enter"); // the header also has a Search button, so submit the form itself
+    const ranked = page.getByRole("list", { name: "Results, best match first" });
+    await ranked.waitFor({ timeout: 20000 });
+    const rows = ranked.locator(":scope > li"); // top-level results only (each also holds its own reason bullets)
+    assert.ok((await rows.count()) >= 1, "at least one ranked result");
+    assert.equal(await ranked.getByLabel("Rank 1", { exact: true }).count(), 1, "the first result is ranked 1");
+    const explained = await rows.evaluateAll((els) => els.filter((e) => /Why this person|Confirmed|Public evidence|Document|Self-claimed/.test(e.textContent)).length);
+    assert.equal(explained, await rows.count(), "every result explains itself");
+    await shot("directory-search");
+    await page.goto(`${WEB}/directory`);
+  }
   else await page.getByRole("link", { name: /./ }).first().waitFor();
   await shot("directory");
 });

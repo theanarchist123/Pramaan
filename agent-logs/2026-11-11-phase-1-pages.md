@@ -208,3 +208,16 @@ mobile bottom tab bar), the command palette.
   against the production build (next start, port 3013).
 - STILL NEEDED FROM THE OWNER: register a free Unsplash app, set UNSPLASH_ACCESS_KEY in the backend .env, restart the API, open the console
   /images and approve photos. Until then tiles show the sector-colour pattern.
+
+# Directory rebuilt to the section 6.2 layout (v2/pg-16-visual-theme)
+Two modes in one page. BROWSE: shelves, each with a cover band (SectorImage purpose=cover: approved attributed Unsplash photo with the sector duotone,
+else the sector-colour pattern) with the field's icon + name + "See all N", then ONE horizontal snap-scrolling row of people cards.
+SEARCH: a ranked ordered list (rank, name, headline, field + place, "Why this person" reasons, match score as number + bar) so no result appears
+without a reason. Components: directory/shelf.tsx, directory/result-row.tsx.
+Browser test (pages smoke, production build on :3013): 9/9 steps passed on the run that completed: shelves with sideways-scrolling rows; a real
+query returns a ranked list, rank 1 first, every top-level result explains itself. Two test bugs of mine were fixed on the way (header "Search"
+button was matched instead of the form; nested bullets were counted as results).
+CAVEAT, honest: that run still exited non-zero because of console errors. They were CORS-masked HTTP 500s: the API log shows
+ConnectionResetError / connection_lost talking to Postgres (engine already has pool_pre_ping=True), and the Docker engine later stopped
+responding altogether (`docker info` prints nothing). Environmental (Docker Desktop on this machine), not an app fault, but it means I do not have a
+fully green run of the final test file. Re-run after `docker compose up -d db redis`.
