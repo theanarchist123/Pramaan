@@ -194,3 +194,17 @@ Known: Verify still overflows by 11px at 320px wide (not in the test widths). Hi
 Not yet redesigned to section 6: Directory (cover-band shelves + separate search mode), Profile (dossier with cover band + "Show what's proven"),
 Onboarding (fact capture), Agent Floor (stage with travelling tokens), Transparency (ledger tape), the header (compress on scroll, account menu,
 mobile bottom tab bar), the command palette.
+
+# Photograph curation + Unsplash slot tests (v2/pg-16-visual-theme)
+- Staff console /images: search Unsplash, look at candidates, approve ONE at a time into a field + slot (tile / cover band / empty state), remove
+  approved ones. No bulk import; nothing downloaded or re-hosted. Without UNSPLASH_ACCESS_KEY the search says exactly what to do. Browser test
+  apps/admin/scripts/smoke-images.mjs passes 3/3 (sign in, 14 fields, empty approved list, actionable no-key message).
+- Public site test (pages smoke step "UNSPLASH SLOTS"): with an approved photo (a clearly fake "Test Photographer", intercepted network; nothing
+  written to the DB) the tile hotlinks from images.unsplash.com, keeps the ixid, is sized with w/q/fm params, is fetched by the BROWSER, and the
+  credit has two linked, utm-tagged anchors. Passes.
+- Bento grid fixed to fill evenly (two large tiles span half the row each on desktop).
+- PERFORMANCE: measured. Production build: first API call at 289 ms, proof table done at 2.2 s; Home first-load JS 194 kB. The long-running dev
+  server degraded (JS took ~10 s to hydrate and later never finished in 60 s): dev-server slowness, not an app problem. Pages smoke 9/9 passes
+  against the production build (next start, port 3013).
+- STILL NEEDED FROM THE OWNER: register a free Unsplash app, set UNSPLASH_ACCESS_KEY in the backend .env, restart the API, open the console
+  /images and approve photos. Until then tiles show the sector-colour pattern.

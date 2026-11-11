@@ -45,6 +45,28 @@ await step("HOME: hero proof table checks a real certificate (or says there is n
   await page.goto(`${WEB}/`);
   await shot("home");
 });
+await step("UNSPLASH SLOTS: an approved photo is hotlinked (never self-hosted), sized by the CDN, duotoned, and credited with linked, tagged attribution", async () => {
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+  const requested = [];
+  const fake = [{ id: "test-fixture", sector: "Science", purpose: "tile", url_raw: "https://images.unsplash.com/test-fixture?ixid=TEST", width: 1000, height: 700, blur_hash: "", dominant_color: "#336699", alt: "A test fixture, not a real photograph",
+    attribution: { photographer: "Test Photographer", photographer_url: "https://unsplash.com/@test?utm_source=pramaan&utm_medium=referral", photo_url: "https://unsplash.com/photos/test?utm_source=pramaan&utm_medium=referral", unsplash_url: "https://unsplash.com/?utm_source=pramaan&utm_medium=referral" } }];
+  await page.route("**/v1/images/sector/**", (r) => r.fulfill({ json: fake }));
+  await page.route("https://images.unsplash.com/**", (r) => { requested.push(r.request().url()); return r.fulfill({ body: png, contentType: "image/png" }); });
+  await page.goto(`${WEB}/`);
+  const credit = page.getByText("Test Photographer").first();
+  await credit.waitFor({ timeout: 20000 });
+  const hrefs = await page.locator("figcaption a").evaluateAll((a) => a.map((x) => x.getAttribute("href")));
+  assert.ok(hrefs.length >= 2 && hrefs.every((h) => /utm_source=pramaan/.test(h)), "both credit links carry the utm tags");
+  await page.waitForFunction(() => document.querySelectorAll("figure img").length > 0);
+  const src = await page.locator("figure img").first().getAttribute("src");
+  assert.match(src, /^https:\/\/images\.unsplash\.com\//, "hotlinked from Unsplash");
+  assert.match(src, /ixid=TEST/, "the ixid (view tracking) is kept");
+  assert.match(src, /w=\d+&q=70&fm=webp/, "sized with the image CDN parameters");
+  assert.ok(requested.length > 0, "the browser, not our server, fetched the photo");
+  await shot("home-with-photo");
+  await page.unroute("**/v1/images/sector/**");
+  await page.unroute("https://images.unsplash.com/**");
+});
 await step("DIRECTORY: shelves per field when unfiltered, a filter switches to one grid", async () => {
   await page.goto(`${WEB}/directory`);
   await page.getByRole("heading", { level: 1 }).waitFor();
