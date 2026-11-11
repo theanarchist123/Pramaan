@@ -91,7 +91,9 @@ export function SiteHeader() {
           >
             <Menu />
           </Button>
-          <InstallButton />
+          <span className="hidden md:inline-flex">
+            <InstallButton />
+          </span>
           <Button
             variant="ghost"
             size="sm"
@@ -100,14 +102,15 @@ export function SiteHeader() {
             lang={lang === "en" ? "hi" : "en"}
             onClick={() => setLang(lang === "en" ? "hi" : "en")}
           >
-            <Languages className="size-4" /> {lang === "en" ? "हिन्दी" : "EN"}
+            <Languages className="size-4" /> <span className="hidden sm:inline">{lang === "en" ? "हिन्दी" : "EN"}</span>
           </Button>
-          <Button variant="ghost" size="icon" aria-label={t("nav.largeText")} onClick={toggleLargeText}>
+          <Button variant="ghost" size="icon" className="hidden sm:inline-flex" aria-label={t("nav.largeText")} onClick={toggleLargeText}>
             <Type />
           </Button>
           <Button
             variant="ghost"
             size="icon"
+            className="hidden sm:inline-flex"
             aria-label={t("nav.reduceMotion")}
             aria-pressed={reduced}
             onClick={() => setReduced(!reduced)}

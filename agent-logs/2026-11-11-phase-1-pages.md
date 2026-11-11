@@ -158,3 +158,13 @@ Found by looking at screenshots: Verify code boxes wrapped; fixed. Tests: pages 
 step (reduced motion) had a fragile 800 ms timeout, fixed to measure "all checks present once the first appears".
 NOT reviewed visually: Profile, Transparency, Developers, Agent Floor, Onboarding, the certificate, mobile widths, the staff console in the
 new composition. Typography (typeface) unchanged.
+
+# Visual review of the remaining pages (screenshots, light/dark/390px)
+Looked at: Profile, certificate result, Transparency, Agent Floor, Developers (dark), Home (mobile). Found and fixed:
+1. Mobile header overflowed at 390px: Sign in and the theme toggle were cut off. Install now shows from md, the language button is icon-only on
+   phones, and large-text/reduce-motion toggles show from sm (phones keep the OS-level settings). Measured: Sign in right edge 374 of 390, no
+   horizontal scroll.
+2. Agent Floor: Khoji-Pehle used the old "indigo", which now equals the stamp purple, so it matched Saathi. Gave it its own colour.
+Not changed / noted: the Developers code block is a light panel in dark mode (readable, a little jarring); the certificate keeps its
+tracked all-caps label (it is the artwork, not UI chrome); Profile leaves empty space under a short claim list (the sticky rail is fine).
+Not yet reviewed: Directory (light), Onboarding signed in, staff console in the new composition, the other phone pages beyond Home.
