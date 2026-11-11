@@ -111,3 +111,13 @@ approvals + registry counts only with approval.read; model call/failure counts o
 are omitted, not zeroed. Console front page shows them as tiles (warnings are text + number, not colour alone). 1 backend test
 (review workbench file: 9 passed); the browser test now also checks the tiles (a reviewer sees Open cases, not Approvals): passes 4/4.
 NOT done: trend lines/history (needs stored snapshots), SLA breach notifications, registry and compliance modules.
+
+# Phase 2: registry + compliance (v2/adm-16-registry, off adm-03)
+POST /v1/admin/registry/profiles/{id}/suspend|restore (profile.suspend; written reason 10+ chars; audited; not your own profile; step-up when
+MFA is required; state-checked: suspend only from approved, restore only from suspended). Suspension hides the profile from every public
+query (they already require status == approved) and from graph/stats; the owner still sees "suspended"; resubmitting cannot undo it.
+GET /v1/admin/consents?profile_id= (consent.read, read-only). Web: ProfileStatus gains "suspended" (types, stepper, onboarding message).
+4 new backend tests pass (tests/test_registry.py); web tsc + eslint clean.
+KNOWN LIMITS: a suspended person's certificates still verify as genuine (a certificate is a signed historical fact; whether suspension
+should also flag them is a policy decision, not made here). No console screens for suspend/restore or the consent view yet (API only).
+Not done: merge duplicates (profile.merge), correct a profile (profile.correct), takedown processing, DSR export/erasure queue, retention.

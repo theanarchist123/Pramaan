@@ -19,6 +19,7 @@ const STATUS_COPY: Record<Profile["status"], { label: string; cls: string }> = {
   pending_review: { label: "Under review", cls: "bg-pending-soft text-foreground" },
   approved: { label: "Verified", cls: "bg-verified-soft text-verified" },
   rejected: { label: "Needs changes", cls: "bg-destructive/10 text-destructive" },
+  suspended: { label: "Suspended", cls: "bg-destructive/10 text-destructive" },
 };
 
 export function completeness(p: Profile): { pct: number; missing: string[] } {
