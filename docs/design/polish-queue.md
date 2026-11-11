@@ -14,3 +14,4 @@ gets a polish pass: compare against the references, adjust timings and compositi
 | Agent Floor | PG-12 | status text + motion-safe only; floor layout and handoff lines not built | patterns/agent-floor.md | stations, handoffs, replay |
 | Transparency | PG-13 | in-browser chain check + tamper demo built; link animation, checkpoints not done | patterns/transparency.md | tape styling, long-log virtualisation |
 | Developers | PG-14 | deep links + tab keyboard only; docs shell and OpenAPI pages not built | patterns/developers.md | docs rail, search |
+| Profile / Agent Floor / Home (finish) | PG-15 | dossier two-column + sticky rail, handoff pipeline (M-11), ledger strip built; browser-untested | - | pipeline dot timing, mobile order of the rail |

@@ -54,21 +54,22 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
   const claims = [...p.claims].sort((a, b) => order[a.status] - order[b.status]);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
+    <div className="mx-auto max-w-6xl px-4 py-10">
       <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-1 text-sm text-muted-foreground">
         <Link href="/directory" className="hover:text-foreground">Registry</Link>
         <ChevronRight className="size-3.5" /> <span className="text-foreground">{p.full_name}</span>
       </nav>
 
-      <header className="overflow-hidden rounded-3xl border border-border bg-card">
+      <div className="lg:grid lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+      <header className="overflow-hidden rounded-3xl border border-border bg-card lg:sticky lg:top-20">
         <div className="h-24" style={{ background: `linear-gradient(120deg, ${color.ink}, ${color.primary})` }} />
         <div className="px-6 pb-6">
           <div className="-mt-10 flex size-20 items-center justify-center rounded-full border-4 border-card font-display text-3xl font-semibold text-white" style={{ background: color.ink }} aria-hidden="true">
             {p.full_name.replace(/^(Dr\.?|Prof\.?|Adv\.?|Justice)\s+/i, "").charAt(0)}
           </div>
-          <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+          <div className="mt-3 flex flex-col gap-3">
             <div>
-              <h1 className="text-4xl font-semibold">{p.full_name}</h1>
+              <h1 className="text-3xl font-semibold">{p.full_name}</h1>
               <p className="mt-1 text-lg text-muted-foreground">{p.headline}</p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <SectorChip sector={p.sector} />
@@ -80,11 +81,11 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
                 {p.is_demo && <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Fictional demo profile</span>}
               </div>
             </div>
-            <p className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${sum.confirmed ? "bg-verified-soft text-verified" : "bg-muted text-muted-foreground"}`}>
+            <p className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${sum.confirmed ? "bg-verified-soft text-verified" : "bg-muted text-muted-foreground"}`}>
               <BadgeCheck aria-hidden className="size-4" /> {sum.confirmed} of {sum.total} claims confirmed
             </p>
           </div>
-          {p.bio && <p className="mt-5 max-w-2xl text-[17px] leading-relaxed">{p.bio}</p>}
+          {p.bio && <p className="mt-5 text-base leading-relaxed">{p.bio}</p>}
           {extras.length > 0 && (
             <dl className="mt-5 grid gap-x-8 gap-y-3 sm:grid-cols-2">
               {extras.map((d) => (
@@ -105,7 +106,8 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
         </div>
       </header>
 
-      <section className="mt-8" aria-labelledby="ach">
+      <div className="min-w-0">
+      <section className="mt-8 lg:mt-0" aria-labelledby="ach">
         <h2 id="ach" className="text-2xl font-semibold">Achievements and the proof behind them</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {sum.confirmed} confirmed by a document, issuer or reviewer · {sum.web} backed by a public source · {sum.self} self-claimed.
@@ -133,6 +135,8 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
           </div>
         </section>
       )}
+      </div>
+      </div>
     </div>
   );
 }

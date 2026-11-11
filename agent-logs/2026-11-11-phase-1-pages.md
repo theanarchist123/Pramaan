@@ -42,3 +42,8 @@ signed checkpoints, Hindi review of new strings. PG-13 polish pass still pending
   NOT built: daily independent publication and the RFC 3161 timestamp (needs a chosen external TSA/publisher: an ADR + owner
   decision, and a **(verify)** of the vendor), browser/verify-js consumption of proofs, witness cosigning.
   Note the existing hash chain is kept; the Merkle tree is a second, additive view over the same entries.
+
+# Phase 1 finish (v2/pg-15-phase1-finish)
+Built: Profile two-column dossier with sticky identity rail; Agent Floor handoff pipeline (M-11, moves only on real handoff events,
+reduced-motion variant); Home ledger strip of real log entries. Verified only by tsc + eslint (Docker still down; no browser run).
+Still not built in Phase 1: directory search mode, Developers docs shell, the other 23 motions, Hindi review, moodboard polish.
