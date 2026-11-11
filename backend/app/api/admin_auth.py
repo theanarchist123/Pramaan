@@ -19,12 +19,38 @@ from app.db import get_session
 from app.deps import Principal, admin_cookie_name, get_principal
 from app.models import User
 from app.schemas import LoginIn, UserOut
+from datetime import datetime, timedelta, timezone
+
+from pydantic import Field
 
 router = APIRouter(prefix="/v1/admin/auth", tags=["staff-auth"])
 
 
+class AdminLoginIn(LoginIn):
+    """Password plus, for anyone with an authenticator enrolled, a 6-digit code or one single-use recovery code."""
+
+    code: str = Field(default="", max_length=16)
+
+
+async def _second_factor_ok(session: AsyncSession, user: User, code: str) -> bool:
+    from app.core import totp
+    from app.models import MfaRecoveryCode
+
+    code = code.strip().replace(" ", "")
+    secret = totp.unseal(user.totp_secret_enc or "")
+    if secret is not None and totp.verify(secret, code):
+        return True
+    row = (await session.execute(select(MfaRecoveryCode).where(
+        MfaRecoveryCode.user_id == user.id, MfaRecoveryCode.code_hash == totp.hash_recovery_code(code),
+        MfaRecoveryCode.used_at.is_(None)))).scalar_one_or_none()
+    if row is None:
+        return False
+    row.used_at = datetime.now(timezone.utc)  # a recovery code works exactly once
+    return True
+
+
 @router.post("/login", dependencies=[Depends(ip_limit("admin-login", 10))])
-async def admin_login(body: LoginIn, response: Response, session: AsyncSession = Depends(get_session)):
+async def admin_login(body: AdminLoginIn, response: Response, session: AsyncSession = Depends(get_session)):
     email = body.email.lower().strip()
     key = f"admin:{email}"
     if await login_locked(key):
@@ -36,6 +62,17 @@ async def admin_login(body: LoginIn, response: Response, session: AsyncSession =
     ):
         await login_failed(key)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect email or password")
+    if user.mfa_enrolled_at is not None:
+        # The password alone is never enough once an authenticator exists. Asking for the code is not a failure and does not
+        # count against the lockout; a wrong code does.
+        if not body.code.strip():
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "mfa_code_required", "message": "Enter the code from your authenticator app"})
+        if not await _second_factor_ok(session, user, body.code):
+            await login_failed(key)
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect email, password or code")
+        # Having just proved presence, sensitive actions are unlocked for the usual step-up window.
+        user.stepup_until = datetime.now(timezone.utc) + timedelta(minutes=get_settings().stepup_minutes)
+        await session.commit()
     await login_ok(key)
     s = get_settings()
     minutes = s.admin_session_minutes

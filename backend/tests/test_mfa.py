@@ -97,3 +97,43 @@ async def test_ordinary_members_are_not_asked_for_mfa(client, make_user, mfa_on)
     person, _ = await make_user()
     assert (await client.get("/v1/profiles/mine", headers=person)).status_code == 200
     assert (await client.get("/v1/auth/mfa/status", headers=person)).json()["required"] is True
+
+
+# ---------------------------------------------------------------------------------- MFA at login (staff console)
+async def _staff_login(client, email, **extra):
+    return await client.post("/v1/admin/auth/login", json={"email": email, "password": "password123", **extra})
+
+
+async def test_enrolled_staff_must_give_a_code_at_login_and_get_no_session_without_one(cookie_client, client, make_user):
+    admin, user = await make_user(promote_to_admin=True)
+    secret = await enrol(client, admin)
+    cookie_client.cookies.clear()
+    no_code = await _staff_login(cookie_client, user["email"])
+    assert no_code.status_code == 401 and no_code.json()["detail"]["code"] == "mfa_code_required"
+    assert "pramaan_admin" not in no_code.headers.get("set-cookie", "")  # no session was issued
+    wrong = "000000" if totp.code_at(secret) != "000000" else "111111"
+    assert (await _staff_login(cookie_client, user["email"], code=wrong)).status_code == 401
+    ok = await _staff_login(cookie_client, user["email"], code=totp.code_at(secret))
+    assert ok.status_code == 200 and "pramaan_admin" in ok.headers.get("set-cookie", "")
+
+
+async def test_a_recovery_code_works_at_login_once(cookie_client, client, make_user):
+    admin, user = await make_user(promote_to_admin=True)
+    start = (await client.post("/v1/auth/mfa/enroll", headers=admin)).json()
+    codes = (await client.post("/v1/auth/mfa/confirm", headers=admin, json={"code": totp.code_at(start["secret"])})).json()["recovery_codes"]
+    assert (await _staff_login(cookie_client, user["email"], code=codes[0])).status_code == 200
+    assert (await _staff_login(cookie_client, user["email"], code=codes[0])).status_code == 401  # single use
+
+
+async def test_staff_who_have_not_enrolled_still_sign_in_with_a_password_so_they_can_enrol(cookie_client, make_user):
+    _, user = await make_user(promote_to_admin=True)
+    assert (await _staff_login(cookie_client, user["email"])).status_code == 200
+
+
+async def test_repeated_wrong_codes_lock_the_login(cookie_client, client, make_user):
+    admin, user = await make_user(promote_to_admin=True)
+    secret = await enrol(client, admin)
+    bad = "000000" if totp.code_at(secret) != "000000" else "111111"
+    codes = [(await _staff_login(cookie_client, user["email"], code=bad)).status_code for _ in range(8)]
+    assert 429 in codes
+    assert (await _staff_login(cookie_client, user["email"], code=totp.code_at(secret))).status_code == 429  # even the right code, while locked
