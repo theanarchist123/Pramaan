@@ -193,7 +193,7 @@ async def submit_for_review(
     session: AsyncSession = Depends(get_session),
 ):
     profile = await _load_editable(session, profile_id, principal)
-    require_verified_email(principal)
+    await require_verified_email(principal)
     consent = (
         await session.execute(
             select(Consent)

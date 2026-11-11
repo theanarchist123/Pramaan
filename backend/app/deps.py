@@ -162,9 +162,12 @@ def require_scope(scope: str):
     return _dep
 
 
-def require_verified_email(principal: Principal) -> None:
-    """Public listing needs proof the applicant controls the email on the account (admins are exempt)."""
-    if get_settings().require_email_verification and not principal.is_admin and principal.user.email_verified_at is None:
+async def require_verified_email(principal: Principal) -> None:
+    """Public listing needs proof the applicant controls the email on the account (admins are exempt).
+    The rule is a GOVERNED setting: switched only by a second person's approval, with history."""
+    from app.services import governed
+
+    if await governed.get("require_email_verification") and not principal.is_admin and principal.user.email_verified_at is None:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Verify your email address first")
 
 
