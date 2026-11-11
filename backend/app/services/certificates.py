@@ -177,6 +177,14 @@ async def verify_certificate(session: AsyncSession, code: str) -> VerifyOut:
         ).scalar_one()
 
     revoked = cert.revoked_at is not None
+    newer = None
+    if cert.profile_id is not None and not revoked:
+        newer = (
+            await session.execute(
+                select(Certificate).where(Certificate.profile_id == cert.profile_id, Certificate.revoked_at.is_(None),
+                                          Certificate.issued_at > cert.issued_at).order_by(Certificate.issued_at.asc()).limit(1)
+            )
+        ).scalar_one_or_none()
     valid = sig_ok and chain_ok and not revoked
     if revoked:
         reason = "This certificate was revoked by the registry."
@@ -184,6 +192,8 @@ async def verify_certificate(session: AsyncSession, code: str) -> VerifyOut:
         reason = "Stored certificate content no longer matches its signature."
     elif not chain_ok:
         reason = "Certificate is missing from, or inconsistent with, the transparency log."
+    elif newer is not None:
+        reason = "Signature valid; content unchanged since issuance. A newer certificate has replaced this one."
     else:
         reason = "Signature valid; content unchanged since issuance."
 
@@ -203,6 +213,8 @@ async def verify_certificate(session: AsyncSession, code: str) -> VerifyOut:
         log_position=log_position,
         log_size=log_size,
         entry_hash=entry.entry_hash if entry else "",
+        superseded_by=newer.code if newer else "",
+        superseded_at=newer.issued_at.isoformat() if newer else "",
     )
 
 

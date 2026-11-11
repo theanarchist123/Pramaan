@@ -1,0 +1,4 @@
+{
+  "/verify/page": "app/verify/page.js",
+  "/verify/[code]/page": "app/verify/[code]/page.js"
+}

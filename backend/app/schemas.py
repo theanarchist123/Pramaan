@@ -168,6 +168,9 @@ class VerifyOut(BaseModel):
     log_position: int | None = None  # 1-based position in the transparency log
     log_size: int = 0
     entry_hash: str = ""
+    # A newer, active certificate for the same person: this one is still genuine, but it has been replaced.
+    superseded_by: str = ""
+    superseded_at: str = ""
 
 
 class VerifyCheckIn(BaseModel):
