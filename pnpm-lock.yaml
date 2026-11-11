@@ -60,6 +60,9 @@ importers:
       '@pramaan/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@pramaan/verify':
+        specifier: workspace:*
+        version: link:../../packages/verify-js
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -150,6 +153,8 @@ importers:
         version: 5.9.3
 
   packages/ui: {}
+
+  packages/verify-js: {}
 
 packages:
 
