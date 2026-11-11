@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, FlaskConical, KeyRound, Rocket, ShieldCheck, Webhook } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,30 @@ export default function Developers() {
   const { user, ready } = useAuth();
   const [section, setSection] = useState<(typeof SECTIONS)[number]["id"]>("start");
 
+  // Sections are deep-linkable: /developers#play opens the playground, and choosing a tab updates the address.
+  useEffect(() => {
+    const fromHash = () => {
+      const id = window.location.hash.slice(1);
+      const hit = SECTIONS.find((x) => x.id === id);
+      if (hit) setSection(hit.id);
+    };
+    fromHash();
+    window.addEventListener("hashchange", fromHash);
+    return () => window.removeEventListener("hashchange", fromHash);
+  }, []);
+  const choose = (id: (typeof SECTIONS)[number]["id"]) => {
+    setSection(id);
+    history.replaceState(null, "", `#${id}`);
+  };
+  const onKey = (e: React.KeyboardEvent, i: number) => {
+    const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!step) return;
+    e.preventDefault();
+    const next = SECTIONS[(i + step + SECTIONS.length) % SECTIONS.length];
+    choose(next.id);
+    document.getElementById(`tab-${next.id}`)?.focus();
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <h1 className="text-4xl font-semibold md:text-5xl">Build on Pramaan</h1>
@@ -52,23 +76,27 @@ export default function Developers() {
       </div>
 
       <div role="tablist" aria-label="Developer sections" className="mt-8 flex flex-wrap gap-1 border-b border-border">
-        {SECTIONS.map(({ id, label, icon: Icon }) => (
+        {SECTIONS.map(({ id, label, icon: Icon }, i) => (
           <button
             key={id}
+            id={`tab-${id}`}
             role="tab"
             aria-selected={section === id}
-            onClick={() => setSection(id)}
+            aria-controls="dev-panel"
+            tabIndex={section === id ? 0 : -1}
+            onKeyDown={(e) => onKey(e, i)}
+            onClick={() => choose(id)}
             className={cn(
               "-mb-px inline-flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
               section === id ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
-            <Icon className="size-4" /> {label}
+            <Icon aria-hidden className="size-4" /> {label}
           </button>
         ))}
       </div>
 
-      <div className="mt-8" role="tabpanel">
+      <div className="mt-8" role="tabpanel" id="dev-panel" aria-labelledby={`tab-${section}`}>
         {section === "start" && <Quickstart />}
         {section === "play" && <Playground />}
         {section === "keys" && (ready && user ? <ApiKeys /> : <SignInPrompt what="API keys" />)}
