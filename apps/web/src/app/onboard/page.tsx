@@ -11,6 +11,7 @@ import { ConsentStep, type ConsentChoice } from "@/components/onboarding/consent
 import { DiscoveryCard } from "@/components/onboarding/discovery-card";
 import { DocumentDrop } from "@/components/onboarding/document-drop";
 import { ProfilePanel } from "@/components/onboarding/profile-panel";
+import { StatusStepper } from "@/components/onboarding/status-stepper";
 import { VerifyPanel } from "@/components/onboarding/verify-panel";
 import { useAgentStream } from "@/hooks/use-agent-stream";
 import { api, ApiError } from "@/lib/api";
@@ -223,6 +224,7 @@ export default function OnboardPage() {
       <div className="h-[80dvh] min-h-0 overflow-hidden rounded-2xl border border-border bg-card lg:h-auto">
         <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className="flex h-full flex-col">
           <div className="border-b border-border px-4 pt-3 pb-2">
+            <div className="mb-3"><StatusStepper profile={profile} /></div>
             <TabsList>
               <TabsTrigger value="profile"><UserRound /> Profile</TabsTrigger>
               <TabsTrigger value="documents"><FileText /> Documents</TabsTrigger>

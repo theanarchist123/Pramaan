@@ -7,3 +7,4 @@ gets a polish pass: compare against the references, adjust timings and compositi
 | Page | Task | Status | Pattern note | What to polish once references exist |
 |---|---|---|---|---|
 | Verify (entry + result) | PG-05 | built, browser test pending | patterns/verify.md | cascade timing, mobile banner, Hindi copy, scanner on Firefox/Safari |
+| Onboarding | PG-08 | built (stepper + fact capture), browser test not written | patterns/onboarding.md | stepper connectors, mobile, Hindi copy |
