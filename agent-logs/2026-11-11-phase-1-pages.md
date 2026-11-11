@@ -28,3 +28,11 @@ pg-12-agent-floor -> pg-13-transparency -> pg-14-developers. One commit per page
 ## Not built (see docs/design/polish-queue.md)
 Dossier two-column profile, search-mode directory, floor layout with handoff lines, ledger tape on Home, docs shell for Developers,
 signed checkpoints, Hindi review of new strings. PG-13 polish pass still pending the moodboard.
+
+# Phase 3
+- **TRU-02** was already complete from Phase 0a (year/number guard in pariksha.py, confirmed-QID-only Wikidata, tests in test_phase0a.py). No change.
+- **TRU-03** (v2/tru-03-forensics, off pg-14): `services/doc_forensics.py` deterministic signals (PDF incremental updates, editor
+  producer, modified-vs-created date; image EXIF editor) + duplicate-document hash across profiles. Flags block the automatic claim
+  upgrade (I-2). 6 pure tests pass. NOT verified: the Lipik integration + duplicate query against a real DB (Docker down; SQL
+  compiles). NOT built: QR decode + issuer-endpoint verification (needs a decoder dependency and per-issuer endpoints; a decision for
+  the owner), image re-compression/ELA heuristics (unreliable, deliberately skipped), font/layout anomalies.

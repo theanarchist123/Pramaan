@@ -8,6 +8,7 @@ import io
 from dataclasses import dataclass, field
 
 from PIL import Image, UnidentifiedImageError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.events import RunContext
@@ -16,6 +17,7 @@ from app.agents.schemas import DocumentExtraction
 from app.agents.textutil import name_similarity, token_overlap
 from app.domain import DOCUMENT_CONFIDENCE, STATUS_DOCUMENT
 from app.llm.client import get_llm
+from app.services.doc_forensics import FLAG_TEXT, forensic_flags
 from app.models import Claim, Document, Evidence, Profile
 
 MAX_BYTES = 8 * 1024 * 1024
@@ -119,10 +121,18 @@ async def read_document(
         flags.append("partial_match")
     if extraction.suspicious:
         flags.append("suspicious")
+    # Deterministic forensics: a flag only stops the automatic upgrade below and sends the document to a person.
+    flags.extend(f for f in forensic_flags(content_type, data) if f not in flags)
+    digest = hashlib.sha256(data).hexdigest()
+    same = await session.execute(
+        select(Document.id).where(Document.profile_id != profile.id, Document.extracted["sha256"].astext == digest).limit(1)
+    )
+    if same.first() is not None:
+        flags.append("duplicate_document")
     if extraction.title and not issuer_is_recognised(extraction.issuer):
         flags.append("issuer_unrecognised")  # never upgrades a claim on its own; a human decides
 
-    doc.extracted = {**extraction.model_dump(), "flags": flags, "sha256": hashlib.sha256(data).hexdigest()}
+    doc.extracted = {**extraction.model_dump(), "flags": flags, "sha256": digest, "flag_notes": [FLAG_TEXT[f] for f in flags if f in FLAG_TEXT]}
     doc.match_score = round(score, 3)
 
     upgraded = 0
