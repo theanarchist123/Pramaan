@@ -48,7 +48,7 @@ export function CodeInput({
   return (
     <div role="group" aria-label="Certificate code">
     <div className="flex flex-nowrap items-center gap-1">
-        <span className="select-none font-mono text-base text-muted-foreground sm:text-lg" aria-hidden>
+        <span className="hidden select-none font-mono text-base text-muted-foreground min-[440px]:inline sm:text-lg" aria-hidden>
           PRM-
         </span>
         {chars.map((c, i) => (
@@ -79,7 +79,7 @@ export function CodeInput({
               if (e.key === "Enter" && value.length === LEN) onComplete(`PRM-${value}`);
             }}
             className={cn(
-              "aspect-square min-w-0 max-w-10 flex-1 rounded-md border bg-background p-0 text-center font-mono text-base uppercase outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/50 sm:text-lg",
+              "aspect-square w-0 min-w-0 max-w-10 flex-1 rounded-md border bg-background p-0 text-center font-mono text-base uppercase outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/50 sm:text-lg",
               c.trim() ? "border-primary/60" : "border-input",
             )}
           />

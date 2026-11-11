@@ -58,7 +58,7 @@ export function SiteHeader() {
         <Link href="/" aria-label="Pramaan home">
           <Logo />
         </Link>
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Main">
           {[...NAV, ...(user?.role === "admin" ? [{ href: "/admin", key: "nav.admin" as Key }] : [])].map((n) => (
             <Link
               key={n.href}
@@ -76,22 +76,23 @@ export function SiteHeader() {
           <Button
             variant="outline"
             size="sm"
+            aria-label={t("nav.search")}
             className="hidden gap-2 text-muted-foreground sm:inline-flex"
             onClick={() => setPaletteOpen(true)}
           >
-            <CommandIcon className="size-3.5" /> <span>{t("nav.search")}</span>
-            <kbd className="rounded bg-muted px-1.5 text-[10px]">Ctrl K</kbd>
+            <CommandIcon className="size-3.5" /> <span className="hidden lg:inline">{t("nav.search")}</span>
+            <kbd className="hidden rounded bg-muted px-1.5 text-[10px] lg:inline">Ctrl K</kbd>
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="lg:hidden"
             aria-label={t("nav.menu")}
             onClick={() => setPaletteOpen(true)}
           >
             <Menu />
           </Button>
-          <span className="hidden md:inline-flex">
+          <span className="hidden lg:inline-flex">
             <InstallButton />
           </span>
           <Button
@@ -102,7 +103,7 @@ export function SiteHeader() {
             lang={lang === "en" ? "hi" : "en"}
             onClick={() => setLang(lang === "en" ? "hi" : "en")}
           >
-            <Languages className="size-4" /> <span className="hidden sm:inline">{lang === "en" ? "हिन्दी" : "EN"}</span>
+            <Languages className="size-4" /> <span className="hidden lg:inline">{lang === "en" ? "हिन्दी" : "EN"}</span>
           </Button>
           <Button variant="ghost" size="icon" className="hidden sm:inline-flex" aria-label={t("nav.largeText")} onClick={toggleLargeText}>
             <Type />

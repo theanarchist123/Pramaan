@@ -42,7 +42,7 @@ export default function VerifyLookup() {
       <p className="mt-2 max-w-2xl text-muted-foreground">Check that a Pramaan certificate is genuine and unchanged. It takes a few seconds and needs no account.</p>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        <section aria-label="Enter a certificate" className="space-y-5 rounded-2xl border border-border bg-card p-5">
+        <section aria-label="Enter a certificate" className="min-w-0 space-y-5 rounded-2xl border border-border bg-card p-4 sm:p-5">
           <div>
             <h2 className="text-sm font-medium text-muted-foreground">Type or paste the code</h2>
             <div className="mt-2">
@@ -76,7 +76,7 @@ export default function VerifyLookup() {
           </div>
         </section>
 
-        <aside className="space-y-5">
+        <aside className="min-w-0 space-y-5">
           <section aria-label="What we check" className="rounded-2xl border border-border bg-card p-5">
             <h2 className="text-lg font-semibold">What we check</h2>
             <ul className="mt-3 space-y-3">

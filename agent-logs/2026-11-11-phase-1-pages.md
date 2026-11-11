@@ -175,3 +175,22 @@ Fixed: (1) Agent Floor pipeline wrapped badly on phones (a dangling connector, a
 connectors under sm, horizontal from sm up. (2) Onboarding stepper showed a half-spinner on "Tell us about yourself", which reads as loading;
 only the checking stage spins now, the current stage gets a still marker. Pages smoke 7/7 after the changes.
 Still not reviewed visually: the staff console in the new composition; Transparency/Developers/Profile at 390px individually; Hindi layout.
+
+# Home rebuilt to the section 6.1 layout (v2/pg-16-visual-theme)
+User was right (twice): section 6 specifies a different LAYOUT and signature interaction per page (I had only recoloured and added bits), and
+section 4.9 specifies live Unsplash API images on sector tiles / shelf headers / cover bands (the SectorImage component and backend service exist
+but NO page used them).
+Done for Home: editorial hero with a REAL certificate on a desk and an editable name (change a letter: the registry's /v1/verify/check says the
+signature is broken and the seal cracks, "NOT VALID"); bento "Browse by field" (14 tiles, two large, SectorImage with duotone + attribution,
+link to /directory?sector=X which now pre-selects the field); the step-by-step proof table moved below.
+Unsplash facts, checked in the docs on 2026-11-11: the API needs the application's access key (Authorization: Client-ID ...) for every request
+(users need no login); photos are hotlinked from images.unsplash.com. UNSPLASH_ACCESS_KEY is EMPTY in .env and the approved-image set is empty
+(/v1/images/sector/Science returns []), so tiles show the sector-colour pattern until a key is set and a person approves photos one at a time
+(spec: no bulk import). The staff console has NO page for that approval yet (endpoints exist): to build.
+Bugs found by the new tests/screenshots and fixed: certificate (1123px) forced the page wider than a phone (grid column min-width); tablet header
+overflowed at 768 (compact header until lg); Verify code boxes overflowed at 360 and were 21px (now 26-30px, "PRM-" prefix hidden below 440px).
+New permanent test step: no page scrolls sideways at 360/390/768/1024/1280 (pages smoke 8/8). Verify smoke 12/12.
+Known: Verify still overflows by 11px at 320px wide (not in the test widths). Hindi strings for the new Home text are not written (English only).
+Not yet redesigned to section 6: Directory (cover-band shelves + separate search mode), Profile (dossier with cover band + "Show what's proven"),
+Onboarding (fact capture), Agent Floor (stage with travelling tokens), Transparency (ledger tape), the header (compress on scroll, account menu,
+mobile bottom tab bar), the command palette.

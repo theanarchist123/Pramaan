@@ -36,6 +36,16 @@ export default function Directory() {
   const [stats, setStats] = useState<MapStats | null>(null);
   const [picked, setPicked] = useState<GraphNode | null>(null);
 
+  // A link such as /directory?sector=Science (from the home page's field tiles) starts with that field selected.
+  useEffect(() => {
+    try {
+      const wanted = new URLSearchParams(window.location.search).get("sector");
+      if (wanted && SECTORS.includes(wanted)) setSector(wanted);
+    } catch {
+      /* no query string available: show everyone */
+    }
+  }, []);
+
   // Initial data: everyone, the relationship graph, and per-state counts.
   useEffect(() => {
     api<Summary[]>("/v1/profiles?limit=100", { auth: false }).then(setEveryone).catch(() => setEveryone([]));

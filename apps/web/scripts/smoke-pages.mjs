@@ -12,6 +12,7 @@ const browser = await chromium.launch();
 const errors = [];
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 const page = await ctx.newPage();
+page.setDefaultNavigationTimeout(90000); // a dev server compiles each route on first use
 page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
 page.on("console", (m) => { if (m.type() === "error" && !/404|Failed to load resource/.test(m.text())) errors.push(`console: ${m.text().slice(0, 300)}`); });
 const step = async (name, fn) => { process.stdout.write(`• ${name} … `); await fn(); console.log("ok"); };
@@ -25,6 +26,23 @@ await step("HOME: hero proof table checks a real certificate (or says there is n
   await page.getByText("Checked just now").waitFor();
   await page.getByText(/Confirmed it has not been revoked|has been revoked|There is no certificate to check yet/).waitFor({ timeout: 8000 });
   assert.equal(await page.getByText("Example profile · sample data").count(), 0);
+  // the desk certificate: change a letter and the REGISTRY says the signature no longer holds
+  const box = page.getByLabel(/Try to forge it/);
+  await box.waitFor({ timeout: 20000 });
+  await page.getByText("Signature valid: this is the real name").waitFor();
+  const original = await box.inputValue();
+  await box.fill(original.slice(0, -1) + (original.endsWith("x") ? "y" : "x"));
+  await page.getByText("Signature broken: the registry refuses it").waitFor({ timeout: 10000 });
+  await page.getByText("NOT VALID").waitFor();
+  await box.fill(original);
+  await page.getByText("Signature valid: this is the real name").waitFor({ timeout: 10000 });
+  // browse by field: 14 tiles, each linking to the filtered directory
+  const tiles = page.getByRole("link", { name: /: \d+ (person|people)$/ });
+  assert.equal(await tiles.count(), 14, "one tile per field");
+  await tiles.first().click();
+  await page.waitForURL(/\/directory\?sector=/);
+  await page.getByRole("button", { name: /^(Science|Technology|Energy|Healthcare)/, pressed: true }).first().waitFor({ timeout: 15000 });
+  await page.goto(`${WEB}/`);
   await shot("home");
 });
 await step("DIRECTORY: shelves per field when unfiltered, a filter switches to one grid", async () => {
@@ -74,6 +92,21 @@ await step("AGENT FLOOR: pipeline lists the five agents in order, each with a te
   for (const n of ["Saathi", "Khoji-Pehle", "Lipik", "Pariksha", "Prahari"]) await pipe.getByText(n, { exact: true }).waitFor();
   assert.ok((await pipe.getByText("Idle").count()) + (await pipe.getByText("Working").count()) >= 5);
   await shot("agent-floor");
+});
+await step("RESPONSIVE: no page scrolls sideways at 360, 390, 768, 1024 or 1280 px", async () => {
+  const paths = ["/", "/directory", slug ? `/p/${slug}` : "/directory", "/transparency", "/developers", "/mission-control", "/verify"];
+  const bad = [];
+  for (const w of [360, 390, 768, 1024, 1280]) {
+    await page.setViewportSize({ width: w, height: 800 });
+    for (const path of paths) {
+      await page.goto(`${WEB}${path}`, { timeout: 90000 });
+      await page.waitForTimeout(1800);
+      const m = await page.evaluate(() => ({ s: document.documentElement.scrollWidth, c: document.documentElement.clientWidth }));
+      if (m.s > m.c) bad.push(`${path} @${w}: ${m.s} > ${m.c}`);
+    }
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  assert.deepEqual(bad, [], "pages that scroll sideways");
 });
 await step("ONBOARDING (signed out): sends the visitor to sign in rather than showing a broken page", async () => {
   await page.goto(`${WEB}/onboard`, { timeout: 90000, waitUntil: "commit" });
