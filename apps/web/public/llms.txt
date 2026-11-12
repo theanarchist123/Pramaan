@@ -1,0 +1,36 @@
+# Pramaan
+
+> Pramaan is a registry of notable people in India where every achievement carries its evidence, and every certificate can be checked by anyone, without an account.
+
+Pramaan decides nothing with a language model alone: AI agents gather and check evidence, but approval is decided by fixed rules and, where they are unsure, by a named person.
+Public verification needs no key. The API base URL is shown on the Developers page of this site (/developers); the paths below are relative to it.
+
+## Check a certificate (no account, no key)
+- GET /v1/verify/{code}: is this certificate genuine, unchanged, and not revoked? Answers `valid`, `revoked`, `superseded_by`, `key_id`, `reason`.
+- POST /v1/verify/batch: the same for up to 50 codes in one call: {"codes": ["PRM-..."]}.
+- POST /v1/verify/check: ask whether an edited copy of a certificate would still verify (it will not).
+- GET /v1/certificates/{code}: the certificate (payload, digest, signature, key id).
+- GET /v1/certificates/{code}/vc: the same certificate as a W3C Verifiable Credential 2.0 with an eddsa-jcs-2022 Data Integrity proof.
+- GET /v1/status/revocation/1: the signed Bitstring Status List (a set bit means revoked).
+
+## Verify it yourself, without trusting the server
+- GET /.well-known/pramaan-keys.json: the registry's published Ed25519 public keys (current and retired).
+- GET /.well-known/did.json: the registry's did:web document (did:web is a draft community specification, not a standard).
+- Digest = SHA-256 of the canonical JSON of the payload (keys sorted, no spaces); signature = Ed25519 over the digest bytes. The JavaScript package `@pramaan/verify` and the `<pramaan-verify>` element do this in the browser.
+
+## The public log
+- GET /v1/transparency: every certificate ever issued, hash-chained.
+- GET /v1/transparency/checkpoint: a signed Merkle root and size. GET /v1/transparency/proof/{code} and /v1/transparency/consistency?first=N return inclusion and consistency proofs (RFC 9162).
+
+## People and search
+- GET /v1/profiles and GET /v1/profiles/{slug}: approved, consenting people only.
+- POST /v1/search: plain-language search; every result says why it matched.
+- GET /v1/graph: connections between people; a stated working connection always carries the person's own words.
+
+## Rules a client can rely on
+- A certificate prints a claim only with a status its evidence supports: `human` (a named reviewer), `document`, `web` (a public source quoted verbatim) or `issuer`.
+- "Verified" in any interface comes from the server's own status, never from a model's wording.
+- Personal details of erased people are removed and their certificates are revoked; the log keeps only fingerprints.
+
+## Reference
+- OpenAPI: /openapi.json. Interactive reference: /docs. Transparency log page: /transparency.

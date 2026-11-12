@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from pydantic import BaseModel, Field, StringConstraints
+from app.core.ratelimit import ip_limit
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +25,30 @@ from app.services.certificates import (
 )
 
 router = APIRouter(prefix="/v1", tags=["verification"])
+
+
+class BatchIn(BaseModel):
+    codes: list[Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]] = Field(min_length=1, max_length=50)
+
+
+@router.post("/verify/batch", dependencies=[Depends(ip_limit("verify-batch", 30))])
+async def verify_batch(body: BatchIn, session: AsyncSession = Depends(get_session)):
+    """Check up to 50 certificate codes in one call. Each answer is exactly what GET /v1/verify/{code} says (same function), codes are normalised to
+    upper case, duplicates are answered once, and order is kept. Public: verification needs no account."""
+    seen: set[str] = set()
+    results = []
+    for raw in body.codes:
+        code = raw.strip().upper()
+        if code in seen:
+            continue
+        seen.add(code)
+        found = await get_certificate(session, code) is not None
+        v = await verify_certificate(session, code)
+        results.append({
+            "code": code, "found": found, "valid": v.valid, "revoked": v.revoked, "superseded_by": v.superseded_by,
+            "key_id": v.key_id, "issued_at": v.issued_at, "reason": v.reason,
+        })
+    return {"checked": len(results), "results": results}
 
 
 @router.get("/verify/{code}", response_model=VerifyOut)
