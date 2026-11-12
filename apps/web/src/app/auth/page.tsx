@@ -14,7 +14,9 @@ function AuthForm() {
   const { login, register } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/onboard";
+  // Only a path on this site: a crafted ?next=https://elsewhere must never become a redirect off-site.
+  const rawNext = params.get("next") || "";
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes("\\") ? rawNext : "/onboard";
   // "Sign in" links open the sign-in form; "Get started" links open registration.
   const [mode, setMode] = useState<"login" | "register">(params.get("mode") === "login" ? "login" : "register");
   const [busy, setBusy] = useState(false);
