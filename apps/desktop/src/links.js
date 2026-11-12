@@ -45,4 +45,12 @@ function findDeepLink(argv) {
   return (argv || []).find((a) => typeof a === "string" && a.toLowerCase().startsWith(`${PROTOCOL}://`)) || null;
 }
 
-module.exports = { PROTOCOL, resolveDeepLink, findDeepLink };
+// Verifier mode: find ONE certificate code in text copied from anywhere (an email, a PDF, a chat). Clipboard text is untrusted, so only a
+// code-shaped token is taken from it, and the result is a path on our own origin. Two different codes are ambiguous: refuse rather than guess.
+function pathFromClipboard(text) {
+  if (typeof text !== "string" || text.length > 5000) return null;
+  const found = new Set((text.match(/\bPRM-[A-Z0-9]{6,12}\b/gi) || []).map((c) => c.toUpperCase()));
+  return found.size === 1 ? `/verify/${[...found][0]}` : null;
+}
+
+module.exports = { PROTOCOL, resolveDeepLink, findDeepLink, pathFromClipboard };

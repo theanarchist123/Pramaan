@@ -1,8 +1,8 @@
 "use strict";
-const { app, BrowserWindow, Menu, Tray, globalShortcut, shell, ipcMain, nativeImage, session, dialog, net } = require("electron");
+const { app, BrowserWindow, Menu, Tray, globalShortcut, shell, ipcMain, nativeImage, session, dialog, net, clipboard } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
-const { PROTOCOL, resolveDeepLink, findDeepLink } = require("./links");
+const { PROTOCOL, resolveDeepLink, findDeepLink, pathFromClipboard } = require("./links");
 const { startAutoUpdates } = require("./updater");
 const { verifyCertificate } = require("./verify");
 
@@ -200,6 +200,17 @@ function createWindow() {
   pendingLink = null;
 }
 
+// Verifier mode (DSK-02): check the certificate code on the clipboard, from any app, with one shortcut.
+function verifyFromClipboard() {
+  const target = pathFromClipboard(clipboard.readText());
+  showWindow();
+  if (target) navigate(target);
+  else {
+    navigate("/verify");
+    dialog.showMessageBox(win, { type: "info", message: "No single certificate code found on the clipboard", detail: "Copy one code that looks like PRM-ABCDEFGHJK, then try again." });
+  }
+}
+
 function buildTray() {
   const img = nativeImage.createFromPath(path.join(__dirname, "..", "assets", "icon.png")).resize({ width: 18, height: 18 });
   tray = new Tray(img);
@@ -208,6 +219,7 @@ function buildTray() {
     Menu.buildFromTemplate([
       { label: "Open Pramaan", click: showWindow },
       { label: "Verify a certificate", click: () => navigate("/verify") },
+      { label: "Check the code on the clipboard", accelerator: "CommandOrControl+Shift+V", click: verifyFromClipboard },
       { label: "Search the registry", click: () => navigate("/directory") },
       { type: "separator" },
       { label: "Quit", click: () => app.quit() },
@@ -279,7 +291,8 @@ if (!gotLock) {
     }
     if (!TEST) {
       buildTray();
-      globalShortcut.register("CommandOrControl+Shift+P", () => (win && win.isVisible() && win.isFocused() ? win.hide() : showWindow()));
+      globalShortcut.register("CommandOrControl+Shift+V", verifyFromClipboard);
+  globalShortcut.register("CommandOrControl+Shift+P", () => (win && win.isVisible() && win.isFocused() ? win.hide() : showWindow()));
     }
   });
 }
