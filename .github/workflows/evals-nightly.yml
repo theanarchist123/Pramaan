@@ -1,0 +1,39 @@
+name: evals-nightly
+
+# Runs the evaluator against the real model every night and on demand. Fails (and so blocks a release) on the hard rules in
+# backend/evals/gate.py or on an accuracy drop against backend/evals/baseline-live.json. Needs the ANTHROPIC_API_KEY secret;
+# without it the job runs the offline plumbing check only and says so.
+on:
+  schedule:
+    - cron: "30 21 * * *"
+  workflow_dispatch:
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LLM_PROVIDER: claude
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            LLM_MODE=live python -m evals.run --live
+          else
+            echo "No ANTHROPIC_API_KEY secret: running the offline plumbing check only."
+            python -m evals.run
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-results
+          path: backend/evals/results/

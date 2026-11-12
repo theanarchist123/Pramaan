@@ -223,6 +223,12 @@ async def _escalate_on_failure(ctx: RunContext, profile_id: uuid.UUID, why: str)
 
 async def run_verification(ctx: RunContext, profile_id: uuid.UUID) -> dict[str, Any]:
     """Run the workflow inside an existing run (so callers can return the run id immediately)."""
+    from app.services import governed
+
+    if await governed.get("agents_paused"):  # AGT-01 kill switch: no model call, a human takes it (I-2)
+        await _escalate_on_failure(ctx, profile_id, "AI agents are paused by an administrator")
+        await ctx.finish("failed", "Paused: agents are switched off")
+        return {"decision": "escalate", "score": 0.0, "reasons": ["agents paused"]}
     try:
         graph = await get_graph()
         config = {"configurable": {"thread_id": thread_id(profile_id, ctx.run_id)}}
