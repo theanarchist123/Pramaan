@@ -147,13 +147,9 @@ function Result({ code, detail, verify }: { code: string; detail: CertificateDet
           {preview ? (
             <div className="relative">
               <ScaledTilt tilt={!forging}>
-                <Certificate data={preview} forceTamper={cracked} />
+                <Certificate data={preview} forceTamper={cracked} state={verdict === "revoked" ? { kind: "revoked" } : verdict === "replaced" ? { kind: "replaced" } : undefined} />
               </ScaledTilt>
-              {verdict === "revoked" && (
-                <div aria-hidden className="pointer-events-none absolute inset-0 grid place-items-center">
-                  <span className="-rotate-12 rounded-md border-4 border-destructive px-6 py-2 text-5xl font-bold text-destructive/80">Revoked</span>
-                </div>
-              )}
+
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">

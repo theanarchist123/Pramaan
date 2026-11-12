@@ -149,12 +149,15 @@ await step("a made-up code is rejected; transparency log is intact", async () =>
   await page.goto(`${BASE}/verify/PRM-FAKEFAKE12`);
   await page.getByText("No such certificate").waitFor();
   await page.goto(`${BASE}/transparency`);
+  await page.getByRole("button", { name: "Verify the whole chain in your browser" }).click(); // checks only when asked
   await page.getByText(/Chain intact/).waitFor();
   await page.screenshot({ path: `${OUT}/09-transparency.png` });
 });
 
 await step("dark mode", async () => {
-  await page.getByRole("button", { name: "Toggle dark mode" }).click();
+  await page.getByRole("button", { name: "Account and settings" }).click();
+  await page.getByRole("menuitemcheckbox", { name: "Dark mode" }).click();
+  await page.keyboard.press("Escape");
   await page.waitForTimeout(400);
   await page.screenshot({ path: `${OUT}/05-dark.png` });
 });
