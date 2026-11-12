@@ -121,6 +121,9 @@ async def process_change(change_id: uuid.UUID, ctx: RunContext) -> None:
                 await ctx.finish("done", "sandbox unavailable")
                 return
             if result["passed"]:
+                from app.services.plugin_risk import assess
+
+                checks["risk"] = assess(files)  # shown to the approver; it never approves anything itself
                 await save(status="ready", files=files, checks=checks)
                 note = f" (after {attempt} automatic fix{'es' if attempt != 1 else ''})" if attempt else ""
                 await ctx.emit("Prahari", "handoff", f"All checks passed{note} — ready for your review and approval", confidence=1.0)
