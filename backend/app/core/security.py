@@ -69,10 +69,14 @@ def decode_scoped_token(token: str, purpose: str) -> str | None:
 API_KEY_SCOPES = {"profiles:read", "profiles:write", "verify:read", "search:read", "webhooks:manage"}
 
 
-def generate_api_key() -> tuple[str, str, str]:
+# A test key can only read: it can never change anything, so it is safe to paste into a CI job or a demo (API-01).
+TEST_KEY_SCOPES = {"profiles:read", "verify:read", "search:read"}
+
+
+def generate_api_key(mode: str = "live") -> tuple[str, str, str]:
     prefix = secrets.token_hex(4)
     secret = secrets.token_urlsafe(24)
-    full = f"pk_live_{prefix}_{secret}"
+    full = f"pk_{'test' if mode == 'test' else 'live'}_{prefix}_{secret}"
     return full, prefix, hash_api_key(full)
 
 
@@ -82,6 +86,6 @@ def hash_api_key(full_key: str) -> str:
 
 def parse_api_key_prefix(full_key: str) -> str | None:
     parts = full_key.split("_", 3)
-    if len(parts) == 4 and parts[0] == "pk" and parts[1] == "live":
+    if len(parts) == 4 and parts[0] == "pk" and parts[1] in ("live", "test"):
         return parts[2]
     return None

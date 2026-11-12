@@ -192,6 +192,7 @@ class ApiKeyIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     scopes: list[str] = ["profiles:read", "verify:read"]
     rate_limit_per_min: int = Field(default=60, ge=1, le=6000)
+    mode: Literal["live", "test"] = "live"
 
 
 class ApiKeyOut(ORM):

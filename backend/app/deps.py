@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.core.ratelimit import check_rate_limit
-from app.core.security import decode_access_token, hash_api_key, parse_api_key_prefix
+from app.core.security import TEST_KEY_SCOPES, decode_access_token, hash_api_key, parse_api_key_prefix
 from app.db import get_session
 from app.models import ApiKey, User
 
@@ -96,7 +96,7 @@ async def get_principal(
         raise _unauthorized()
 
     # API key
-    if token.startswith("pk_live_"):
+    if token.startswith(("pk_live_", "pk_test_")):
         prefix = parse_api_key_prefix(token)
         row = None
         if prefix:
@@ -121,7 +121,10 @@ async def get_principal(
             raise _unauthorized("API key owner no longer exists")
         row.last_used_at = datetime.now(timezone.utc)
         await session.commit()
-        return Principal(owner, "api_key", set(row.scopes), row.id)
+        scopes = set(row.scopes)
+        if token.startswith("pk_test_"):
+            scopes &= TEST_KEY_SCOPES  # belt and braces: a test key never writes, whatever its row says
+        return Principal(owner, "api_key", scopes, row.id)
 
     # JWT
     claims = decode_access_token(token)
