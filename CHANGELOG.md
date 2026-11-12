@@ -16,6 +16,9 @@ Notable changes to the public API and behaviour, newest first. This is written f
 - Graph links of type `collab`: a stated working connection, whose `why` is the person's own words.
 - Every email carries a system-made unsubscribe link (`GET /v1/outreach/unsubscribe`).
 
+- `POST /mcp`: a read-only MCP server with two tools (certificate check, people search).
+- Errors on `/v1` are `application/problem+json` (the `detail` field is unchanged); API-key and per-IP-limited calls return `RateLimit-*` headers; public GETs carry `ETag`; `pk_test_` read-only keys.
+
 ### Changed
 - A profile can now be `suspended` (hidden from every public listing until restored). Clients that switch on `status` should handle it.
 - Staff sign-in requires an authenticator or recovery code once an authenticator is enrolled.
