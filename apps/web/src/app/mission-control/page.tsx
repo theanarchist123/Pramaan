@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Radio } from "lucide-react";
 import { AgentAvatar, AgentFeed } from "@/components/agent-feed";
+import { Pipeline } from "@/components/agent-floor/pipeline";
 import { Button } from "@/components/ui/button";
 import { useAgentStream } from "@/hooks/use-agent-stream";
 import { api } from "@/lib/api";
@@ -43,7 +44,11 @@ export default function MissionControl() {
         )}
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
+      <div className="mt-8 rounded-2xl border border-border bg-card p-5">
+        <Pipeline events={events} now={now} />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
         <ul className="grid content-start gap-2 sm:grid-cols-2">
           {agents.map((a) => (
             <li key={a.name} className={cn("rounded-xl border border-border bg-card p-3 transition-colors", active.has(a.name) && "border-primary/60 bg-primary/5")}>

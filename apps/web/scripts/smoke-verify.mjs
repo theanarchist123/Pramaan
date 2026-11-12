@@ -62,7 +62,7 @@ await step("entry page is never empty: what we check, recent checks, scanner/fil
   await page.getByText("Revocation").first().waitFor();
   await page.getByText("Nothing yet.").waitFor();
   await page.getByText(/Drop a certificate file/).waitFor();
-  await page.screenshot({ path: `${OUT}/verify-1-entry.png` });
+  await page.screenshot({ caret: "initial", path: `${OUT}/verify-1-entry.png` });
 });
 await step("the code boxes refuse characters a code never contains, and explain why", async () => {
   await page.getByLabel("Character 1 of 10").fill("O");
@@ -85,7 +85,7 @@ await step("VALID: 'Authentic', five checks cascade, one certificate on the page
   await list.getByText(/Found at position/).waitFor();
   await list.getByText("Confirmed it has not been revoked").waitFor();
   assert.equal(await page.locator("#certificate").count(), 1, "exactly one certificate (no second copy for forge mode)");
-  await page.screenshot({ path: `${OUT}/verify-2-valid.png`, fullPage: true });
+  await page.screenshot({ caret: "initial", path: `${OUT}/verify-2-valid.png`, fullPage: true });
 });
 await step("FORGE: editing a letter on the page breaks the signature and the checks re-run", async () => {
   await page.getByRole("button", { name: "Edit as a forger" }).click();
@@ -93,7 +93,7 @@ await step("FORGE: editing a letter on the page breaks the signature and the che
   await page.getByText("Forgery detected").waitFor();
   await page.getByText(/does not match|edited after issuance/i).first().waitFor();
   assert.equal(await page.locator("#certificate").count(), 1, "still one certificate in forge mode");
-  await page.screenshot({ path: `${OUT}/verify-3-forged.png`, fullPage: true });
+  await page.screenshot({ caret: "initial", path: `${OUT}/verify-3-forged.png`, fullPage: true });
   await page.getByRole("button", { name: "Reset" }).click();
   await page.getByText("Nothing changed yet").waitFor();
 });
@@ -101,19 +101,19 @@ await step("REPLACED: genuine, but says a newer certificate replaced it, with a 
   await page.goto(`${WEB}/verify/${replaced.cert.code}`);
   await banner().getByRole("heading", { name: "Genuine, but replaced" }).waitFor();
   await banner().getByRole("link", { name: "View the newer certificate" }).waitFor();
-  await page.screenshot({ path: `${OUT}/verify-4-replaced.png` });
+  await page.screenshot({ caret: "initial", path: `${OUT}/verify-4-replaced.png` });
 });
 await step("REVOKED: says so and overprints the paper", async () => {
   await page.goto(`${WEB}/verify/${revoked.cert.code}`);
   await banner().getByRole("heading", { name: "Revoked" }).waitFor();
   await page.getByText("Revoked", { exact: true }).nth(1).waitFor();
-  await page.screenshot({ path: `${OUT}/verify-5-revoked.png` });
+  await page.screenshot({ caret: "initial", path: `${OUT}/verify-5-revoked.png` });
 });
 await step("NOT FOUND: says so, and offers the likely correction for a look-alike character", async () => {
   await page.goto(`${WEB}/verify/PRM-ABCDEFGHJ0`);
   await banner().getByRole("heading", { name: "Not found" }).waitFor();
   await page.getByText(/never contain 0, 1, I, L, O or U/).waitFor();
-  await page.screenshot({ path: `${OUT}/verify-6-notfound.png` });
+  await page.screenshot({ caret: "initial", path: `${OUT}/verify-6-notfound.png` });
 });
 await step("recent checks lists what was checked, on this device only, and can be cleared", async () => {
   await page.goto(`${WEB}/verify`);

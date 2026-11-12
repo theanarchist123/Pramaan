@@ -288,3 +288,29 @@ async def test_an_older_certificate_says_it_has_been_replaced_but_stays_genuine(
     old = (await client.get(f"/v1/verify/{first['code']}")).json()
     assert old["valid"] is True and old["superseded_by"] == second.json()["code"] and "replaced" in old["reason"]
     assert (await client.get(f"/v1/verify/{second.json()['code']}")).json()["superseded_by"] == ""
+
+
+async def test_the_merkle_endpoints_prove_a_real_certificate_is_in_the_signed_log(client, make_user):
+    """TRU-09 end to end: issue real certificates, then verify the inclusion proof and the signed checkpoint independently."""
+    import hashlib
+
+    from app.api.verify import checkpoint_text
+    from app.core import merkle
+    from app.core.signing import verify_signature
+
+    _, _, _, cert1 = await _approved_profile_with_cert(client, make_user)
+    _, _, _, cert2 = await _approved_profile_with_cert(client, make_user)
+    cp = (await client.get("/v1/transparency/checkpoint")).json()
+    assert cp["text"] == checkpoint_text(cp["size"], cp["root"])
+    keys = (await client.get("/.well-known/pramaan-keys.json")).json()
+    pub = next(k for k in keys["keys"] if k["kid"] == cp["key_id"])["x"]
+    assert verify_signature(hashlib.sha256(cp["text"].encode()).hexdigest(), cp["signature"], pub)
+
+    pr = (await client.get(f"/v1/transparency/proof/{cert2['code']}")).json()
+    leaf = merkle.leaf_hash(bytes.fromhex(pr["entry_hash"]))
+    assert merkle.verify_inclusion(leaf, pr["index"], pr["size"], [bytes.fromhex(x) for x in pr["proof"]], bytes.fromhex(pr["root"]))
+
+    cs = (await client.get("/v1/transparency/consistency", params={"first": max(1, pr["size"] - 1)})).json()
+    assert merkle.verify_consistency(cs["first"], cs["second"], bytes.fromhex(cs["first_root"]), bytes.fromhex(cs["second_root"]), [bytes.fromhex(x) for x in cs["proof"]])
+    assert (await client.get("/v1/transparency/proof/PRM-NOSUCHCODE")).status_code == 404
+    assert cert1["code"] != cert2["code"]

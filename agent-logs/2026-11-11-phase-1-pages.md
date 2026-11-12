@@ -42,3 +42,37 @@ signed checkpoints, Hindi review of new strings. PG-13 polish pass still pending
   NOT built: daily independent publication and the RFC 3161 timestamp (needs a chosen external TSA/publisher: an ADR + owner
   decision, and a **(verify)** of the vendor), browser/verify-js consumption of proofs, witness cosigning.
   Note the existing hash chain is kept; the Merkle tree is a second, additive view over the same entries.
+
+# Phase 1 finish (v2/pg-15-phase1-finish)
+Built: Profile two-column dossier with sticky identity rail; Agent Floor handoff pipeline (M-11, moves only on real handoff events,
+reduced-motion variant); Home ledger strip of real log entries. Verified only by tsc + eslint (Docker still down; no browser run).
+Still not built in Phase 1: directory search mode, Developers docs shell, the other 23 motions, Hindi review, moodboard polish.
+
+# Verification run (Docker up)
+- test_agents.py 17 passed (new duplicate-document test included); the new Merkle endpoint test passes (checkpoint signature checked
+  against the published key; inclusion and consistency proofs verified independently).
+- **Verify browser test now PASSES: 12/12 steps, no browser errors** (five verdicts, forge mode, code input, recent checks, offline
+  file check altered + genuine, reduced motion). It found two real bugs, fixed: (1) the "newer certificate" link was a Button rendered
+  as a link and was not exposed as a link; (2) a mistyped 0/O produced no suggestion, which hid the whole explanation.
+- Existing test fixed, with reason: test_flagged_document_on_a_published_profile... shared a byte-identical file with another test,
+  which the new duplicate rule rightly flags; the fixture is now unique, the rule is unchanged.
+- Still unverified in a browser: Onboarding, Profile, Directory, Home, Agent Floor, Transparency (chain check), Developers.
+- Full backend suite not re-run on the stacked tip yet.
+
+# Pages smoke test (apps/web/scripts/smoke-pages.mjs)
+- HOME step PASSED in a browser (proof table, no mock screenshot). It exposed a design flaw: with the newest certificate revoked, the
+  hero led with a failed check. The proof table now picks the newest certificate that checks out.
+- The remaining steps (Directory, Profile, Transparency chain + tamper demo, Developers keys, Agent Floor pipeline, Onboarding redirect)
+  are written but have NOT run: the Docker engine crashed mid-run (pramaan-db and pramaan-redis "Exited (255)"), the API then returned
+  500 for DB-backed endpoints. Environmental, not a code result. Re-run once `docker compose up -d db redis` stays up.
+
+# Pages smoke test: PASSES 7/7 (Docker stable)
+Home, Directory (shelves), Profile ("confirmed" counts, evidence slip), Transparency (chain re-computed in browser, tamper demo breaks it,
+undo restores), Developers (deep link + arrow keys), Agent Floor (five stations, text status), Onboarding signed-out redirect. No
+browser console errors. Test fixes were races in the test (waiting for hydration/data), not page bugs.
+Still browser-untested: signed-in Onboarding (chat, stepper, fact capture), the QR scanner camera path.
+
+# Full backend suite on the stacked tip (v2/pg-15-phase1-finish)
+**311 passed, 0 failed, 0 skipped (5m38s)**, Postgres+pgvector up. (Baseline before this work: 278.) The first full run found 1 failure:
+eight tests upload a byte-identical sample credential, which the new TRU-03 duplicate rule correctly flags. The `client` fixture now
+clears documents left by earlier tests; the rule is unchanged and has its own test.

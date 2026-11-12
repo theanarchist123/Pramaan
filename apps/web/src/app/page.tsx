@@ -5,6 +5,7 @@ import { ArrowRight, BadgeCheck, FileSearch, MessagesSquare, ShieldCheck } from 
 import { Button } from "@/components/ui/button";
 import { LandingStats } from "@/components/landing/stats";
 import { AgentRoster } from "@/components/landing/agent-roster";
+import { LedgerStrip } from "@/components/landing/ledger-strip";
 import { ProofTable } from "@/components/landing/proof-table";
 import { useI18n, type Key } from "@/lib/i18n";
 
@@ -45,6 +46,8 @@ export default function Home() {
           <ProofTable />
         </div>
       </section>
+
+      <LedgerStrip />
 
       <section className="mx-auto max-w-7xl px-4 py-16">
         <h2 className="text-3xl font-semibold">{t("home.how")}</h2>
