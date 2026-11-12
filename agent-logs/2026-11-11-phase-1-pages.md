@@ -76,3 +76,12 @@ Still browser-untested: signed-in Onboarding (chat, stepper, fact capture), the 
 **311 passed, 0 failed, 0 skipped (5m38s)**, Postgres+pgvector up. (Baseline before this work: 278.) The first full run found 1 failure:
 eight tests upload a byte-identical sample credential, which the new TRU-03 duplicate rule correctly flags. The `client` fixture now
 clears documents left by earlier tests; the rule is unchanged and has its own test.
+
+# Phase 2: MFA at login (v2/adm-04b-mfa-login, off pg-15)
+Staff login (/v1/admin/auth/login) now requires a TOTP or single-use recovery code whenever an authenticator is enrolled; no cookie
+is issued without it; a wrong code counts toward the lockout (429); asking for the code does not. Successful MFA login opens the
+step-up window. Staff who have not enrolled still sign in with a password so they can enrol. Console login page shows the code field
+when the server asks. 4 new tests; test_mfa + test_admin_origin + test_mfa_recovery = 24 passed.
+KNOWN GAP: a member-login Bearer token still reaches /v1/admin (the cookie split protects browsers only). With STAFF_MFA_REQUIRED the
+enrolment gate and step-up still apply, but an enrolled staff member's password-only Bearer token is not code-checked. Closing it
+means binding staff API access to the admin login (a breaking change for API clients/tests): needs an owner decision.
