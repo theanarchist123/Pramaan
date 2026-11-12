@@ -238,3 +238,13 @@ fully green run of the final test file. Re-run after `docker compose up -d db re
 - Test infra: bypassCSP in the test context only (Playwright's waitForFunction is blocked by the app's CSP, which is unchanged).
 - Still not to spec: Agent Floor (a public replay of RECORDED real runs needs a privacy decision: run messages can contain names), header
   (compress on scroll, account menu, mobile bottom tab bar), command palette people preview, Hindi copy, Unsplash photos (owner step).
+
+# Header to spec 6.0 (v2/pg-16-visual-theme)
+Public nav is four places (Directory, Verify, Transparency, Developers); Mission Control and Admin leave the header (staff console is in the account
+menu for admins). Account menu (shadcn DropdownMenu): My record / Sign in, dark mode, larger text, reduce motion (checkbox items that report
+state and really change the page), Install app (via a new useInstall hook), Sign out. Header compresses on scroll (instant height change: no
+animation on layout properties). Phones: a bottom tab bar (Directory, Verify, Get listed or My record, Search) with safe-area padding; main reserves
+space so content is never covered. New strings in English AND Hindi (the Hindi object is typed against the English keys; Hindi wording is mine and
+needs a native-speaker review). Browser test apps/web/scripts/smoke-header.mjs 6/6 (needs no API). Test bugs of mine fixed on the way (menu stays
+open after a checkbox; role queries skip hidden elements; main includes its own padding).
+Not done: the command palette's People preview pane and `?` shortcuts overlay (spec M-24), footer strip "Sealed N certificates", offline banner.

@@ -17,8 +17,7 @@ interface InstallEvent extends Event {
  * triggers the real install dialog where the browser allows it, and explains the manual steps where it doesn't.
  * Hidden once the app is already installed / running standalone.
  */
-export function InstallButton() {
-  const { t } = useI18n();
+export function useInstall(): { available: boolean; install: () => Promise<void> } {
   const [event, setEvent] = useState<InstallEvent | null>(null);
   const [installed, setInstalled] = useState(true); // hidden until we know (avoids a flash and SSR mismatch)
 
@@ -44,8 +43,6 @@ export function InstallButton() {
     };
   }, []);
 
-  if (installed) return null;
-
   async function install() {
     if (event) {
       await event.prompt();
@@ -63,6 +60,13 @@ export function InstallButton() {
     );
   }
 
+  return { available: !installed, install };
+}
+
+export function InstallButton() {
+  const { t } = useI18n();
+  const { available, install } = useInstall();
+  if (!available) return null;
   return (
     <Button variant="ghost" size="sm" className="gap-1 px-2 font-medium" onClick={install}>
       <Download className="size-4" /> <span className="hidden sm:inline">{t("nav.install")}</span>
