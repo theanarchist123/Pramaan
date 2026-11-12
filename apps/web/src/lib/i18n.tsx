@@ -49,6 +49,7 @@ const en = {
 
   "chat.subtitle": "Your interviewer · speaks your language",
   "chat.placeholder": "Type or tap the mic to speak…", "chat.listening": "Listening…",
+  "chat.voice_note": "Your browser turns your voice into text. Some browsers send the audio to the browser maker's speech service. Check the text before you send it.",
   "chat.send": "Send", "chat.message": "Your message", "chat.speak": "Speak your answer", "chat.stop": "Stop listening",
 
   "verify.title": "Verify a certificate",
@@ -107,6 +108,7 @@ const hi: Partial<Record<Key, string>> = {
 
   "chat.subtitle": "आपका इंटरव्यूअर · आपकी भाषा में बात करता है",
   "chat.placeholder": "लिखिए, या बोलने के लिए माइक दबाइए…", "chat.listening": "सुन रहा हूँ…",
+  "chat.voice_note": "आपका ब्राउज़र आपकी आवाज़ को लिखित रूप में बदलता है। कुछ ब्राउज़र आवाज़ को अपनी कंपनी की स्पीच सेवा को भेजते हैं। भेजने से पहले लिखा हुआ पढ़ लीजिए।",
   "chat.send": "भेजें", "chat.message": "आपका संदेश", "chat.speak": "बोलकर जवाब दीजिए", "chat.stop": "सुनना बंद करें",
 
   "verify.title": "प्रमाणपत्र सत्यापित करें",

@@ -23,6 +23,14 @@ function getRecognitionCtor(): (new () => Recognition) | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+/** What you said goes into the message box for you to check before sending (a misheard name must not be recorded as a fact). */
+export function appendSpoken(existing: string, spoken: string): string {
+  const s = spoken.trim();
+  if (!s) return existing;
+  const e = existing.trimEnd();
+  return e ? `${e} ${s}` : s;
+}
+
 export function useSpeechInput(lang: string, onFinal: (text: string) => void) {
   const [supported, setSupported] = useState(false);
   const [listening, setListening] = useState(false);
@@ -42,12 +50,15 @@ export function useSpeechInput(lang: string, onFinal: (text: string) => void) {
     recRef.current?.stop();
   }, []);
 
-  const start = useCallback(() => {
+  const start = useCallback((local = true) => {
     const Ctor = getRecognitionCtor();
     if (!Ctor) return;
     recRef.current?.abort();
     const rec = new Ctor();
     rec.lang = lang;
+    // Prefer on-device recognition where the browser offers it (MDN: SpeechRecognition.processLocally). Otherwise some browsers send the audio to
+    // their maker's speech service, which the notice under the microphone says.
+    if (local && "processLocally" in rec) rec.processLocally = true;
     rec.interimResults = true;
     rec.continuous = false;
     rec.onresult = (e: any) => {
@@ -65,9 +76,11 @@ export function useSpeechInput(lang: string, onFinal: (text: string) => void) {
       setListening(false);
       setInterim("");
     };
-    rec.onerror = () => {
+    rec.onerror = (e: any) => {
       setListening(false);
       setInterim("");
+      // This language is not installed for on-device recognition: use the browser online service, which the notice already discloses.
+      if (local && e?.error === "language-not-supported") setTimeout(() => start(false), 0);
     };
     recRef.current = rec;
     setListening(true);

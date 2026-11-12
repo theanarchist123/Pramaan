@@ -1,0 +1,125 @@
+{
+ "note": "Fictional people. Expected profile fields after ONE turn. Run live to measure Saathi; the offline mock only checks the plumbing.",
+ "cases": [
+  {
+   "id": "s01",
+   "language": "English",
+   "say": "My name is Meera Iyer, I am a physicist from Kerala.",
+   "expect": {
+    "full_name": "Meera Iyer",
+    "state": "Kerala",
+    "sector": "Science"
+   }
+  },
+  {
+   "id": "s02",
+   "language": "English",
+   "say": "I'm Rahul Verma, a surgeon in Delhi.",
+   "expect": {
+    "full_name": "Rahul Verma",
+    "state": "Delhi",
+    "sector": "Healthcare"
+   }
+  },
+  {
+   "id": "s03",
+   "language": "English",
+   "say": "Call me Priya Nair. I write novels. I live in Tamil Nadu.",
+   "expect": {
+    "full_name": "Priya Nair",
+    "state": "Tamil Nadu",
+    "sector": "Literature"
+   }
+  },
+  {
+   "id": "s04",
+   "language": "English",
+   "say": "This is Arun Kumar, a wrestling coach from Punjab.",
+   "expect": {
+    "full_name": "Arun Kumar",
+    "state": "Punjab",
+    "sector": "Sports"
+   }
+  },
+  {
+   "id": "s05",
+   "language": "Hindi",
+   "say": "मेरा नाम सुनीता शर्मा है, मैं उत्तर प्रदेश की शिक्षिका हूँ।",
+   "expect": {
+    "full_name": "सुनीता शर्मा",
+    "state": "Uttar Pradesh",
+    "sector": "Education"
+   }
+  },
+  {
+   "id": "s06",
+   "language": "Hindi",
+   "say": "मैं विजय कुमार हूँ, राजस्थान में पवन ऊर्जा पर काम करता हूँ।",
+   "expect": {
+    "full_name": "विजय कुमार",
+    "state": "Rajasthan",
+    "sector": "Energy"
+   }
+  },
+  {
+   "id": "s07",
+   "language": "Hindi",
+   "say": "मेरा नाम अनीता देसाई है और मैं महाराष्ट्र की डॉक्टर हूँ।",
+   "expect": {
+    "full_name": "अनीता देसाई",
+    "state": "Maharashtra",
+    "sector": "Healthcare"
+   }
+  },
+  {
+   "id": "s08",
+   "language": "Hinglish",
+   "say": "Mera naam Karan Singh hai, main Gujarat mein business karta hoon.",
+   "expect": {
+    "full_name": "Karan Singh",
+    "state": "Gujarat",
+    "sector": "Business"
+   }
+  },
+  {
+   "id": "s09",
+   "language": "Hinglish",
+   "say": "Main Neha Gupta, Bihar se, social work karti hoon.",
+   "expect": {
+    "full_name": "Neha Gupta",
+    "state": "Bihar",
+    "sector": "Social Work"
+   }
+  },
+  {
+   "id": "s10",
+   "language": "Marathi",
+   "say": "माझं नाव स्मिता पाटील आहे, मी महाराष्ट्रातील शेतकरी आहे.",
+   "expect": {
+    "full_name": "स्मिता पाटील",
+    "state": "Maharashtra",
+    "sector": "Agriculture"
+   }
+  },
+  {
+   "id": "s11",
+   "language": "Tamil",
+   "say": "என் பெயர் லக்ஷ்மி ஐயர், நான் தமிழ்நாட்டில் நடனக் கலைஞர்.",
+   "expect": {
+    "full_name": "லக்ஷ்மி ஐயர்",
+    "state": "Tamil Nadu",
+    "sector": "Arts & Culture"
+   }
+  },
+  {
+   "id": "s12",
+   "language": "Bengali",
+   "say": "আমার নাম অনিল চ্যাটার্জি, আমি পশ্চিমবঙ্গের বিজ্ঞানী।",
+   "expect": {
+    "full_name": "অনিল চ্যাটার্জি",
+    "state": "West Bengal",
+    "sector": "Science"
+   }
+  }
+ ]
+}

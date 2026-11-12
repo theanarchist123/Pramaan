@@ -6,7 +6,7 @@ import { Mic, MicOff, SendHorizontal, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AgentAvatar } from "@/components/agent-feed";
-import { VOICE_LANGS, speak, stopSpeaking, useSpeechInput } from "@/hooks/use-speech";
+import { VOICE_LANGS, appendSpoken, speak, stopSpeaking, useSpeechInput } from "@/hooks/use-speech";
 import { speechLocale, useI18n } from "@/lib/i18n";
 import { markCaptured } from "@/lib/fact-capture";
 import { cn } from "@/lib/utils";
@@ -46,8 +46,8 @@ export function ChatPanel({
   const lastSpoken = useRef(0);
 
   const { supported, listening, interim, start, stop } = useSpeechInput(lang, (spoken) => {
-    // Voice-first: what you say is sent straight away, like talking to a person.
-    onSend(spoken);
+    // What you say lands in the box for you to read and send: speech recognition mishears names, and a misheard fact must not be recorded.
+    setText((prev) => appendSpoken(prev, spoken));
   });
 
   useEffect(() => {
@@ -184,7 +184,7 @@ export function ChatPanel({
                 variant={listening ? "default" : "outline"}
                 className={cn("size-11 rounded-full", listening && "animate-pulse")}
                 aria-label={listening ? t("chat.stop") : t("chat.speak")}
-                onClick={listening ? stop : start}
+                onClick={listening ? stop : () => start()}
               >
                 {listening ? <MicOff /> : <Mic />}
               </Button>
@@ -215,6 +215,7 @@ export function ChatPanel({
             </Button>
           </div>
         )}
+        {supported && !disabled && <p className="mt-1.5 text-xs text-muted-foreground">{t("chat.voice_note")}</p>}
       </div>
     </section>
   );
