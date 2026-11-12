@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import hmac
+import hashlib
+import base64
 import logging
 import smtplib
 from datetime import datetime, timedelta, timezone
@@ -15,7 +18,7 @@ from app.agents import doot
 from app.agents.events import RunContext
 from app.config import get_settings
 from app.db import get_sessionmaker
-from app.models import Certificate, Consent, OutboxMessage, Profile, ReviewItem, User
+from app.models import EmailSuppression, Certificate, Consent, OutboxMessage, Profile, ReviewItem, User
 
 log = logging.getLogger("pramaan.outreach")
 
@@ -96,16 +99,78 @@ def _smtp_send(to: str, subject: str, body: str) -> None:
         smtp.send_message(msg)
 
 
+# ---- safeguards (AGT-09): enforced in send(), the one place every email passes, so no route (immediate, scheduled, retried) can skip them -------
+FREQUENCY_CAP = 3          # most emails to one address ...
+FREQUENCY_WINDOW_DAYS = 30  # ... in this many days; the next one waits for a person to decide
+
+
+def _norm(email: str) -> str:
+    return email.strip().lower()
+
+
+def email_hash(email: str) -> str:
+    """Keyed hash of the address (the suppression list never stores addresses)."""
+    return hmac.new(get_settings().jwt_secret.encode(), _norm(email).encode(), hashlib.sha256).hexdigest()
+
+
+def unsubscribe_token(email: str) -> str:
+    """address (base64url) + a signature only this server can make, so nobody can unsubscribe someone else or mint a token for a made-up address."""
+    raw = base64.urlsafe_b64encode(_norm(email).encode()).decode().rstrip("=")
+    return f"{raw}.{hmac.new(get_settings().jwt_secret.encode(), raw.encode(), hashlib.sha256).hexdigest()[:32]}"
+
+
+def email_from_token(token: str) -> str | None:
+    try:
+        raw, sig = token.rsplit(".", 1)
+        good = hmac.new(get_settings().jwt_secret.encode(), raw.encode(), hashlib.sha256).hexdigest()[:32]
+        if not hmac.compare_digest(sig, good):
+            return None
+        return base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4)).decode()
+    except (ValueError, UnicodeDecodeError):
+        return None
+
+
+async def suppress(session: AsyncSession, email: str, reason: str = "") -> None:
+    if not (await session.execute(select(EmailSuppression).where(EmailSuppression.email_hash == email_hash(email)))).first():
+        session.add(EmailSuppression(email_hash=email_hash(email), reason=reason[:200]))
+
+
+async def is_suppressed(session: AsyncSession, email: str) -> bool:
+    return (await session.execute(select(EmailSuppression.id).where(EmailSuppression.email_hash == email_hash(email)))).first() is not None
+
+
+async def _recent_sent(session: AsyncSession, email: str) -> int:
+    since = _now() - timedelta(days=FREQUENCY_WINDOW_DAYS)
+    rows = (await session.execute(select(OutboxMessage.to_email).where(OutboxMessage.status == "sent", OutboxMessage.sent_at > since))).scalars().all()
+    return sum(1 for e in rows if _norm(e) == _norm(email))
+
+
+def _with_unsubscribe(body: str, email: str) -> str:
+    """The system, not the model, appends this (invariant I-7 concerns links the MODEL adds)."""
+    url = f"{get_settings().api_base_url.rstrip('/')}/v1/outreach/unsubscribe?token={unsubscribe_token(email)}"
+    return f"{body.rstrip()}\n\n--\nYou are getting this because of your Pramaan record. To stop these emails, open:\n{url}\n"
+
+
 async def send(session: AsyncSession, msg: OutboxMessage) -> OutboxMessage:
     """Deliver one message. Without SMTP configured this is a recorded dry run, not a silent no-op."""
     if "\n" in msg.to_email or "\r" in msg.to_email or "@" not in msg.to_email:
         msg.status, msg.error = "draft", "invalid recipient address"
         return msg
+    # Safeguards first, in this order, for EVERY path (a dry run must not pretend to send to someone who opted out).
+    if await is_suppressed(session, msg.to_email):
+        msg.status, msg.error = "discarded", "recipient has opted out: not sent"
+        return msg
+    if msg.profile_id is not None and await _opted_out(session, msg.profile_id):
+        msg.status, msg.error = "discarded", "outreach consent was withdrawn: not sent"
+        return msg
+    if await _recent_sent(session, msg.to_email) >= FREQUENCY_CAP:
+        msg.status, msg.error = "draft", f"frequency cap: already {FREQUENCY_CAP} emails to this address in {FREQUENCY_WINDOW_DAYS} days; a person decides"
+        return msg
     if not get_settings().smtp_host:
         msg.status, msg.sent_at, msg.error = "sent", _now(), "dry-run: SMTP not configured, nothing was emailed"
         return msg
     try:
-        await asyncio.to_thread(_smtp_send, msg.to_email, msg.subject, msg.body)
+        await asyncio.to_thread(_smtp_send, msg.to_email, msg.subject, _with_unsubscribe(msg.body, msg.to_email))
         msg.status, msg.sent_at, msg.error = "sent", _now(), ""
     except Exception as exc:  # noqa: BLE001
         msg.status, msg.error = "draft", f"send failed: {type(exc).__name__}"  # back to draft; a human decides

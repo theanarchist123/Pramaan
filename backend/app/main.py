@@ -136,7 +136,7 @@ telemetry.setup(app)  # OTLP export only if OTEL_EXPORTER_OTLP_ENDPOINT is set
 
 for r in (
     auth.router, profiles.router, onboarding.router, agents.router, directory.router,
-    admin_auth.router, review.router, staff.router, images.public, images.admin, verify.router, apikeys.router, webhooks.router, badges.router, fields.router, builder.router, outreach.router, admin.router, registry.router, vc.router, identity.router,
+    admin_auth.router, review.router, staff.router, images.public, images.admin, verify.router, apikeys.router, webhooks.router, badges.router, fields.router, builder.router, outreach.router, admin.router, registry.router, vc.router, identity.router, outreach.public,
 ):
     app.include_router(r)
 
