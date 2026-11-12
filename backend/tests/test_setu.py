@@ -81,7 +81,7 @@ async def test_the_run_stores_only_validated_edges_and_the_graph_shows_them_with
 
     async with get_sessionmaker()() as s:
         ctx = await start_run("setu_test")
-        report = await setu.run(ctx, s)
+        report = await setu.run(ctx, s, limit=100000)
         await s.commit()
     assert report["accepted"] >= 1 and report["rejected"] >= 0
 
@@ -90,7 +90,7 @@ async def test_the_run_stores_only_validated_edges_and_the_graph_shows_them_with
     assert len(links) == 1 and "tidal energy" in links[0]["why"] and "co-author" in links[0]["why"].lower()  # the evidence travels with the edge
 
     async with get_sessionmaker()() as s:  # running it again must not duplicate
-        await setu.run(await start_run("setu_test"), s)
+        await setu.run(await start_run("setu_test"), s, limit=100000)
         await s.commit()
         pair = [e for e in (await s.execute(select(SetuEdge))).scalars().all() if {str(e.a_id), str(e.b_id)} == {raj['id'], ananya['id']}]
         assert len(pair) == 1  # still exactly one stored edge after a second run
