@@ -121,3 +121,13 @@ GET /v1/admin/consents?profile_id= (consent.read, read-only). Web: ProfileStatus
 KNOWN LIMITS: a suspended person's certificates still verify as genuine (a certificate is a signed historical fact; whether suspension
 should also flag them is a policy decision, not made here). No console screens for suspend/restore or the consent view yet (API only).
 Not done: merge duplicates (profile.merge), correct a profile (profile.correct), takedown processing, DSR export/erasure queue, retention.
+
+# Phase 3: TRU-10 verify-js (v2/tru-10-verify-js, off adm-16)
+packages/verify-js (@pramaan/verify): dependency-free WebCrypto ES module: canonical JSON, certificate verification (keys supplied by the
+caller; key id must equal the SHA-256 of the key so a key cannot be swapped under another id), RFC 6962/9162 inclusion + consistency
+verification, signed-checkpoint verification. TypeScript declarations. 10 tests pass against vectors produced by the BACKEND's Python
+code (test/make-fixtures.py regenerates them): every inclusion proof for sizes 1..12, every consistency pair, signed checkpoint, tamper cases.
+Web now uses it (lib/offline-verify.ts); Verify browser test still passes 12/12.
+NOT done: the <pramaan-verify> web component and docs; moving apps/desktop onto the package (the desktop app is outside the pnpm
+workspace and its verifier is synchronous CommonJS; its own 9 vectors still pass but it is a second copy); pinning a key fingerprint
+inside the desktop app; checkpoint/revocation sync.

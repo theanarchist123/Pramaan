@@ -1,0 +1,13 @@
+{
+  "name": "@pramaan/verify",
+  "version": "0.1.0",
+  "description": "Verify Pramaan certificates and the public log on the viewer's own device. No dependencies.",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": { ".": { "types": "./src/index.d.ts", "default": "./src/index.js" } },
+  "files": ["src"],
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": { "test": "node --test" }
+}

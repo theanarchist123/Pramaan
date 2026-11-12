@@ -32,7 +32,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Self-contained server bundle: what the Docker image runs.
   output: "standalone",
-  transpilePackages: ["@pramaan/ui"], // workspace package shipped as TypeScript source
+  transpilePackages: ["@pramaan/ui", "@pramaan/verify"], // workspace package shipped as TypeScript source
   // The web app lives in a pnpm workspace: trace dependencies from the repo root so the standalone bundle is complete.
   outputFileTracingRoot: path.join(__dirname, "../../"),
   // Lets a production build live beside a running `next dev` without clobbering its .next folder.
