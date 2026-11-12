@@ -65,10 +65,10 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
       <div className="lg:grid lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start lg:gap-8">
       <header className="overflow-hidden rounded-3xl border border-border bg-card lg:sticky lg:top-20">
         <div className="relative h-24 overflow-hidden" style={{ background: `linear-gradient(120deg, ${color.ink}, ${color.primary})` }}>
-          <SectorImage sector={p.sector} purpose="cover" width={900} className="absolute inset-0 size-full rounded-none opacity-90" />
+          <SectorImage sector={p.sector} purpose="cover" width={900} creditAlign="right" className="absolute inset-0 size-full rounded-none opacity-90" />
         </div>
         <div className="px-6 pb-6">
-          <div className="-mt-10 flex size-20 items-center justify-center rounded-full border-4 border-card font-display text-3xl font-semibold text-white" style={{ background: color.ink }} aria-hidden="true">
+          <div className="relative z-10 -mt-10 flex size-20 items-center justify-center rounded-full border-4 border-card font-display text-3xl font-semibold text-white" style={{ background: color.ink }} aria-hidden="true">
             {p.full_name.replace(/^(Dr\.?|Prof\.?|Adv\.?|Justice)\s+/i, "").charAt(0)}
           </div>
           <div className="mt-3 flex flex-col gap-3">

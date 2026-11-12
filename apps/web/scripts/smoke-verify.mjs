@@ -46,7 +46,8 @@ const replaced = await certified("replaced");
 const revoked = await certified("revoked");
 sql(`update certificates set revoked_at = now() where code = '${revoked.cert.code}'`);
 
-const browser = await chromium.launch();
+// Playwright's bundled Chromium has no Ed25519 in WebCrypto unless this flag is on (Chrome 137+, Firefox and Safari have it natively).
+const browser = await chromium.launch({ args: ["--enable-experimental-web-platform-features"] });
 const errors = [];
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 const page = await ctx.newPage();
@@ -138,10 +139,12 @@ await step("ALTERED file: the offline check refuses an edited certificate file",
   await page.locator('input[type="file"]').setInputFiles({ name: "edited.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(cert)) });
   await page.getByText(/edited|does not match/i).first().waitFor();
 });
-await step("GENUINE file: checked on this device (or says plainly that this browser lacks Ed25519)", async () => {
+await step("GENUINE file: really verified on this device (Ed25519 in the browser)", async () => {
   const cert = await (await fetch(`${API}/v1/certificates/${valid.cert.code}`)).json();
   await page.locator('input[type="file"]').setInputFiles({ name: "cert.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(cert)) });
-  await page.getByText(/Authentic: |does not support Ed25519/).first().waitFor();
+  // STRICT: a genuine file must really verify in the browser. (An earlier version also accepted the "does not support Ed25519" fallback, which hid
+  // that the test browser could not do the check at all.)
+  await page.getByText(/Authentic: /).first().waitFor({ timeout: 20000 });
 });
 await step("REDUCED MOTION: with the in-app switch on, every check is shown at once", async () => {
   await page.goto(`${WEB}/verify/${valid.cert.code}`);

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pramaan verify widget: demo</title>
+  <style>body { font: 16px/1.5 system-ui, sans-serif; margin: 2rem auto; max-width: 40rem; padding: 0 1rem; }</style>
+</head>
+<body>
+  <h1>Embed a certificate check</h1>
+  <p>This page is a demo of the <code>&lt;pramaan-verify&gt;</code> element. Open it as <code>?code=PRM-XXXXXXXXXX&amp;api=https://your-api</code>.</p>
+  <div id="slot"></div>
+  <script type="module" src="/pramaan-verify/element.js"></script>
+  <script type="module">
+    // The demo reads the code and API from the address bar and builds the element with textContent-safe setAttribute calls.
+    const q = new URLSearchParams(location.search);
+    const el = document.createElement("pramaan-verify");
+    el.setAttribute("code", q.get("code") || "");
+    el.setAttribute("api", q.get("api") || "");
+    el.setAttribute("site", location.origin);
+    document.getElementById("slot").append(el);
+  </script>
+</body>
+</html>
