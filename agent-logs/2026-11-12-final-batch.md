@@ -18,3 +18,18 @@ Still open: AGT-02/04/05/07/08/10/11/13, API-01/02/05/06/07/09/10, DSK-02..06, M
 - API-01 (partial): read-only `pk_test_` keys (creation refuses write scopes; authentication clamps scopes again). No migration needed.
 - API-05 NOT done on purpose: replaying a delivery needs the payload stored, which needs a migration (always-human-review path) and
   stores personal data in a table that today holds none. Decision for the owner: store payload hash + event id and rebuild on replay, or store payloads.
+
+## Second pass (same day)
+Merged to main, backend suite 418 passed on the tip before the last small merges:
+- API-03: problem+json (detail unchanged for clients) and RateLimit-* headers. Idempotency keys and cursor pagination NOT done.
+- AGT-07: Prahari policy as versioned data (`agents/policy.py`), behaviour unchanged and pinned by a test, decisions record `policy_version`; shadow helper. prahari.py is an always-human-review path: PLEASE REVIEW that diff.
+- AGT-08 (partial): filter chips + model-free fallback plan. Multilingual embedding evaluation NOT done (needs licences + golden set).
+- API-09 (partial): read-only MCP server at POST /mcp; ADR 0005 records the spec versions checked.
+- API-07 (partial): Postman collection generated from OpenAPI with a test.
+- AGT-11 (partial): deterministic onboarding coverage; ready_to_submit needs the required fields. Voice NOT done.
+- MOB-01 (partial): share target. DSK-02 (partial): clipboard verifier shortcut. DSK-03 (partial): login-item toggle.
+- Admin console: Registry page (consents, suspend/restore).
+Tests of mine fixed with reasons: Setu test (50-profile window), ETag tests (async client), Postman test (runtime plugin routes).
+Not run: browser suites; desktop test run directly with node (pnpm tried to reinstall).
+Deliberately not started (each needs a decision or a migration): API-02 OAuth (auth-code storage = migration), API-05 replay, API-10 usage counts (new table),
+AGT-04/05/13 (model-quality or AI-written-code pipelines that need live-model evals and human review), DSK-04..06, MOB-02..03.
