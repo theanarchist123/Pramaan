@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 /** Three honest stages from the server's status. Each is icon + text + colour, never colour alone. */
 export function StatusStepper({ profile }: { profile: Profile }) {
   const stages = stagesOf(profile);
-  const rejected = profile.status === "rejected";
+  const rejected = profile.status === "rejected" || profile.status === "suspended";
   return (
     <ol aria-label="Progress" className="flex flex-wrap items-start gap-x-6 gap-y-2">
       {stages.map((s, i) => {

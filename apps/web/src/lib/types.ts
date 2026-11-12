@@ -1,7 +1,7 @@
 // Mirrors backend/app/schemas.py — keep in sync (Phase 6 generates these from OpenAPI).
 
 export type ClaimStatus = "self" | "web" | "document" | "human" | "issuer";
-export type ProfileStatus = "draft" | "pending_review" | "approved" | "rejected";
+export type ProfileStatus = "draft" | "pending_review" | "approved" | "rejected" | "suspended";
 
 export interface Evidence {
   id: string;

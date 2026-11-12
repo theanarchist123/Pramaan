@@ -203,7 +203,9 @@ export default function OnboardPage() {
           onSend={send}
           disabled={!editable}
           disabledReason={
-            profile.status === "approved"
+            profile.status === "suspended"
+              ? "The registry has suspended this profile, so it can't be edited. Contact the registry for the reason."
+              : profile.status === "approved"
               ? profile.decision_basis === "reviewer"
                 ? "Your profile was reviewed and approved by a person."
                 : profile.decision_basis === "automation"
