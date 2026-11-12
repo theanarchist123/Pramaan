@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BadgeCheck, ChevronRight, MapPin, Quote } from "lucide-react";
+import { BadgeCheck, ChevronRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectorChip } from "@/components/directory/result-card";
-import { VerificationBadge } from "@/components/verification-badge";
+import { ClaimCard } from "@/components/profile/claim-card";
+import { decisionLine, summarise } from "@/lib/claim-summary";
 import { API_URL } from "@/lib/api";
 import { paletteFor } from "@/lib/certificate-art";
 import type { Profile } from "@/lib/types";
@@ -33,10 +34,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const data = await load((await params).slug);
   if (!data) return { title: "Profile not found" };
   const { profile: p } = data;
-  const verified = p.claims.filter((c) => c.status !== "self").length;
+  const verified = summarise(p.claims).confirmed;
   return {
     title: p.full_name,
-    description: `${p.headline || p.sector}${p.state ? ` · ${p.state}` : ""} — ${verified} achievement${verified === 1 ? "" : "s"} checked against evidence on Pramaan.`,
+    description: `${p.headline || p.sector}${p.state ? ` · ${p.state}` : ""} — ${verified} achievement${verified === 1 ? "" : "s"} confirmed by evidence on Pramaan.`,
   };
 }
 
@@ -47,7 +48,8 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
   const defs = await loadFields();
   const extras = defs.filter((d) => p.custom?.[d.key] != null && p.custom[d.key] !== "");
   const color = paletteFor(p.sector);
-  const verified = p.claims.filter((c) => c.status !== "self");
+  const sum = summarise(p.claims);
+  const decided = decisionLine(p);
   const order = { issuer: 0, document: 1, human: 2, web: 3, self: 4 } as const;
   const claims = [...p.claims].sort((a, b) => order[a.status] - order[b.status]);
 
@@ -78,8 +80,8 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
                 {p.is_demo && <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Fictional demo profile</span>}
               </div>
             </div>
-            <p className="inline-flex items-center gap-1.5 rounded-full bg-verified-soft px-3 py-1.5 text-sm font-medium text-verified">
-              <BadgeCheck className="size-4" /> {verified.length} of {p.claims.length} claims verified
+            <p className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${sum.confirmed ? "bg-verified-soft text-verified" : "bg-muted text-muted-foreground"}`}>
+              <BadgeCheck aria-hidden className="size-4" /> {sum.confirmed} of {sum.total} claims confirmed
             </p>
           </div>
           {p.bio && <p className="mt-5 max-w-2xl text-[17px] leading-relaxed">{p.bio}</p>}
@@ -87,7 +89,7 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
             <dl className="mt-5 grid gap-x-8 gap-y-3 sm:grid-cols-2">
               {extras.map((d) => (
                 <div key={d.key}>
-                  <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{d.label}</dt>
+                  <dt className="text-xs text-muted-foreground">{d.label}</dt>
                   <dd className="text-[15px]">
                     {d.type === "url" ? <a href={String(p.custom[d.key])} target="_blank" rel="noreferrer noopener nofollow" className="text-primary underline">{String(p.custom[d.key])}</a> : show(p.custom[d.key])}
                   </dd>
@@ -104,38 +106,14 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
       </header>
 
       <section className="mt-8" aria-labelledby="ach">
-        <h2 id="ach" className="text-2xl font-semibold">Achievements & the proof behind them</h2>
+        <h2 id="ach" className="text-2xl font-semibold">Achievements and the proof behind them</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {sum.confirmed} confirmed by a document, issuer or reviewer · {sum.web} backed by a public source · {sum.self} self-claimed.
+          {decided ? ` ${decided}` : ""}
+        </p>
         <ul className="mt-4 space-y-3">
           {claims.map((c) => (
-            <li key={c.id} className="rounded-2xl border border-border bg-card p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {c.field}{c.year ? ` · ${c.year}` : ""}
-                  </p>
-                  <p className="mt-0.5">{c.value}</p>
-                </div>
-                <VerificationBadge status={c.status} className="shrink-0" />
-              </div>
-              {c.evidence.filter((e) => e.kind !== "chat").length > 0 && (
-                <details className="mt-3 text-sm">
-                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Show the evidence</summary>
-                  <ul className="mt-2 space-y-2">
-                    {c.evidence.filter((e) => e.kind !== "chat").map((e) => (
-                      <li key={e.id} className="rounded-xl bg-muted/60 p-3">
-                        <p className="flex gap-2 italic"><Quote className="mt-0.5 size-3.5 shrink-0 opacity-60" /> {e.quote}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {e.kind === "document" ? "From an uploaded credential" : "From a public source"}
-                          {e.url && !p.is_demo && (
-                            <> · <a href={e.url} target="_blank" rel="noreferrer" className="underline">open source</a></>
-                          )}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-            </li>
+            <ClaimCard key={c.id} claim={c} isDemo={p.is_demo} />
           ))}
         </ul>
       </section>
@@ -144,7 +122,7 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
         <section className="mt-8 rounded-2xl border border-border bg-card p-5" aria-labelledby="cert">
           <h2 id="cert" className="text-xl font-semibold">Signed certificate</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Cryptographically signed and recorded in the public transparency log. Anyone can verify it — or try to forge it.
+            Cryptographically signed and recorded in the public transparency log. Anyone can check it, or try to forge it.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {certs.map((c) => (
