@@ -321,3 +321,12 @@ Verify smoke 12/12 on the production build incl. new assertions. Two stale tests
 header change; legacy smoke.mjs). None of these browser scripts run in CI (.github/workflows has no smoke steps).
 NOT done: the headline / city in the certificate's subtitle (not in the signed payload: adding them changes what is signed), Chitrakar as a real agent
 (9.3), a same-origin guard test for the renderer beyond what exists, print-variant bleed/greyscale testing on a real printer, PDF accessibility tagging.
+
+# AGT-09 Doot safeguards (v2/agt-09-doot-safeguards)
+Found: the only outreach safeguard was the profile-level consent checked when a message was DRAFTED; nothing at send time. Added, in send() (the one place every
+email passes: immediate, scheduled, retried): (1) a suppression list (keyed hash of the address, never the address; case-insensitive), (2) outreach consent
+re-checked at send time (withdrawn after drafting => discarded), (3) a frequency cap (3 emails per address in 30 days; the next waits as a DRAFT for a person),
+(4) an unsubscribe link appended by the SYSTEM to every sent email (HMAC-signed token; forging or editing it does nothing; clicking twice is safe), public
+GET /v1/outreach/unsubscribe, and POST /v1/admin/suppressions for staff. A dry run obeys the same rules. Migration 0015 (new table; rehearsal passes).
+6 new tests + all existing outreach/hardening tests: 52 passed. NOT done: templates and schedules as first-class objects, policy auto-send for approved low-risk
+kinds (AGT-09 asks for it; sending without a human is a decision for the owner), an unsubscribe landing PAGE (the link returns JSON), a staff screen for the list.

@@ -123,3 +123,30 @@ async def discard(msg_id: uuid.UUID, _: Principal = Depends(require_admin), sess
     await session.commit()
     await session.refresh(m)
     return m
+
+
+# ---- public unsubscribe (linked from every email) and the suppression list -------------------------------------------------------------------
+public = APIRouter(prefix="/v1/outreach", tags=["outreach"])
+
+
+@public.get("/unsubscribe")
+async def unsubscribe(token: str, session: AsyncSession = Depends(get_session)):
+    """One click, no sign-in. Safe to open twice. A token that was not made by this server does nothing."""
+    email = svc.email_from_token(token)
+    if email is None:
+        raise HTTPException(400, "This unsubscribe link is not valid")
+    await svc.suppress(session, email, reason="unsubscribed from an email link")
+    await session.commit()
+    return {"unsubscribed": True, "message": "You will not receive any more emails from Pramaan."}
+
+
+class SuppressIn(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+    reason: str = Field(default="", max_length=200)
+
+
+@router.post("/suppressions", status_code=201)
+async def add_suppression(body: SuppressIn, _: Principal = Depends(require_admin), session: AsyncSession = Depends(get_session)):
+    await svc.suppress(session, body.email, reason=body.reason or "added by staff")
+    await session.commit()
+    return {"suppressed": True}

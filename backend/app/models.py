@@ -442,6 +442,17 @@ class OutboxMessage(Base):
     created_at: Mapped[datetime] = ts()
 
 
+class EmailSuppression(Base):
+    """Someone who asked not to be emailed (AGT-09). Only a keyed hash of the address is stored, never the address itself."""
+
+    __tablename__ = "email_suppressions"
+
+    id: Mapped[uuid.UUID] = pk()
+    email_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    reason: Mapped[str] = mapped_column(String(200), default="")
+    created_at: Mapped[datetime] = ts()
+
+
 class LlmCall(Base):
     """One live model call: who, how long, how many tokens. The raw material for per-run cost and latency views."""
 
