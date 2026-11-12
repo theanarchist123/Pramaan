@@ -85,6 +85,13 @@ await step("VALID: 'Authentic', five checks cascade, one certificate on the page
   await list.getByText(/Found at position/).waitFor();
   await list.getByText("Confirmed it has not been revoked").waitFor();
   assert.equal(await page.locator("#certificate").count(), 1, "exactly one certificate (no second copy for forge mode)");
+  // the redesigned certificate: sentence-case title, a status in words beside each claim, and the honest QR note (no tracked all-caps, no "tamper-proof" claim)
+  const cert = page.locator("#certificate");
+  await cert.getByText("Certificate of verified record").waitFor();
+  await cert.getByText("Registry of Record").waitFor();
+  await cert.getByText("Printed copies can be altered; the online record cannot.").waitFor();
+  assert.equal(await cert.getByText(/CERTIFICATE OF VERIFIED ACHIEVEMENT/).count(), 0, "the old tracked all-caps title is gone");
+  assert.equal(await cert.getByText(/Confirmed by a reviewer/).count() >= 1, true, "each claim carries its status in words");
   await page.screenshot({ caret: "initial", path: `${OUT}/verify-2-valid.png`, fullPage: true });
 });
 await step("FORGE: editing a letter on the page breaks the signature and the checks re-run", async () => {
@@ -101,12 +108,14 @@ await step("REPLACED: genuine, but says a newer certificate replaced it, with a 
   await page.goto(`${WEB}/verify/${replaced.cert.code}`);
   await banner().getByRole("heading", { name: "Genuine, but replaced" }).waitFor();
   await banner().getByRole("link", { name: "View the newer certificate" }).waitFor();
+  await page.getByText("A newer certificate has taken its place.").waitFor(); // the state is ON the certificate, in words
   await page.screenshot({ caret: "initial", path: `${OUT}/verify-4-replaced.png` });
 });
 await step("REVOKED: says so and overprints the paper", async () => {
   await page.goto(`${WEB}/verify/${revoked.cert.code}`);
   await banner().getByRole("heading", { name: "Revoked" }).waitFor();
   await page.getByText("Revoked", { exact: true }).nth(1).waitFor();
+  await page.getByText("The registry has withdrawn this certificate.").waitFor();
   await page.screenshot({ caret: "initial", path: `${OUT}/verify-5-revoked.png` });
 });
 await step("NOT FOUND: says so, and offers the likely correction for a look-alike character", async () => {
@@ -136,7 +145,9 @@ await step("GENUINE file: checked on this device (or says plainly that this brow
 });
 await step("REDUCED MOTION: with the in-app switch on, every check is shown at once", async () => {
   await page.goto(`${WEB}/verify/${valid.cert.code}`);
-  await page.getByRole("button", { name: "Reduce motion" }).click();
+  await page.getByRole("button", { name: "Account and settings" }).click(); // the switch lives in the account menu now
+  await page.getByRole("menuitemcheckbox", { name: "Reduce motion" }).click();
+  await page.keyboard.press("Escape");
   await page.reload();
   // Wait (generously) for the first check to appear; with reduced motion the rest must already be there, not arriving one by one.
   const list = page.getByRole("list", { name: "How we checked" });

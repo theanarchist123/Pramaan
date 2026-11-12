@@ -24,6 +24,7 @@ STATUS_SELF = "self"          # said by the person; never certified
 STATUS_WEB = "web"            # independently supported by a public source (capped at 0.9)
 STATUS_DOCUMENT = "document"  # backed by an uploaded credential whose holder matches
 STATUS_HUMAN = "human"        # a named reviewer vouched for it, with a written reason and an evidence reference
+STATUS_ISSUER = "issuer"      # the body that issued it vouches for it, with a verifiable record (needs issuer evidence: none can be created yet, see docs/adr/0004)
 HUMAN_CONFIDENCE_CAP = 0.9    # a human override alone never reaches the auto-approve bar used for other cases
 WEB_CONFIDENCE_CAP = 0.9
 DOCUMENT_CONFIDENCE = 0.97

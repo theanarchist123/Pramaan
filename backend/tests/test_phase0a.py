@@ -374,3 +374,49 @@ async def test_the_profile_owner_cannot_approve_the_request_for_their_own_claim(
         await s.execute(update(User).where(User.id == uuid.UUID(me["id"])).values(role="admin"))
         await s.commit()
     assert (await client.post(f"/v1/admin/approvals/{filed['approval_id']}/approve", headers=owner)).status_code == 403
+
+
+# ---------------------------------------------------------------------------------- the `issuer` status (TRU-06): printable only with a COMPLETE issuer record
+async def _profile_with_issuer_claim(client, make_user, evidence):
+    """An approved profile whose single claim is marked `issuer`, with the given evidence rows written straight to the database (there is
+    deliberately NO endpoint that can create issuer evidence: the only legitimate source, DigiLocker, is not built, see docs/adr/0004)."""
+    from sqlalchemy import select, update
+
+    from app.db import get_sessionmaker
+    from app.models import Claim, Evidence, Profile
+
+    person, _ = await make_user()
+    profile = (await client.post("/v1/profiles", headers=person, json={"full_name": "Issuer Case", "consent_public_listing": True})).json()
+    claim = (await client.post(f"/v1/profiles/{profile['id']}/claims", headers=person, json={"field": "education", "value": "Degree from Test University"})).json()
+    async with get_sessionmaker()() as s:
+        c = (await s.execute(select(Claim).where(Claim.id == uuid.UUID(claim["id"])))).scalar_one()
+        c.status, c.confidence = "issuer", 0.97
+        for kind, url, quote, src in evidence:
+            s.add(Evidence(claim_id=c.id, kind=kind, url=url, quote=quote, source_hash=src))
+        await s.execute(update(Profile).where(Profile.id == uuid.UUID(profile["id"])).values(status="approved"))
+        await s.commit()
+    return person, profile
+
+
+async def test_an_issuer_claim_with_no_issuer_evidence_is_never_printed(client, make_user):
+    person, profile = await _profile_with_issuer_claim(client, make_user, evidence=[("web", "https://example.org/x", "a web quote", "")])
+    r = await client.post(f"/v1/profiles/{profile['id']}/certificate", headers=person)
+    assert r.status_code == 409 and "backed by evidence" in r.text  # a weaker record never earns the strongest label
+
+
+async def test_an_incomplete_issuer_record_is_not_enough(client, make_user):
+    # missing the signed-document hash: it says an issuer vouched but nothing can be checked
+    person, profile = await _profile_with_issuer_claim(client, make_user, evidence=[("issuer", "https://issuer.example/verify/123", "Conferred B.Sc., 2019", "")])
+    assert (await client.post(f"/v1/profiles/{profile['id']}/certificate", headers=person)).status_code == 409
+
+
+async def test_a_complete_issuer_record_prints_as_issuer_everywhere_the_certificate_goes(client, make_user):
+    person, profile = await _profile_with_issuer_claim(
+        client, make_user, evidence=[("issuer", "https://issuer.example/verify/123", "Conferred B.Sc., 2019", "a" * 64)])
+    r = await client.post(f"/v1/profiles/{profile['id']}/certificate", headers=person)
+    assert r.status_code == 201, r.text
+    code = r.json()["code"]
+    claims = (await client.get(f"/v1/certificates/{code}")).json()["payload"]["claims"]
+    assert [c["status"] for c in claims] == ["issuer"]
+    vc = (await client.get(f"/v1/certificates/{code}/vc")).json()  # and in the Verifiable Credential
+    assert [c["status"] for c in vc["credentialSubject"]["claims"]] == ["issuer"]

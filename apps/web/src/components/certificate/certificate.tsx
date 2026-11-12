@@ -40,7 +40,10 @@ function formatDate(iso: string) {
  * The certificate itself: fixed A4-landscape canvas (1123×794). Always light (it is a printed
  * document), regardless of the app theme. `data-cert-ready` tells the PDF renderer when images loaded.
  */
-export function Certificate({ data, forceTamper = false }: { data: CertificateData; forceTamper?: boolean }) {
+/** The live state of a certificate in the web view. A printed or PDF copy cannot change, so only the web page passes this; its QR leads to the live status. */
+export type CertificateState = { kind: "revoked" } | { kind: "replaced" };
+
+export function Certificate({ data, forceTamper = false, state }: { data: CertificateData; forceTamper?: boolean; state?: CertificateState }) {
   const palette = paletteFor(data.sector);
   const [photoDone, setPhotoDone] = useState(!data.photo_id);
   const [qrDone, setQrDone] = useState(false);
@@ -111,7 +114,7 @@ export function Certificate({ data, forceTamper = false }: { data: CertificateDa
       </div>
 
       {/* the seal: the art IS the fingerprint of this exact content */}
-      <div style={{ position: "absolute", right: 150, bottom: 40, background: "#fbf6ea", borderRadius: 999, padding: 6, boxShadow: `0 0 0 2px ${palette.ink}` }}>
+      <div style={{ position: "absolute", right: 150, bottom: 40, background: "#fbf6ea", borderRadius: 999, padding: 6, boxShadow: "0 0 0 3px var(--foil, #A87B1E), 0 0 0 4px #fbf6ea" }}>
         <Rosette seed={data.digest} sector={data.sector} size={134} />
       </div>
 
@@ -119,10 +122,11 @@ export function Certificate({ data, forceTamper = false }: { data: CertificateDa
       <div style={{ position: "absolute", left: 84, top: 66, width: 600 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <LogoMark className="size-9" />
-          <span className="font-display" style={{ fontSize: 22, fontWeight: 600, letterSpacing: "0.02em" }}>Pramaan</span>
+          <span className="font-display" style={{ fontSize: 22, fontWeight: 600 }}>Pramaan</span>
+          <span style={{ fontSize: 14, color: "#6b6558" }}>· Registry of Record</span>
         </div>
-        <p style={{ marginTop: 26, fontSize: 12, letterSpacing: "0.32em", textTransform: "uppercase", color: palette.ink, fontWeight: 600 }}>
-          Certificate of Verified Achievement
+        <p className="font-display" style={{ marginTop: 24, fontSize: 24, fontWeight: 500, color: palette.ink }}>
+          Certificate of verified record
         </p>
         <p style={{ marginTop: 26, fontSize: 15, color: "#6b6558" }}>This certifies that</p>
         <h2
@@ -134,7 +138,7 @@ export function Certificate({ data, forceTamper = false }: { data: CertificateDa
         <p style={{ marginTop: 8, fontSize: 14, color: "#6b6558" }}>
           {[data.sector, data.state].filter(Boolean).join(" · ")}
         </p>
-        <div style={{ margin: "22px 0 14px", height: 1, background: `linear-gradient(90deg, ${palette.ink}, transparent)` }} />
+        <div style={{ margin: "22px 0 14px", height: 1, background: "linear-gradient(90deg, var(--foil, #A87B1E), transparent)" }} />
         <p style={{ fontSize: 14, color: "#4a463d" }}>
           {data.claims.length > 0 && data.claims.every((x) => INDEPENDENT.has(x.status))
             ? "has had the following achievements independently verified:"
@@ -142,14 +146,12 @@ export function Certificate({ data, forceTamper = false }: { data: CertificateDa
         </p>
         <ul style={{ marginTop: 12, display: "grid", gap: 9 }}>
           {shown.map((c, i) => (
-            <li key={i} style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
-              <span style={{ width: 7, height: 7, background: palette.primary, transform: "rotate(45deg)", flexShrink: 0, translate: "0 -1px" }} />
-              <span style={{ fontSize: 15, lineHeight: 1.3 }}>
-                {c.value}{" "}
-                <span style={{ fontSize: 12.5, color: palette.ink, fontWeight: 600 }}>
-                  · {STATUS_LABEL[c.status] ?? c.status}
-                </span>
+            <li key={i} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 18, alignItems: "baseline" }}>
+              <span style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
+                <span style={{ width: 7, height: 7, background: palette.primary, transform: "rotate(45deg)", flexShrink: 0, translate: "0 -1px" }} />
+                <span style={{ fontSize: 15, lineHeight: 1.3 }}>{c.value}</span>
               </span>
+              <span style={{ fontSize: 13, color: palette.ink, fontWeight: 600, textAlign: "right" }}>{STATUS_LABEL[c.status] ?? c.status}</span>
             </li>
           ))}
           {data.claims.length > shown.length && (
@@ -173,16 +175,31 @@ export function Certificate({ data, forceTamper = false }: { data: CertificateDa
           />
         </div>
         <div style={{ fontSize: 11, lineHeight: 1.65, color: "#4a463d" }}>
-          <p style={{ fontWeight: 600, color: palette.ink, letterSpacing: "0.04em" }}>Scan to verify — or try to forge it.</p>
+          <p style={{ fontWeight: 600, color: palette.ink }}>Scan the code or visit the address to check this certificate.</p>
+          <p style={{ color: "#6b6558" }}>Printed copies can be altered; the online record cannot.</p>
           <p>Issued {formatDate(data.issued_at)}</p>
           <p>
             Certificate <span style={{ fontFamily: "ui-monospace, monospace" }}>{data.code}</span>
           </p>
-          <p style={{ fontFamily: "ui-monospace, monospace", fontSize: 9.5, color: "#7a7467" }}>
+          <p style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "#6b6558" }}>
             sha-256 {data.digest.slice(0, 24)}… · Ed25519 key {data.key_id}
           </p>
         </div>
       </div>
+
+      {state && (
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: state.kind === "revoked" ? "rgba(180,30,30,0.07)" : "rgba(60,60,80,0.05)", pointerEvents: "none" }}>
+          <div
+            style={{
+              transform: "rotate(-12deg)", padding: "10px 30px", fontWeight: 700, background: "rgba(255,255,255,0.78)", textAlign: "center",
+              border: `5px solid ${state.kind === "revoked" ? "#b42318" : "#4a463d"}`, color: state.kind === "revoked" ? "#b42318" : "#4a463d",
+            }}
+          >
+            <div style={{ fontSize: 52 }}>{state.kind === "revoked" ? "Revoked" : "Replaced"}</div>
+            <div style={{ fontSize: 16, fontWeight: 500 }}>{state.kind === "revoked" ? "The registry has withdrawn this certificate." : "A newer certificate has taken its place."}</div>
+          </div>
+        </div>
+      )}
 
       {forceTamper && (
         <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(180,30,30,0.08)" }}>

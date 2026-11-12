@@ -303,3 +303,21 @@ was tested (backend 357 passed, 0 failed; pages smoke 11/11; header 6/6; fact-ca
 Two generated files blocked the merge and were discarded/removed: apps/admin/tsconfig.tsbuildinfo (untracked build cache) and a one-line change to
 apps/admin/next-env.d.ts (rewritten by Next on every build). The remote v2/* branches were NOT deleted. The earlier "do not merge to main" rule was superseded
 by this explicit instruction.
+
+# TRU-06 audit (v2/crt-and-tru06)
+`human` was already end to end. `issuer` was NOT: backed_claims() had no rule for it, so an issuer claim could never be printed (the UI/types knew it, the
+backend ignored it). Added STATUS_ISSUER and a rule: an `issuer` claim prints only with a COMPLETE issuer evidence row (issuer reference url + statement +
+64-hex hash of the signed document); incomplete or weaker evidence leaves it off (I-8). Printed as "issuer" on the certificate and in the VC. There is
+deliberately NO endpoint that can create issuer evidence (the reviewer override is still limited to self|human): the only legitimate source, DigiLocker,
+is not built (docs/adr/0004). 3 tests. This does not make `issuer` obtainable; it makes it correct when a source exists.
+
+# Certificate restyle to spec 9 (v2/crt-and-tru06)
+Kept: the seeded guilloche + rosette art, sector palette, frozen local photos, the signed payload (presentation only; nothing signed changed).
+Changed to spec 9.2: header "Pramaan - Registry of Record"; title "Certificate of verified record" in the record serif (sentence case, no tracked all-caps);
+each claim's status in words in its own right-hand column (never colour alone); foil gold (--foil) ONLY on the seal ring and one hairline; digest text
+11px not 9.5; the honest QR note ("Printed copies can be altered; the online record cannot", no tamper-proof claim). The revoked / replaced state is
+drawn ON the certificate in words (web view only: a PDF cannot change, its QR leads to the live status); the Verify page no longer draws its own overprint.
+Verify smoke 12/12 on the production build incl. new assertions. Two stale tests of mine fixed (the "Reduce motion" switch moved into the account menu in the
+header change; legacy smoke.mjs). None of these browser scripts run in CI (.github/workflows has no smoke steps).
+NOT done: the headline / city in the certificate's subtitle (not in the signed payload: adding them changes what is signed), Chitrakar as a real agent
+(9.3), a same-origin guard test for the renderer beyond what exists, print-variant bleed/greyscale testing on a real printer, PDF accessibility tagging.
