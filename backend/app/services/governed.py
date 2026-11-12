@@ -34,6 +34,8 @@ GOVERNED: dict[str, Spec] = {
                                      "A second person approves raising a claim to 'confirmed by a reviewer'"),
     "require_email_verification": Spec(bool, lambda: get_settings().require_email_verification,
                                        "Applicants confirm their email with a one-time code before verification"),
+    "agents_paused": Spec(bool, lambda: False,
+                          "Kill switch: while on, no AI agent runs; every new verification goes straight to a human reviewer"),
     "auto_approve_threshold": Spec(float, lambda: AUTO_APPROVE_THRESHOLD,
                                    "Confidence at or above which Prahari may approve without a person (never below 0.90)",
                                    minimum=0.90, maximum=1.0),
