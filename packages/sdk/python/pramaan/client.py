@@ -101,6 +101,26 @@ class _Methods:
     def certificate(self, code: str):
         return self._call(_Req("GET", f"/v1/certificates/{code.strip().upper()}"))
 
+    def verify_batch(self, codes: list[str]):
+        """Check up to 50 certificates in one call; each answer is what `verify` would say."""
+        return self._call(_Req("POST", "/v1/verify/batch", json={"codes": [c.strip().upper() for c in codes]}))
+
+    def credential(self, code: str):
+        """The certificate as a W3C Verifiable Credential 2.0 (eddsa-jcs-2022 proof)."""
+        return self._call(_Req("GET", f"/v1/certificates/{code.strip().upper()}/vc"))
+
+    def revocation_list(self, list_id: int = 1):
+        """The signed Bitstring Status List: a set bit means that certificate is revoked."""
+        return self._call(_Req("GET", f"/v1/status/revocation/{list_id}"))
+
+    def log_checkpoint(self):
+        """A signed Merkle root and size of the public log."""
+        return self._call(_Req("GET", "/v1/transparency/checkpoint"))
+
+    def log_proof(self, code: str):
+        """Inclusion proof for one certificate in the public log (RFC 9162)."""
+        return self._call(_Req("GET", f"/v1/transparency/proof/{code.strip().upper()}"))
+
     def search(self, query: str, *, state: str | None = None, sector: str | None = None, limit: int = 12):
         """Plain-English (any language) search of verified, consenting people. Each hit says why it matched."""
         return self._call(_Req("POST", "/v1/search", json=_clean(
