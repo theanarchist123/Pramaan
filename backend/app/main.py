@@ -196,11 +196,15 @@ async def healthz():
 @app.get("/.well-known/pramaan-keys.json", tags=["meta"])
 async def public_keys():
     """Anyone can verify a certificate offline using this Ed25519 public key."""
-    from app.core.keys import public_keyring
+    from datetime import timezone
 
+    from app.core.keys import compromised, public_keyring
+
+    bad = compromised()
     return {
         "keys": [
-            {"kid": kid, "kty": "OKP", "crv": "Ed25519", "x": pub, "use": "sig"}
+            {"kid": kid, "kty": "OKP", "crv": "Ed25519", "x": pub, "use": "sig",
+             **({"compromised_since": bad[kid].astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")} if kid in bad else {})}
             for kid, pub in public_keyring().items()
         ]
     }

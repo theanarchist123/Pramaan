@@ -83,6 +83,10 @@ async def issue_certificate(
 ) -> Certificate:
     if profile.status != "approved":
         raise CertificateError("Profile must be approved before a certificate can be issued.")
+    from app.core.keys import compromised as _compromised
+
+    if get_signer().key_id in _compromised():  # first thing: a compromised key issues nothing, whatever else is true
+        raise CertificateError("The signing key is marked as compromised: rotate to a new key before issuing anything.")
     claims = await backed_claims(session, profile)
     if not claims:
         raise CertificateError("None of this profile's claims is backed by evidence yet - nothing to certify.")
@@ -206,9 +210,22 @@ async def verify_certificate(session: AsyncSession, code: str) -> VerifyOut:
                                           Certificate.issued_at > cert.issued_at).order_by(Certificate.issued_at.asc()).limit(1)
             )
         ).scalar_one_or_none()
-    valid = sig_ok and chain_ok and not revoked
+    # A key reported as compromised is trusted only for log entries made before the reported time.
+    from app.core.keys import compromised
+
+    since = compromised().get(cert.key_id)
+    untrusted_key = False
+    if since is not None:
+        try:
+            logged = datetime.fromisoformat(entry.issued_at.replace("Z", "+00:00")) if entry is not None else None
+        except ValueError:
+            logged = None
+        untrusted_key = logged is None or logged >= since
+    valid = sig_ok and chain_ok and not revoked and not untrusted_key
     if revoked:
         reason = "This certificate was revoked by the registry."
+    elif untrusted_key:
+        reason = "The signing key was later reported as compromised, and this certificate was logged after the report: do not rely on it."
     elif not sig_ok:
         reason = "Stored certificate content no longer matches its signature."
     elif not chain_ok:

@@ -121,8 +121,15 @@ class Settings(BaseSettings):
     did_web_host: str = ""
     jwt_secret: str = _DEV_JWT_SECRET
     signing_key_b64: str = ""
+    # Where the signing key lives: "env" (the seed in SIGNING_KEY_B64 or a local key file: the default), "aws_kms" or "gcp_kms" (the key never leaves the provider;
+    # SIGNING_KMS_KEY is the key id / ARN for AWS, or the full key VERSION name for Google). Never set both a seed and a KMS key.
+    signing_provider: str = "env"
+    signing_kms_key: str = ""
     # Comma-separated base64 public keys of past signing keys, so old certificates keep verifying after rotation.
     signing_retired_public_keys: str = ""
+    # Keys reported as compromised: "kid=2026-11-10T00:00:00Z,kid2=...". Signatures by such a key are trusted ONLY for transparency-log entries made before that time
+    # (the log is what a thief holding just the key cannot write into), and the key can no longer issue. Always give the time with a zone.
+    signing_compromised_keys: str = ""
 
     # Unsplash API for SECTOR imagery on experience pages (spec 4.9, services/images.py): server-side only, hotlinked,
     # attributed, human-curated. Certificates never use it: they use the frozen local photos.

@@ -30,14 +30,22 @@ This is a human-review path (`docs/security/`). It is backed by `backend/tests/t
 If step 6 fails: restore the previous `SIGNING_KEY_B64` and the previous `SIGNING_RETIRED_PUBLIC_KEYS`, restart, re-run step 6. Nothing is lost because no certificate is re-signed during a rotation.
 
 ## If the key is compromised (read this before you need it)
-A leaked private key means anyone can mint certificates that verify. The current system has **no way to mark a key as untrusted**: the keyring only lists keys, it does not distinguish "retired" from "compromised". **That is a known gap, not a solved problem.** Until it is built:
+A leaked private key means anyone can mint signatures that verify. The defence that survives a key leak is the transparency log: a thief holding only the key cannot write into the log.
 1. Stop issuing. Rotate as above so new certificates use a clean key.
-2. Treat every certificate signed by the compromised key as suspect. The transparency log records every legitimate issuance with its digest, so a forged certificate can be recognised as *absent from the log* (the log is the check that survives a key leak). Verify certificates against the log, not only the signature.
-3. Revoke and re-issue the affected certificates; publish the incident.
-4. **To build (needs a decision):** a `compromised_since` marker per retired key so verification can refuse signatures made after a given time by that key, and a re-signing batch job.
+2. **Mark the old key.** Set `SIGNING_COMPROMISED_KEYS=<old kid>=<UTC time from which you no longer trust it>` (for example `a1b2c3d4e5f60708=2026-11-10T14:00:00Z`, always with a time zone) and restart.
+   - Certificates by that key that were logged BEFORE that time keep verifying; anything logged at or after it verifies as invalid ("do not rely on it"), and a certificate with no log entry never verifies.
+   - The key can no longer issue anything. A malformed value stops the app from starting (a safety setting is never silently ignored).
+   - `/.well-known/pramaan-keys.json` publishes `compromised_since` for that key, so outside verifiers can apply the same rule together with the log.
+3. Pick the time carefully: too late trusts forgeries made in the gap; too early invalidates honest certificates (revoke and re-issue those from the affected list).
+4. Revoke and re-issue the affected certificates; publish the incident.
+Not built: a re-signing batch job (re-issuing is manual).
 
-## KMS / HSM (not built)
-The `Signer` object is the only place a private key is used (`sign_digest`, `sign_raw`, `public_key_b64`, `key_id`). A KMS-backed signer would implement the same four members and never expose the key. **Not built**, because it needs a cloud account and a choice of provider, and because Ed25519 support differs by provider and version **(verify against the provider's current documentation before choosing)**. Until then the seed lives in the host's environment: protect it as such (secrets manager, no logs, restricted access).
+## KMS / HSM
+`backend/app/core/kms.py` holds the private key in AWS KMS or Google Cloud KMS; the key never enters this process. Set `SIGNING_PROVIDER=aws_kms` (or `gcp_kms`) and `SIGNING_KMS_KEY` (AWS key id/ARN, or the full Google key VERSION name), and leave `SIGNING_KEY_B64` empty (setting both is refused).
+- Facts checked in the providers' documentation on 2026-11-12: AWS KMS key spec `ECC_NIST_EDWARDS25519` with algorithm `ED25519_SHA_512` and message type RAW (pure Ed25519, 0-4096 bytes); Google Cloud KMS `EC_SIGN_ED25519` (PureEdDSA). Both verify with every existing verifier. Do NOT use AWS `ED25519_PH_SHA_512`: it is Ed25519ph and does not verify as Ed25519.
+- The signer checks every signature against the key's own public key before using it and refuses to start if its self-test fails; an outage is an error, never a fallback to another key.
+- **Moving to KMS is a rotation**: the KMS key has a new key id. Follow the routine rotation steps with the KMS public key as the "new" key, and add the old public key to `SIGNING_RETIRED_PUBLIC_KEYS`.
+- **Tested here only with a fake provider.** The real AWS and Google adapters have not been run (no cloud account here): first do a staging run and `python scripts/verify_rotation.py`.
 
 ## Dry run in staging
-Run `pytest backend/tests/test_key_rotation.py` (needs the local database) before any production rotation, then perform steps 1 to 9 in staging with a copy of production data and record the evidence. **This session has not done a staging rotation: only the automated test.**
+Run `pytest backend/tests/test_key_rotation.py` (needs the local database) before any production rotation, then perform steps 1 to 9 in staging with a copy of production data and record the evidence. **No staging rotation has been done: only the automated tests.** After a real rotation run `python scripts/verify_rotation.py --api <url> --old-code <code> --old-kid <kid> [--new-code <code>]`: it performs the step 6 checks against the live API and exits non-zero if any fails.
