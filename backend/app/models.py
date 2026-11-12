@@ -522,6 +522,26 @@ class OAuthToken(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class ViewSpecRow(Base):
+    """A page described as data (AGT-10, T2). `spec` is the live version; `previous_spec` is kept so a publish can be rolled back."""
+
+    __tablename__ = "view_specs"
+
+    id: Mapped[uuid.UUID] = pk()
+    slug: Mapped[str] = mapped_column(String(60), unique=True, index=True)
+    request: Mapped[str] = mapped_column(Text, default="")
+    spec: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    previous_spec: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    draft_spec: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)  # a newer version waiting for a second person while `spec` serves
+    status: Mapped[str] = mapped_column(String(12), default="draft", index=True)  # draft|published|archived
+    version: Mapped[int] = mapped_column(Integer, default=0)  # counts publishes
+    created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    edited_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    published_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    created_at: Mapped[datetime] = ts()
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class Incident(Base):
     """A spike of agent or API failures noticed by Nigrani (AGT-13). Counts and a safe summary only: no request bodies, no personal data."""
 

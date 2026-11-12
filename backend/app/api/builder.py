@@ -192,6 +192,8 @@ async def apply_change(
     change = await session.get(CodeChange, change_id)
     if change is None:
         raise HTTPException(404, "Change not found")
+    if change.slug.startswith("mig_"):
+        raise HTTPException(409, "A database migration is never applied by the app: after two approvals a person adds it to the repository through a pull request")
     if change.status != "ready":
         raise HTTPException(409, f"Only a change whose checks passed can be applied (this one is '{change.status}')")
     if not get_settings().plugins_enabled:
@@ -237,3 +239,220 @@ async def reject_change(change_id: uuid.UUID, _: Principal = Depends(require_adm
 @router.get("/plugins")
 async def loaded_plugins(_: Principal = Depends(require_admin)):
     return {"enabled": get_settings().plugins_enabled, "plugins": list(plugins_loader.loaded.values())}
+
+
+# ----- tier T2: views as data (AGT-10) -----
+views_public = APIRouter(prefix="/v1/views", tags=["views"])
+views_admin = APIRouter(prefix="/v1/admin/views", tags=["builder"])
+
+
+class ViewRequestIn(BaseModel):
+    request: str = Field(min_length=5, max_length=500)
+
+
+class ViewSpecIn(BaseModel):
+    spec: dict
+
+
+def _view_out(v) -> dict:
+    return {"id": str(v.id), "slug": v.slug, "status": v.status, "version": v.version, "spec": v.spec, "request": v.request,
+            "has_previous": v.previous_spec is not None, "has_pending_draft": v.draft_spec is not None, "created_by": str(v.created_by) if v.created_by else None, "published_at": v.published_at}
+
+
+@views_public.get("")
+async def list_views(session: AsyncSession = Depends(get_session)):
+    from app.models import ViewSpecRow
+
+    rows = (await session.execute(select(ViewSpecRow).where(ViewSpecRow.status == "published").order_by(ViewSpecRow.slug))).scalars().all()
+    return [{"slug": r.slug, "title": (r.spec or {}).get("title", r.slug)} for r in rows]
+
+
+@views_public.get("/{slug}")
+async def get_view(slug: str, session: AsyncSession = Depends(get_session)):
+    from app.models import ViewSpecRow
+
+    v = (await session.execute(select(ViewSpecRow).where(ViewSpecRow.slug == slug, ViewSpecRow.status == "published"))).scalar_one_or_none()
+    if v is None:
+        raise HTTPException(404, "No such page")
+    return {"slug": v.slug, "version": v.version, "spec": v.spec, "published_at": v.published_at}
+
+
+@views_admin.get("")
+async def admin_list_views(_: Principal = Depends(require_admin), session: AsyncSession = Depends(get_session)):
+    from app.models import ViewSpecRow
+
+    rows = (await session.execute(select(ViewSpecRow).order_by(ViewSpecRow.created_at.desc()).limit(50))).scalars().all()
+    return [_view_out(r) for r in rows]
+
+
+@views_admin.post("", status_code=status.HTTP_201_CREATED)
+async def propose_view_endpoint(body: ViewRequestIn, principal: Principal = Depends(require_admin), session: AsyncSession = Depends(get_session)):
+    """Shilpkar drafts a view spec. It is validated and saved as a DRAFT (public to no one); a second person publishes it."""
+    from app.agents import sutradhar
+    from app.models import ViewSpecRow
+    from app.services import viewspec
+
+    await _limit(principal)
+    adm = await sutradhar.admit("shilpkar")
+    if not adm.ok:
+        raise HTTPException(409, adm.reason)
+    ctx = await start_run("shilpkar_view")
+    try:
+        p = await shilpkar.propose_view(ctx, body.request.strip())
+    except (LLMError, LLMRefusal):
+        await ctx.finish("failed", "model unavailable")
+        raise HTTPException(502, "The designer is temporarily unavailable") from None
+    spec, problems = viewspec.validate(p.spec)
+    if spec is None:
+        await ctx.finish("done", "rejected: " + "; ".join(problems)[:120])
+        raise HTTPException(422, "The proposed view broke the rules: " + "; ".join(problems))
+    base = viewspec.slugify(spec.title)
+    slug, n = base, 2
+    while (await session.execute(select(ViewSpecRow.id).where(ViewSpecRow.slug == slug))).first():
+        slug, n = f"{base}-{n}", n + 1
+    row = ViewSpecRow(slug=slug, request=body.request.strip(), spec=spec.model_dump(), status="draft", created_by=principal.user.id)
+    session.add(row)
+    await session.commit()
+    await ctx.finish("done", f"draft view {slug}")
+    return _view_out(row)
+
+
+async def _view(session: AsyncSession, view_id: uuid.UUID):
+    from app.models import ViewSpecRow
+
+    v = await session.get(ViewSpecRow, view_id)
+    if v is None:
+        raise HTTPException(404, "View not found")
+    return v
+
+
+@views_admin.put("/{view_id}")
+async def replace_view(view_id: uuid.UUID, body: ViewSpecIn, principal: Principal = Depends(require_admin), session: AsyncSession = Depends(get_session)):
+    """Save a new version of the spec. A draft is replaced in place. A published view keeps serving its live version until a second person publishes this one."""
+    from app.services import viewspec
+
+    v = await _view(session, view_id)
+    if v.status == "archived":
+        raise HTTPException(409, "An archived view cannot be edited")
+    spec, problems = viewspec.validate(body.spec)
+    if spec is None:
+        raise HTTPException(422, "; ".join(problems))
+    if v.status == "published":
+        v.draft_spec = spec.model_dump()
+    else:
+        v.spec = spec.model_dump()
+    v.edited_by = principal.user.id
+    await session.commit()
+    return _view_out(v)
+
+
+@views_admin.post("/{view_id}/publish")
+async def publish_view(view_id: uuid.UUID, principal: Principal = Depends(require_admin), session: AsyncSession = Depends(get_session)):
+    """Make the draft live. Never the person who proposed or last edited it: two people look at every view before the public can."""
+    from app.services import viewspec
+
+    v = await _view(session, view_id)
+    if principal.user.id in (v.created_by, v.edited_by):
+        raise HTTPException(403, "A second person must publish this view")
+    if v.status == "archived":
+        raise HTTPException(409, "An archived view cannot be published")
+    if v.status == "published" and v.draft_spec is None:
+        raise HTTPException(409, "There is nothing new to publish")
+    candidate = v.draft_spec if v.status == "published" else v.spec
+    spec, problems = viewspec.validate(candidate)  # checked again at the last moment: what goes live is exactly what passed
+    if spec is None:
+        raise HTTPException(409, "The saved view no longer passes the rules: " + "; ".join(problems))
+    if v.status == "published":
+        v.previous_spec = v.spec
+    v.spec, v.draft_spec = spec.model_dump(), None
+    v.status, v.version = "published", (v.version or 0) + 1
+    v.published_by, v.published_at = principal.user.id, datetime.now(timezone.utc)
+    await session.commit()
+    return _view_out(v)
+
+
+@views_admin.post("/{view_id}/rollback")
+async def rollback_view(view_id: uuid.UUID, principal: Principal = Depends(require_admin), session: AsyncSession = Depends(get_session)):
+    v = await _view(session, view_id)
+    if v.status != "published" or v.previous_spec is None:
+        raise HTTPException(409, "There is no earlier version to go back to")
+    v.spec, v.previous_spec = v.previous_spec, v.spec
+    v.version = (v.version or 0) + 1
+    v.published_by, v.published_at = principal.user.id, datetime.now(timezone.utc)
+    await session.commit()
+    return _view_out(v)
+
+
+@views_admin.post("/{view_id}/archive")
+async def archive_view(view_id: uuid.UUID, principal: Principal = Depends(require_admin), session: AsyncSession = Depends(get_session)):
+    v = await _view(session, view_id)
+    v.status = "archived"
+    await session.commit()
+    return _view_out(v)
+
+
+# ----- tier T3: a proposed database migration (AGT-10) -----
+class MigrationRequestIn(BaseModel):
+    request: str = Field(min_length=10, max_length=500)
+
+
+@router.post("/migrations", status_code=status.HTTP_201_CREATED, response_model=ChangeOut)
+async def propose_migration_endpoint(body: MigrationRequestIn, principal: Principal = Depends(require_admin), session: AsyncSession = Depends(get_session)):
+    """Shilpkar drafts an expand-only migration; it is linted and rehearsed on a scratch database. Passing makes it READY for two approvals; nothing is applied."""
+    import re
+
+    from app.agents import sutradhar
+    from app.services import migration_check as mc
+
+    await _limit(principal)
+    adm = await sutradhar.admit("shilpkar")
+    if not adm.ok:
+        raise HTTPException(409, adm.reason)
+    ctx = await start_run("shilpkar_migration")
+    head = mc.current_head()
+    try:
+        p = await shilpkar.propose_migration(ctx, body.request.strip(), head)
+    except (LLMError, LLMRefusal):
+        await ctx.finish("failed", "model unavailable")
+        raise HTTPException(502, "The designer is temporarily unavailable") from None
+    rev_m = re.search(r'^revision\s*=\s*"([^"]+)"', p.source, re.M)
+    rev = rev_m.group(1) if rev_m and mc.REV_RE.match(rev_m.group(1)) else "0000_invalid"
+    checks: dict = {"lint": mc.lint(p.source), "head": head}
+    status_ = "checks_failed"
+    if not checks["lint"]:
+        result = await mc.rehearse(p.source, skip_lint=True)
+        checks["rehearsal"] = result.as_dict()
+        status_ = "ready" if result.ok else "checks_failed"
+    change = CodeChange(request=body.request.strip(), slug=("mig_" + rev)[:40], summary=p.summary[:300], files={f"migrations/versions/{rev}.py": p.source},
+                        status=status_, checks=checks, run_id=ctx.run_id)
+    session.add(change)
+    await session.commit()
+    await ctx.finish("done", f"migration {rev}: {status_}")
+    await session.refresh(change)
+    return change
+
+
+@router.post("/migrations/{change_id}/approve", response_model=ChangeOut)
+async def approve_migration(change_id: uuid.UUID, principal: Principal = Depends(require_admin), session: AsyncSession = Depends(get_session)):
+    """Four eyes: two DIFFERENT people must approve a migration that passed its checks. Approval does not run it; it produces a release note for a person."""
+    change = await session.get(CodeChange, change_id)
+    if change is None or not change.slug.startswith("mig_"):
+        raise HTTPException(404, "Migration not found")
+    if change.status != "ready":
+        raise HTTPException(409, f"Only a migration whose checks passed can be approved (this one is '{change.status}')")
+    who = str(principal.user.id)
+    checks = dict(change.checks or {})
+    approvals = list(checks.get("approvals", []))
+    if who in approvals:
+        raise HTTPException(409, "You have already approved this; a second person must")
+    approvals.append(who)
+    checks["approvals"] = approvals
+    if len(approvals) >= 2:
+        change.status = "approved_for_release"
+        fname = next(iter(change.files)).rsplit("/", 1)[-1]
+        checks["release_note"] = (f"Add {fname} to backend/migrations/versions/ in a pull request (a protected path: human code review). Deploy it as a canary and judge it with "
+                                  f"scripts/canary_watch.py. Rollback plan: alembic downgrade {checks.get('head', '')}.")
+    change.checks = checks
+    await session.commit()
+    await session.refresh(change)
+    return change
