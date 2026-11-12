@@ -348,3 +348,8 @@ GET /v1/verify/{code}, with a test that proves they agree). apps/web/public/llms
 CHANGELOG.md. API-05: webhook test events and secret rotation ALREADY existed; replay is NOT built (deliveries may not store payloads: not checked). NOT done in API-*: live/test
 key modes (01), OAuth 2.0 + PKCE (02), idempotency keys / ETag / problem+json (03: changing the error format would break every client and test, needs a decision),
 NL search batch (04 second half), SDK generation in CI + Go/Kotlin SDKs (06), docs site / Postman / status page (07 rest), MCP upgrade (09), usage dashboard (10).
+
+# Merge to main #2, 2026-11-12 (owner asked for everything to be merged)
+Merged in stack order with --no-ff: v2/crt-and-tru06, v2/image-autoseed, v2/agt-09-doot-safeguards, v2/agt-03-setu, v2/api-04-05-07 (5 merge commits, no conflicts).
+`git diff origin/v2/api-04-05-07 main` is EMPTY: main's tree is exactly the tested tip. Backend suite on that tip: 382 passed, 0 failed; web + admin tsc clean, web eslint clean.
+Browser suites (pages / header / widget / verify) were last run before AGT-09, AGT-03 and API-04; those changes touched the backend and one web type, not those pages.
