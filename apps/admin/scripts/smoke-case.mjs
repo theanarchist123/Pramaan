@@ -45,6 +45,11 @@ await step("reviewer signs in and finds the case in the queue", async () => {
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.getByRole("link", { name }).waitFor({ timeout: 30000 });
+  // command-centre tiles: real counts, and a reviewer sees only the sections their role allows
+  const tiles = page.getByRole("region", { name: "Overview" });
+  await tiles.getByText("Open cases").waitFor();
+  assert.ok(Number((await tiles.locator(".tile-n").first().innerText()).trim()) >= 1, "at least our case is open");
+  assert.equal(await tiles.getByText("Approvals waiting").count(), 0, "a reviewer does not see approvals");
 });
 await step("the case page shows the claim, documents, namesakes, and the form is closed until the case is taken", async () => {
   await page.getByRole("link", { name }).click();

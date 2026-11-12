@@ -164,3 +164,29 @@ async def test_the_namesake_panel_lists_wikidata_candidates_next_to_the_confirme
     reviewer, _ = await staff(make_user, "reviewer")
     r = (await client.get(f"/v1/admin/review/{item['id']}/namesakes", headers=reviewer)).json()
     assert r["candidates"][0]["qid"] == "Q1" and r["confirmed_qid"] in ("", None)
+
+
+# ---------------------------------------------------------------------------------- command centre tiles
+async def test_the_overview_reports_real_counts_and_hides_sections_the_role_cannot_see(client, make_user, monkeypatch):
+    person, profile, item = await escalated_case(client, make_user, monkeypatch)
+    reviewer, _ = await staff(make_user, "reviewer")
+    auditor, _ = await staff(make_user, "auditor")
+
+    r = (await client.get("/v1/admin/overview", headers=reviewer)).json()
+    assert r["queue"]["open"] >= 1 and r["queue"]["overdue"] <= r["queue"]["open"]
+    assert r["queue"]["oldest_hours"] is not None and r["queue"]["oldest_hours"] >= 0
+    assert sum(r["queue"]["by_reason_code"].values()) >= 1
+    assert "approvals" not in r and "agents" not in r  # a reviewer is not shown what an auditor sees
+
+    a = (await client.get("/v1/admin/overview", headers=auditor)).json()
+    assert {"pending", "oldest_hours"} <= set(a["approvals"]) and {"calls_24h", "failed_24h"} <= set(a["agents"])
+    assert a["registry"]["profiles"]["approved"] >= 0 and a["registry"]["certificates"] >= 0
+
+    # taking the case moves it from "unassigned" to "held"
+    before = r["queue"]["unassigned"]
+    await client.post(f"/v1/admin/review/{item['id']}/claim", headers=reviewer)
+    after = (await client.get("/v1/admin/overview", headers=reviewer)).json()["queue"]["unassigned"]
+    assert after == before - 1
+
+    member, _ = await make_user()
+    assert (await client.get("/v1/admin/overview", headers=member)).status_code in (401, 403)
