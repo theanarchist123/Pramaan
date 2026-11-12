@@ -22,7 +22,7 @@ from app.agents.lipik import NAME_MATCH_OK
 from app.models import Certificate, Document, Profile, TransparencyLog
 from app.schemas import VerifyOut
 
-VERIFIED_STATUSES = {"web", "document", "human"}
+VERIFIED_STATUSES = {"web", "document", "human", "issuer"}
 MIN_CONFIDENCE = 0.5
 _CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTVWXYZ"
 _CHAIN_LOCK_ID = 7001
@@ -44,6 +44,7 @@ async def backed_claims(session: AsyncSession, profile: Profile) -> list[dict]:
       document  needs a document-evidence row whose uploaded file matched the holder at the acceptance threshold,
                 with no flags (unreadable, suspicious, issuer not recognised...)
       human     needs a human evidence row: the reviewer's written reason and evidence reference
+      issuer    needs an issuer evidence row with the issuer's reference, its statement and the hash of the signed document
     A claim whose status is not backed is left OFF the certificate, never printed under a stronger label."""
     docs = (await session.execute(select(Document).where(Document.profile_id == profile.id))).scalars().all()
     good_files = {
@@ -59,6 +60,10 @@ async def backed_claims(session: AsyncSession, profile: Profile) -> list[dict]:
             return any(e.kind == "document" and e.source_hash in good_files for e in c.evidence)
         if c.status == "human":
             return any(e.kind == "human" and e.quote and e.url for e in c.evidence)
+        if c.status == "issuer":
+            # The strongest status needs a COMPLETE record: who the issuer is (url), what it says (quote) and the hash of the issuer-signed
+            # document it can be checked against. Anything less is left off the certificate, never printed under a weaker or stronger label.
+            return any(e.kind == "issuer" and e.url and e.quote and len(e.source_hash or "") == 64 for e in c.evidence)
         return False
 
     def label(c) -> str:
