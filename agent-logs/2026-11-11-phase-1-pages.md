@@ -259,3 +259,14 @@ outcome line; reduced motion lists the whole run at once. The dead right-hand pa
 stays for admins. Browser test: a real run is seeded through the API; pages smoke 11/11 on the production build.
 Limits: the replay shows what the demo run emitted (the mock LLM, so it ends "with a reviewer": no Wikipedia match); route is still /mission-control
 (spec: /how-it-works/live); Saathi's chat-turn events are filtered out of verify runs by design.
+
+# TRU-05 DigiLocker spike and TRU-11 key-rotation runbook (v2/tru-05-11-adr-runbook)
+TRU-05: docs/adr/0004. Read the official DigiLocker partner FAQ + onboarding FAQ. Facts: register on the API Setu partner portal with a DigiLocker
+account; apply as Requester with a valid use case + org documents (PoI, authority letter, PAN, GST, incorporation); OAuth 2.0 + OIDC with user
+consent; non-India firms need an Indian mobile + a server in India. NOT STATED by the sources (so not assumed): eligibility of a private
+registry, fees, sandbox steps, storage/reuse limits, which academic/award issuers publish. Decision: do NOT build (cannot be tested without
+partner approval); the `issuer` status seam already exists; next steps are the owner's (eligibility, counsel on DPDP, issuer list).
+TRU-11: docs/security/key-rotation.md + tests/test_key_rotation.py (2 pass): after a rotation old certificates verify with the OLD key id, new
+ones with the new one, both keys are in pramaan-keys.json AND did.json; dropping the retired PUBLIC key breaks old certificates (the mistake the
+runbook warns about). KNOWN GAPS written into the runbook: no compromised-key marker (the transparency log is the fallback check) and no KMS/HSM
+signer (provider Ed25519 support must be verified). No staging rotation was performed.
