@@ -295,3 +295,11 @@ through the owner's mail account (a 6-digit "Your Pramaan identity code" message
 institution's domain. Existing tests were careful (they set smtp_host "" or replace _smtp_send); only these new ones leaked. Fixed at the root:
 tests/conftest.py now has an autouse guard that turns SMTP off and makes outreach._smtp_send raise in EVERY test unless the test replaces it itself,
 with a test proving it; test addresses are now on the reserved domain uni.example. The owner should check the mail account's Sent folder for those messages.
+
+# Merge to main, 2026-11-12 (done at the owner's explicit request: "merge all the branches... do it urself")
+All 24 unmerged v2/* branches (hardening ... tru-04-identity-binding, one linear stack) were merged into main in order with --no-ff, one merge commit per branch
+(24 merge commits), no conflicts. Pre-push check: `git diff origin/v2/tru-04-identity-binding main` is EMPTY, i.e. main's tree is exactly the tip that
+was tested (backend 357 passed, 0 failed; pages smoke 11/11; header 6/6; fact-capture 3/3; Verify 12/12; calibration 2/2). Pushed with a normal push (no force).
+Two generated files blocked the merge and were discarded/removed: apps/admin/tsconfig.tsbuildinfo (untracked build cache) and a one-line change to
+apps/admin/next-env.d.ts (rewritten by Next on every build). The remote v2/* branches were NOT deleted. The earlier "do not merge to main" rule was superseded
+by this explicit instruction.
