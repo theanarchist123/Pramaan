@@ -70,6 +70,25 @@ def profile_context(profile: Profile) -> dict[str, Any]:
     }
 
 
+COVERAGE_FIELDS = (
+    ("full_name", "your name"), ("sector", "your field"), ("state", "where you are from"), ("headline", "a one-line description"),
+    ("claims", "at least one achievement"), ("bio", "a short bio"),
+)
+REQUIRED_FOR_SUBMIT = {"full_name", "sector", "state", "claims"}
+
+
+def coverage(profile: Profile) -> dict[str, Any]:
+    """How complete the draft is, counted by code, not by the model's say-so. `ready` needs the required fields; the score is just for the progress bar."""
+    have = {
+        "full_name": profile.full_name != PLACEHOLDER_NAME and bool(profile.full_name.strip()),
+        "sector": bool(profile.sector), "state": bool(profile.state), "headline": bool(profile.headline),
+        "claims": len(profile.claims) > 0, "bio": bool(profile.bio),
+    }
+    missing = [label for key, label in COVERAGE_FIELDS if not have[key]]
+    return {"score": round(sum(have.values()) / len(have), 2), "missing": missing,
+            "ready": all(have[k] for k in REQUIRED_FOR_SUBMIT)}
+
+
 def apply_delta(profile: Profile, delta: ProfileDelta, defs=()) -> None:
     if delta.full_name and profile.full_name == PLACEHOLDER_NAME and len(delta.full_name.strip()) >= 2:
         profile.full_name = delta.full_name.strip()[:255]
