@@ -279,7 +279,23 @@ def entailment(ctx: dict[str, Any]):
     return EntailmentVerdict(label="supports" if overlap >= 0.5 else "unrelated", note="")
 
 
+def art_brief(ctx: dict[str, Any]):
+    """Offline stand-in: the deterministic design for this sector and seed."""
+    from app.agents.chitrakar import fallback_brief
+
+    return fallback_brief(str(ctx.get("sector", "Other")), str(ctx.get("seed", "")))
+
+
+def patch_proposal(ctx: dict[str, Any]):
+    """Offline stand-in: the mock never proposes code."""
+    from app.agents.fixer import PatchProposal
+
+    return PatchProposal(title="No safe fix proposed", rationale="Offline mode does not write code.", diff="")
+
+
 _DISPATCH = {
+    "PatchProposal": patch_proposal,
+    "ArtBrief": art_brief,
     "EntailmentVerdict": entailment,
     "SetuProposals": setu,
     "SaathiTurn": saathi,
