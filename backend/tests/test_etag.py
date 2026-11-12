@@ -15,17 +15,17 @@ def test_if_none_match_matching():
     assert not matches("", e) and not matches('W/"other"', e)
 
 
-def test_304_round_trip(client):
-    r = client.get("/.well-known/pramaan-keys.json")
+async def test_304_round_trip(client):
+    r = await client.get("/.well-known/pramaan-keys.json")
     assert r.status_code == 200 and r.headers["etag"] and r.headers["cache-control"] == "no-cache"
-    again = client.get("/.well-known/pramaan-keys.json", headers={"If-None-Match": r.headers["etag"]})
+    again = await client.get("/.well-known/pramaan-keys.json", headers={"If-None-Match": r.headers["etag"]})
     assert again.status_code == 304 and again.content == b""
-    changed = client.get("/.well-known/pramaan-keys.json", headers={"If-None-Match": 'W/"x"'})
+    changed = await client.get("/.well-known/pramaan-keys.json", headers={"If-None-Match": 'W/"x"'})
     assert changed.status_code == 200 and changed.json() == r.json()
 
 
-def test_credentialed_request_gets_no_etag(client):
-    r = client.get("/.well-known/pramaan-keys.json", headers={"Authorization": "Bearer nope"})
+async def test_credentialed_request_gets_no_etag(client):
+    r = await client.get("/.well-known/pramaan-keys.json", headers={"Authorization": "Bearer nope"})
     assert "etag" not in r.headers
 
 
