@@ -39,3 +39,9 @@ AGT-04/05/13 (model-quality or AI-written-code pipelines that need live-model ev
 - API-02 merged (migration 0018, OAuth code+PKCE, consent screen, grants list). Backend 432 passed, web build ok. REVIEW NEEDED (always-human paths): migrations 0017/0018, app/deps.py (oauth principal + path allowlist), services/oauth.py.
   Also fixed an open redirect risk in the web sign-in page (`?next=` is now same-site paths only).
   Open: no admin screen for registering/revoking OAuth clients by staff; clients are self-registered by any signed-in member (consider requiring review before a client can request profiles:write); no browser test of the consent screen.
+
+## Fourth pass
+Merged (backend 439 passed): API-06 (SDK types regenerated + CI staleness job + Python SDK additions + contract test), AGT-10 (plugin risk score, informs the approver only),
+DSK-06 desk ADR 0006 (the spike itself NOT done), MOB-03 (shrink >4 MB photos before upload), AGT-05 (claim names must appear in the quote).
+Still open: AGT-02 (graph refactor), AGT-04 (Chitrakar), AGT-13 (fixer agent: AI-written-code pipeline, needs human review design), AGT-05 model entailment/adapters,
+API-05 replay (your decision), Go/Kotlin SDKs, DSK-04/05, MOB-02, voice, T2/T3 builder tiers, plus owner-only items.
