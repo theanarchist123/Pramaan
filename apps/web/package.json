@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "predev": "node ../../packages/verify-js/scripts/publish-widget.mjs",
+    "prebuild": "node ../../packages/verify-js/scripts/publish-widget.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

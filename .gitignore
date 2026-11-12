@@ -33,3 +33,8 @@ smoke-shots/
 *.tsbuildinfo
 apps/web/.next-smoke/
 apps/web/smoke-shots/
+
+# generated from packages/verify-js by the web app predev/prebuild
+apps/web/public/pramaan-verify/
+
+image-seed-cache.json

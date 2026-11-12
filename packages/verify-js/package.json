@@ -5,9 +5,19 @@
   "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
-  "exports": { ".": { "types": "./src/index.d.ts", "default": "./src/index.js" } },
-  "files": ["src"],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./element": "./src/element.js"
+  },
+  "files": [
+    "src"
+  ],
   "license": "UNLICENSED",
   "private": true,
-  "scripts": { "test": "node --test" }
+  "scripts": {
+    "test": "node --test"
+  }
 }
