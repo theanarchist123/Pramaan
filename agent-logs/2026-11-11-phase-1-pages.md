@@ -279,3 +279,19 @@ setting changed by two people, floor 0.90) and says so in its note; below 30 clo
 numbers, floor respected, role gating). Console page /calibration (shown only with agent_run.read), browser test 2/2 (auditor sees it, reviewer is not
 offered it and the API refuses). Reason codes already existed (ADM-06).
 NOT done (AGT-07, Phase 4): policy-as-config with versions, a promotion workflow for candidate policies, any automatic use of the numbers.
+
+# TRU-04 identity binding (v2/tru-04-identity-binding, off tru-07)
+Two ways to show a person controls something tied to an institution; neither proves WHO they are, neither approves anything.
+(1) Institutional email: POST /v1/profiles/{id}/identity/email -> 6-digit code (hashed, 15 min, 5 attempts, 5/hour) -> /email/confirm. Free-mail domains
+(Gmail, Yahoo, Outlook...) and IP literals are refused. Only the DOMAIN is kept; the address is never stored or returned.
+(2) A code on a page: /identity/page returns a token to publish; /identity/page/check fetches EXACTLY that https URL through the SSRF guard (private/
+internal addresses refused, the checked IP pinned, no redirects, size cap) and binds the HOST only if the token is really there.
+Reviewers see VERIFIED bindings (kind + domain/host) in the case detail; pending ones are never shown. Prahari is untouched. Phone OTP not built (needs an
+SMS provider). Migration 0014 (new table; rehearsal passes). 7 tests.
+NOT built: an onboarding UI for it (API only so far), showing a binding publicly, any scoring use of it.
+
+INCIDENT, disclosed: my first identity tests did not turn SMTP off, and the developer's real .env has SMTP configured, so about FIVE test sends went out
+through the owner's mail account (a 6-digit "Your Pramaan identity code" message) to made-up addresses meera@iisc.ac.in / a@iisc.ac.in at a REAL
+institution's domain. Existing tests were careful (they set smtp_host "" or replace _smtp_send); only these new ones leaked. Fixed at the root:
+tests/conftest.py now has an autouse guard that turns SMTP off and makes outreach._smtp_send raise in EVERY test unless the test replaces it itself,
+with a test proving it; test addresses are now on the reserved domain uni.example. The owner should check the mail account's Sent folder for those messages.
