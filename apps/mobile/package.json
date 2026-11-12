@@ -1,0 +1,22 @@
+{
+  "name": "pramaan-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pramaan Android app: the web app in a Capacitor shell, with push notifications (Firebase Cloud Messaging) and store assets.",
+  "scripts": {
+    "test": "node scripts/test-config.mjs",
+    "sync": "cap sync android",
+    "open": "cap open android",
+    "build:apk": "cap sync android && cd android && gradlew assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/push-notifications": "^6.0.3",
+    "@capacitor/splash-screen": "^6.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0"
+  }
+}
