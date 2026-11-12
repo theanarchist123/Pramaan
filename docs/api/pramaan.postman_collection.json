@@ -349,6 +349,32 @@
       }
     },
     {
+      "name": "GET /v1/api-keys/{key_id}/usage",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/api-keys/{{key_id}}/usage",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "api-keys",
+            "{{key_id}}",
+            "usage"
+          ]
+        },
+        "description": "Key Usage"
+      }
+    },
+    {
       "name": "POST /v1/auth/login",
       "request": {
         "method": "POST",

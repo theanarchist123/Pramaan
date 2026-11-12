@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     ARRAY,
     Boolean,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -467,6 +468,17 @@ class EmailSuppression(Base):
     email_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     reason: Mapped[str] = mapped_column(String(200), default="")
     created_at: Mapped[datetime] = ts()
+
+
+class ApiKeyUsage(Base):
+    """Per-key, per-day request counts (API-10). Counts only: no paths, no IPs, no payloads."""
+
+    __tablename__ = "api_key_usage"
+
+    key_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("api_keys.id", ondelete="CASCADE"), primary_key=True)
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    requests: Mapped[int] = mapped_column(Integer, default=0)
+    throttled: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class LlmCall(Base):

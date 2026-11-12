@@ -14,6 +14,7 @@ interface Key {
   id: string;
   name: string;
   prefix: string;
+  mode: "live" | "test";
   scopes: string[];
   rate_limit_per_min: number;
   created_at: string;
@@ -21,6 +22,7 @@ interface Key {
   revoked_at: string | null;
 }
 
+const READ_ONLY = ["verify:read", "profiles:read", "search:read"];
 const SCOPES: [string, string][] = [
   ["verify:read", "Verify certificates"],
   ["profiles:read", "Read your own profiles"],
@@ -29,11 +31,32 @@ const SCOPES: [string, string][] = [
   ["webhooks:manage", "Manage webhooks"],
 ];
 
+interface Usage { days: { day: string; requests: number; throttled: number }[]; total: number; throttled: number }
+
+/** Seven days of requests as bars, with the numbers in text: the bars are decoration, the words are the information. */
+function UsageBars({ id }: { id: string }) {
+  const [u, setU] = useState<Usage | null>(null);
+  useEffect(() => { api<Usage>(`/v1/api-keys/${id}/usage?days=7`).then(setU).catch(() => setU(null)); }, [id]);
+  if (!u) return null;
+  const max = Math.max(1, ...u.days.map((d) => d.requests));
+  return (
+    <div className="mt-2">
+      <div className="flex h-6 items-end gap-0.5" aria-hidden="true">
+        {u.days.map((d) => <span key={d.day} className="w-3 rounded-sm bg-primary/60" style={{ height: `${Math.max(8, (d.requests / max) * 100)}%`, opacity: d.requests ? 1 : 0.25 }} />)}
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {u.total} request{u.total === 1 ? "" : "s"} in the last 7 days{u.throttled ? `, ${u.throttled} refused for going over the limit` : ""}
+      </p>
+    </div>
+  );
+}
+
 export function ApiKeys() {
   const [keys, setKeys] = useState<Key[] | null>(null);
   const [name, setName] = useState("");
   const [scopes, setScopes] = useState<string[]>(["verify:read", "search:read", "profiles:read"]);
   const [limit, setLimit] = useState(60);
+  const [test, setTest] = useState(false);
   const [fresh, setFresh] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -45,7 +68,7 @@ export function ApiKeys() {
     setBusy(true);
     try {
       const r = await api<Key & { key: string }>("/v1/api-keys", {
-        method: "POST", json: { name: name.trim(), scopes, rate_limit_per_min: limit },
+        method: "POST", json: { name: name.trim(), scopes: test ? scopes.filter((x) => READ_ONLY.includes(x)) : scopes, rate_limit_per_min: limit, mode: test ? "test" : "live" },
       });
       setFresh(r.key);
       setName("");
@@ -74,13 +97,17 @@ export function ApiKeys() {
         </div>
         <fieldset className="space-y-2">
           <legend className="mb-1 text-sm font-medium">Permissions</legend>
-          {SCOPES.map(([s, label]) => (
+          {SCOPES.filter(([s]) => !test || READ_ONLY.includes(s)).map(([s, label]) => (
             <label key={s} className="flex cursor-pointer items-center gap-2 text-sm">
               <Checkbox checked={scopes.includes(s)} onCheckedChange={(v) => setScopes(v ? [...scopes, s] : scopes.filter((x) => x !== s))} />
               <span>{label}</span> <code className="text-xs text-muted-foreground">{s}</code>
             </label>
           ))}
         </fieldset>
+        <label className="flex cursor-pointer items-center gap-2 text-sm">
+          <Checkbox checked={test} onCheckedChange={(v) => setTest(Boolean(v))} />
+          <span>Test key: can only read, safe to put in a CI job or a demo</span>
+        </label>
         <div className="space-y-1.5">
           <Label htmlFor="key-limit">Rate limit (requests / minute)</Label>
           <Input id="key-limit" type="number" min={1} max={6000} value={limit} onChange={(e) => setLimit(Number(e.target.value))} className="h-10 w-32" />
@@ -108,10 +135,11 @@ export function ApiKeys() {
               <li key={k.id} className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3">
                 <div className="min-w-0">
                   <p className="font-medium">{k.name} {k.revoked_at && <span className="ml-1 rounded bg-destructive/10 px-1.5 py-0.5 text-xs text-destructive">revoked</span>}</p>
-                  <p className="font-mono text-xs text-muted-foreground">pk_live_{k.prefix}_••••••••</p>
+                  <p className="font-mono text-xs text-muted-foreground">pk_{k.mode}_{k.prefix}_••••••••</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {k.scopes.join(", ")} · {k.rate_limit_per_min}/min · {k.last_used_at ? `last used ${new Date(k.last_used_at).toLocaleString()}` : "never used"}
                   </p>
+                  <UsageBars id={k.id} />
                 </div>
                 {!k.revoked_at && (
                   <Button variant="ghost" size="icon" aria-label={`Revoke ${k.name}`} onClick={() => revoke(k)}><Trash2 /></Button>
