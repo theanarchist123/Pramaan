@@ -1,14 +1,16 @@
 {
   "name": "pramaan-desktop",
   "version": "1.0.0",
-  "description": "Pramaan desktop app \u2014 the verified registry in its own window, with a tray icon, a global shortcut and pramaan:// deep links.",
+  "description": "Pramaan desktop app — the verified registry in its own window, with a tray icon, a global shortcut and pramaan:// deep links.",
   "private": true,
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
     "package": "electron-builder",
     "package:dir": "electron-builder --dir",
-    "test": "node scripts/test-verify.mjs && node scripts/test.mjs"
+    "test": "node scripts/test-verify.mjs && node scripts/test.mjs",
+    "package:console": "electron-builder --config.productName=\"Pramaan Console\" --config.appId=in.pramaan.console --config.extraMetadata.pramaanVariant=console --config.directories.output=dist-console",
+    "start:console": "electron . --console"
   },
   "devDependencies": {
     "electron": "^33.2.0",
