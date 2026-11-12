@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Radio } from "lucide-react";
 import { AgentAvatar, AgentFeed } from "@/components/agent-feed";
 import { Pipeline } from "@/components/agent-floor/pipeline";
-import { Button } from "@/components/ui/button";
+import { AgentReplay } from "@/components/agent-floor/replay";
 import { useAgentStream } from "@/hooks/use-agent-stream";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -44,12 +44,15 @@ export default function MissionControl() {
         )}
       </div>
 
-      <div className="mt-8 rounded-2xl border border-border bg-card p-5">
+      <div className="mt-8"><AgentReplay /></div>
+
+      <div className="mt-6 rounded-2xl border border-border bg-card p-5">
+        <p className="mb-3 text-sm font-medium">Right now</p>
         <Pipeline events={events} now={now} />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-        <ul className="grid content-start gap-2 sm:grid-cols-2">
+      <div className={cn("mt-6 grid gap-6", isAdmin && "lg:grid-cols-[1fr_1.4fr]")}>
+        <ul className={cn("grid content-start gap-2 sm:grid-cols-2", !isAdmin && "lg:grid-cols-3 xl:grid-cols-5")}>
           {agents.map((a) => (
             <li key={a.name} className={cn("rounded-xl border border-border bg-card p-3 transition-colors", active.has(a.name) && "border-primary/60 bg-primary/5")}>
               <div className="flex items-center gap-2">
@@ -69,21 +72,18 @@ export default function MissionControl() {
           ))}
         </ul>
 
-        <section className="rounded-2xl border border-border bg-card p-4" aria-label="Live agent activity">
-          {!ready ? null : isAdmin ? (
+        {isAdmin ? (
+          <section className="rounded-2xl border border-border bg-card p-4" aria-label="Live agent activity">
             <AgentFeed events={[...events].reverse()} />
-          ) : (
-            <div className="py-12 text-center">
-              <p className="font-medium">The full live feed is for registry administrators.</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                You can watch the agents working on <em>your</em> profile from your onboarding screen.
-              </p>
-              <Button className="mt-4" render={<Link href="/onboard" />} nativeButton={false}>
-                Go to my profile
-              </Button>
-            </div>
-          )}
-        </section>
+          </section>
+        ) : (
+          ready && (
+            <p className="text-sm text-muted-foreground">
+              The live feed of every run is for registry staff. To watch the agents work on <em>your</em> record, start from{" "}
+              <Link className="text-primary underline" href="/onboard">your onboarding screen</Link>.
+            </p>
+          )
+        )}
       </div>
     </div>
   );

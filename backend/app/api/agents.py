@@ -42,6 +42,42 @@ async def catalog():
     return CATALOG
 
 
+@router.get("/replay")
+async def replay(session: AsyncSession = Depends(get_session)):
+    """A recorded REAL verification run, for the public Agent Floor (spec 6.7). Safe by construction: only runs on profiles flagged as
+    fictional demos are ever eligible, so no real person's name or evidence can appear; the payload carries no profile, user or owner
+    identifier; and times are offsets from the start of the run. With no demo run on record it says so instead of falling back to a real one."""
+    from app.models import AgentEvent
+
+    run = (
+        await session.execute(
+            select(AgentRun)
+            .join(Profile, Profile.id == AgentRun.profile_id)
+            .where(AgentRun.workflow == "verify_profile", AgentRun.status == "done", Profile.is_demo.is_(True))
+            .order_by(AgentRun.started_at.desc())
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    if run is None:
+        return {"available": False}
+    profile = await session.get(Profile, run.profile_id)
+    rows = (await session.execute(select(AgentEvent).where(AgentEvent.run_id == run.id).order_by(AgentEvent.id).limit(200))).scalars().all()
+    if not rows:
+        return {"available": False}
+    t0 = rows[0].created_at
+    outcome = {"approved": "sealed", "pending_review": "with_reviewer"}.get(profile.status, "stopped")
+    return {
+        "available": True,
+        "demo": True,
+        "run_id": str(run.id),
+        "outcome": outcome,
+        "events": [
+            {"t_ms": max(0, int((e.created_at - t0).total_seconds() * 1000)), "agent": e.agent, "kind": e.kind, "message": e.message, "confidence": e.confidence}
+            for e in rows
+        ],
+    }
+
+
 @router.get("/runs")
 async def runs(
     limit: int = 50,

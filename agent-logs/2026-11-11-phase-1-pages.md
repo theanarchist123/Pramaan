@@ -248,3 +248,14 @@ space so content is never covered. New strings in English AND Hindi (the Hindi o
 needs a native-speaker review). Browser test apps/web/scripts/smoke-header.mjs 6/6 (needs no API). Test bugs of mine fixed on the way (menu stays
 open after a checkbox; role queries skip hidden elements; main includes its own padding).
 Not done: the command palette's People preview pane and `?` shortcuts overlay (spec M-24), footer strip "Sealed N certificates", offline banner.
+
+# Agent Floor to spec 6.7 (v2/pg-17-agent-floor)
+You did not answer the privacy question, so I took the safe default: the public replay may only ever use a run on a profile flagged is_demo (fictional).
+GET /v1/agents/replay: latest finished verify_profile run on a demo profile; payload = agent, kind, message, confidence, t_ms offset; NO profile, user
+or owner id; outcome sealed / with_reviewer / stopped from the profile's final status; {"available": false} when there is no demo run (it never falls
+back to a real person). 2 backend tests incl. "a real profile's run is never returned" and "no identifiers in the payload".
+Web: components/agent-floor/replay.tsx: five stations, a token (motion layout) that rests at the acting agent, play/pause/replay, event log, honest
+outcome line; reduced motion lists the whole run at once. The dead right-hand panel for non-admins is gone: the roster is full width, the live feed
+stays for admins. Browser test: a real run is seeded through the API; pages smoke 11/11 on the production build.
+Limits: the replay shows what the demo run emitted (the mock LLM, so it ends "with a reviewer": no Wikipedia match); route is still /mission-control
+(spec: /how-it-works/live); Saathi's chat-turn events are filtered out of verify runs by design.

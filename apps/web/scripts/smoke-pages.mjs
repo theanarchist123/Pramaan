@@ -40,6 +40,14 @@ await post(`/v1/profiles/${bioProfile.id}/submit`, memberTok);
 await post(`/v1/admin/claims/${bioClaim.id}/verify`, adminTok, { reason: "Checked against the published honours list", evidence_ref: "https://example.org/honours" });
 await post(`/v1/admin/profiles/${bioProfile.id}/status`, adminTok, { status: "approved" });
 
+// ---- seed one REAL verification run on a fictional demo profile, for the public replay ---------------------------------------------------
+const demoTok = await reg(`dm-${tag}@example.com`);
+sql(`update users set email_verified_at = now() where email='dm-${tag}@example.com'`);
+const demoStart = await (await post("/v1/onboarding/start", demoTok, { full_name: `Demo Replay ${tag}`, consent_public_listing: true, consent_web_research: false })).json();
+await post(`/v1/onboarding/${demoStart.profile.id}/message`, demoTok, { text: "I am a marine scientist working in Kerala. I received the Sagar Samman award in 2024." });
+sql(`update profiles set is_demo = true where id='${demoStart.profile.id}'`);
+await post(`/v1/onboarding/${demoStart.profile.id}/verify`, demoTok);
+
 
 await step("HOME: hero proof table checks a real certificate (or says there is none), ledger strip, no mock screenshot", async () => {
   await page.goto(`${WEB}/`);
@@ -163,6 +171,24 @@ await step("DEVELOPERS: sections deep-link and tabs follow arrow keys", async ()
   await page.getByRole("tab", { name: /Playground/ }).focus();
   await page.keyboard.press("ArrowRight");
   await page.waitForFunction(() => location.hash === "#keys", null, { timeout: 4000 });
+});
+await step("AGENT FLOOR REPLAY: a recorded real run on a demo profile plays station to station and ends in an honest outcome; reduced motion shows it all at once", async () => {
+  await page.goto(`${WEB}/mission-control`);
+  const section = page.getByRole("region", { name: "Recorded run" });
+  await section.getByRole("heading", { name: "Watch it work" }).waitFor({ timeout: 30000 });
+  await section.getByText(/Event \d+ of \d+/).waitFor();
+  const total = Number((await section.getByText(/Event \d+ of \d+/).innerText()).match(/of (\d+)/)[1]);
+  assert.ok(total >= 3, "a real run has several events");
+  // with motion it PLAYS: it does not start complete, and it finishes
+  await section.getByRole("status").filter({ hasText: /Sealed|With a reviewer|Stopped/ }).waitFor({ timeout: 90000 });
+  assert.equal(await section.getByText(`Event ${total} of ${total}`).count(), 1);
+  await shot("agent-floor-replay");
+  // reduced motion: no playback, everything listed straight away
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(`${WEB}/mission-control`);
+  await section.getByText(`Event ${total} of ${total}`).waitFor({ timeout: 15000 });
+  await section.getByRole("status").filter({ hasText: /Sealed|With a reviewer|Stopped/ }).waitFor({ timeout: 5000 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
 });
 await step("AGENT FLOOR: pipeline lists the five agents in order, each with a text status", async () => {
   await page.goto(`${WEB}/mission-control`);
