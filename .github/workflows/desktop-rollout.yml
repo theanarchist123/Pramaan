@@ -1,0 +1,38 @@
+# Staged rollout of a desktop release (DSK-05): set how much of the install base is offered an update (electron-updater reads `stagingPercentage` from latest*.yml).
+#   Actions -> desktop-rollout -> Run workflow: tag desktop-v1.2.0, percentage 10, later 50, then 100.
+# Rolling back means deleting the release's latest*.yml asset or publishing a fixed newer version: electron-updater never downgrades.
+name: desktop-rollout
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, e.g. desktop-v1.2.0"
+        required: true
+      percentage:
+        description: "Share of installs to offer the update to (1-100)"
+        required: true
+        default: "10"
+
+permissions:
+  contents: write
+
+jobs:
+  rollout:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check the input
+        run: |
+          case "${{ inputs.percentage }}" in ''|*[!0-9]*) echo "percentage must be a whole number"; exit 1;; esac
+          [ "${{ inputs.percentage }}" -ge 1 ] && [ "${{ inputs.percentage }}" -le 100 ] || { echo "percentage must be 1-100"; exit 1; }
+      - name: Rewrite stagingPercentage in each update manifest
+        run: |
+          mkdir m && cd m
+          gh release download "${{ inputs.tag }}" --repo "$GITHUB_REPOSITORY" --pattern 'latest*.yml'
+          for f in latest*.yml; do
+            sed -i '/^stagingPercentage:/d' "$f"
+            echo "stagingPercentage: ${{ inputs.percentage }}" >> "$f"
+            gh release upload "${{ inputs.tag }}" "$f" --repo "$GITHUB_REPOSITORY" --clobber
+            echo "$f now offers the update to ${{ inputs.percentage }}%"
+          done

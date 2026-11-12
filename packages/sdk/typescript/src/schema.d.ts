@@ -2785,6 +2785,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/webhooks/{hook_id}/deliveries/{delivery_id}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Replay Delivery
+         * @description Send a past delivery to your endpoint again: same event, same data, same delivery id, with `X-Pramaan-Replay: 1`. Payloads are kept for 30 days.
+         */
+        post: operations["replay_delivery_v1_webhooks__hook_id__deliveries__delivery_id__replay_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/webhooks/{hook_id}/rotate-secret": {
         parameters: {
             query?: never;
@@ -9445,6 +9465,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeliveryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    replay_delivery_v1_webhooks__hook_id__deliveries__delivery_id__replay_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-api-key"?: string | null;
+            };
+            path: {
+                hook_id: string;
+                delivery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

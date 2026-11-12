@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import secrets
+import re
 import uuid
 from datetime import datetime
 from typing import Any
@@ -167,6 +168,26 @@ async def send_test(
         )
     ).scalar_one_or_none()
     return {"ok": ok, "status_code": last.status_code if last else None, "error": last.error if last else ""}
+
+
+@router.post("/{hook_id}/deliveries/{delivery_id}/replay", status_code=status.HTTP_202_ACCEPTED)
+async def replay_delivery(
+    hook_id: uuid.UUID,
+    delivery_id: str,
+    principal: Principal = Depends(require_scope("webhooks:manage")),
+    session: AsyncSession = Depends(get_session),
+):
+    """Send a past delivery to your endpoint again: same event, same data, same delivery id, with `X-Pramaan-Replay: 1`. Payloads are kept for 30 days."""
+    hook = await _mine(session, hook_id, principal)
+    if not re.fullmatch(r"[0-9a-f]{32}", delivery_id or ""):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Delivery not found")
+    out = await svc.replay(hook.id, delivery_id)
+    if out == "missing":
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Delivery not found (payloads are kept for 30 days)")
+    if out == "pending":
+        raise HTTPException(status.HTTP_409_CONFLICT, "That delivery is still being delivered")
+    await svc.process_due()
+    return {"delivery_id": delivery_id, "status": "queued"}
 
 
 @router.get("/{hook_id}/deliveries", response_model=list[DeliveryOut])

@@ -48,3 +48,32 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      # DSK-05: do not trust "the build passed". When signing secrets exist, check the SIGNATURE on what was built, on each OS. (Not yet run on real runners: the first tagged
+      # release is the first test of these steps.)
+      - name: Verify the Windows signature
+        if: matrix.os == 'windows-latest' && env.HAS_WIN_CERT == 'true'
+        shell: pwsh
+        env:
+          HAS_WIN_CERT: ${{ secrets.WIN_CSC_LINK != '' }}
+        run: |
+          $bad = Get-ChildItem dist -Filter *.exe | Where-Object { (Get-AuthenticodeSignature $_.FullName).Status -ne 'Valid' }
+          if ($bad) { $bad | ForEach-Object { Write-Error "Not validly signed: $($_.Name)" }; exit 1 }
+      - name: Verify the macOS signature and notarisation
+        if: matrix.os == 'macos-latest' && env.HAS_MAC_CERT == 'true'
+        env:
+          HAS_MAC_CERT: ${{ secrets.CSC_LINK != '' }}
+        run: |
+          app=$(find dist -name "*.app" -maxdepth 3 | head -1)
+          codesign --verify --deep --strict --verbose=2 "$app"
+          spctl --assess --type execute --verbose=4 "$app"
+      - name: Check the update manifest and installers are attached to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF_NAME:-}"
+          if [ -n "$tag" ]; then
+            assets=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')
+            echo "$assets"
+            echo "$assets" | grep -Eq 'latest.*\.yml' || { echo "no update manifest (latest*.yml) on the release"; exit 1; }
+          fi

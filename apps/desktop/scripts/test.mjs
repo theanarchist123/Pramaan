@@ -11,6 +11,8 @@ import assert from "node:assert/strict";
 
 const require = createRequire(import.meta.url);
 const { resolveDeepLink, findDeepLink, pathFromClipboard } = require("../src/links.js");
+const { pickVariant, queueBadge, badgeLabel } = require("../src/variant.js");
+const { pickChannel } = require("../src/updater.js");
 // PRAMAAN_EXE=<path to Pramaan.exe> runs this same suite against the PACKAGED app instead of the dev one.
 const packaged = process.env.PRAMAAN_EXE || null;
 const electronPath = packaged || require("electron");
@@ -24,6 +26,38 @@ const step = async (name, fn) => {
   passed++;
   console.log("ok");
 };
+
+await step("console variant: chosen only by an explicit switch, with its own server, title and data folder", () => {
+  const member = pickVariant({}, [], {});
+  assert.equal(member.name, "member");
+  assert.equal(pickVariant({ PRAMAAN_VARIANT: "console" }, [], {}).name, "console");
+  assert.equal(pickVariant({}, ["--console"], {}).name, "console");
+  assert.equal(pickVariant({}, [], { pramaanVariant: "console" }).name, "console");
+  assert.equal(pickVariant({ PRAMAAN_VARIANT: "weird" }, [], {}).name, "member", "an unknown value never selects the staff console");
+  const c = pickVariant({ PRAMAAN_VARIANT: "console", PRAMAAN_CONSOLE_URL: "http://x.test:3011/" }, [], {});
+  assert.deepEqual([c.title, c.url, c.dataSuffix, c.deepLinks, c.clipboard, c.badge], ["Pramaan staff console", "http://x.test:3011", "-console", false, false, true]);
+  assert.equal(member.deepLinks && member.clipboard && !member.badge, true);
+});
+
+await step("update channel: stable by default, beta only by choice or on a beta build", () => {
+  assert.equal(pickChannel({}, "1.2.0"), "latest");
+  assert.equal(pickChannel({ updateChannel: "beta" }, "1.2.0"), "beta");
+  assert.equal(pickChannel({}, "1.3.0-beta.2"), "beta");
+  assert.equal(pickChannel({ updateChannel: "latest" }, "1.3.0-beta.2"), "latest");
+  assert.equal(pickChannel({ updateChannel: "weird" }, "1.2.0"), "latest");
+  assert.equal(pickChannel(null, undefined), "latest");
+});
+
+await step("queue badge: a count from the overview, nothing for anything else", () => {
+  assert.equal(queueBadge({ queue: { open: 7 } }), 7);
+  assert.equal(queueBadge({ queue: { open: -2 } }), 0);
+  assert.equal(queueBadge({ queue: { open: "7" } }), 0);
+  assert.equal(queueBadge({}), 0);
+  assert.equal(queueBadge(null), 0);
+  assert.equal(queueBadge({ queue: { open: 1e9 } }), 999, "capped");
+  assert.equal(badgeLabel(0), "Pramaan staff console");
+  assert.equal(badgeLabel(3), "Pramaan staff console: 3 open");
+});
 
 await step("verifier mode: one code in any copied text opens its check; none or two does not", () => {
   assert.equal(pathFromClipboard("Please check prm-abcdefghjk before Friday"), "/verify/PRM-ABCDEFGHJK");
@@ -198,6 +232,28 @@ try {
 }
 
 // ---------------------------------------------------------------------------------- 3. offline + retry
+await step("the console variant opens the staff console, polls the queue and shows the count", async () => {
+  let polled = 0;
+  const api = await listen((req, res) => {
+    if (req.url === "/v1/admin/overview") { polled++; res.setHeader("Content-Type", "application/json"); return res.end(JSON.stringify({ queue: { open: 4 } })); }
+    res.statusCode = 404; res.end("");
+  });
+  const consoleSite = await listen((req, res) => { res.setHeader("Content-Type", "text/html"); res.end(page("Console home")); });
+  const ca = await launch({ PRAMAAN_VARIANT: "console", PRAMAAN_CONSOLE_URL: `http://127.0.0.1:${consoleSite.port}`, PRAMAAN_API_URL: `http://127.0.0.1:${api.port}`, PRAMAAN_USER_DATA: userData() });
+  try {
+    const w = await ca.firstWindow();
+    await w.waitForURL(`http://127.0.0.1:${consoleSite.port}/`);
+    assert.equal(await w.title(), "Console home");
+    assert.equal(await ca.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].getTitle()), "Console home");
+    for (let i = 0; i < 40 && (await ca.evaluate(() => globalThis.__pramaanBadge)) !== 4; i++) await new Promise((r) => setTimeout(r, 250));
+    assert.equal(await ca.evaluate(() => globalThis.__pramaanBadge), 4);
+    assert.ok(polled >= 1);
+  } finally {
+    await ca.close();
+    api.s.close(); consoleSite.s.close();
+  }
+});
+
 await step("server unreachable → friendly offline screen; 'Try again' recovers once it's back", async () => {
   const probe = await listen(() => {});
   const port = probe.port;

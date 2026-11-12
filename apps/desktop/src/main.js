@@ -5,9 +5,14 @@ const path = require("node:path");
 const { PROTOCOL, resolveDeepLink, findDeepLink, pathFromClipboard } = require("./links");
 const { startAutoUpdates } = require("./updater");
 const { verifyCertificate } = require("./verify");
+const { pickVariant, queueBadge, badgeLabel } = require("./variant");
+
+// The member app, or the staff console build (DSK-04): see variant.js. Chosen before anything reads the data folder.
+const VARIANT = pickVariant(process.env, process.argv, require("../package.json"));
 
 const TEST = process.env.PRAMAAN_TEST === "1";
 if (process.env.PRAMAAN_USER_DATA) app.setPath("userData", process.env.PRAMAAN_USER_DATA);
+else if (VARIANT.dataSuffix) app.setPath("userData", app.getPath("userData") + VARIANT.dataSuffix); // the console never shares cookies with the member app
 
 function readConfig() {
   // A config.json lets an organisation point the app at its own server. Checked in order: the user's data folder
@@ -37,7 +42,7 @@ function configuredApiUrl() {
   const cfg = readConfig();
   return typeof cfg.apiUrl === "string" ? cfg.apiUrl : "http://localhost:8000";
 }
-const APP_URL = configuredUrl().replace(/\/$/, "");
+const APP_URL = (VARIANT.url || configuredUrl()).replace(/\/$/, "");
 const ORIGIN = new URL(APP_URL).origin;
 const API_URL = configuredApiUrl().replace(/\/$/, "");
 
@@ -130,6 +135,7 @@ function navigate(pathname) {
 }
 
 function handleDeepLink(raw) {
+  if (!VARIANT.deepLinks) return; // the staff console does not open member links
   const target = resolveDeepLink(raw);
   if (!target) return; // anything we don't recognise is ignored
   if (win) navigate(target);
@@ -143,7 +149,7 @@ function createWindow() {
     minWidth: 380,
     minHeight: 560,
     show: false,
-    title: "Pramaan",
+    title: VARIANT.title,
     icon,
     backgroundColor: "#f8f4ec",
     webPreferences: {
@@ -211,10 +217,25 @@ function verifyFromClipboard() {
   }
 }
 
+// Queue badge (console build): the number of open review cases, from the same endpoint the console's own overview uses. It runs with whatever session the console
+// window is signed in with, so signed out (401) simply shows nothing. It never carries any case detail, only a count.
+async function pollQueue() {
+  let n = 0;
+  try {
+    const res = await session.defaultSession.fetch(`${API_URL}/v1/admin/overview`, { credentials: "include" });
+    if (res.ok) n = queueBadge(await res.json());
+  } catch {
+    /* server unreachable: no badge */
+  }
+  globalThis.__pramaanBadge = n;
+  try { app.setBadgeCount(n); } catch { /* not supported on this platform */ }
+  if (tray) tray.setToolTip(badgeLabel(n));
+}
+
 function buildTray() {
   const img = nativeImage.createFromPath(path.join(__dirname, "..", "assets", "icon.png")).resize({ width: 18, height: 18 });
   tray = new Tray(img);
-  tray.setToolTip("Pramaan");
+  tray.setToolTip(VARIANT.title);
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: "Open Pramaan", click: showWindow },
@@ -286,18 +307,22 @@ if (!gotLock) {
     });
 
     // Register pramaan:// with the OS only for the real installed app (never in tests: it edits the user's settings).
-    if (app.isPackaged && !TEST) app.setAsDefaultProtocolClient(PROTOCOL);
+    if (app.isPackaged && !TEST && VARIANT.deepLinks) app.setAsDefaultProtocolClient(PROTOCOL);
     buildMenu();
     pendingLink = resolveDeepLink(findDeepLink(process.argv));
     createWindow();
-    startAutoUpdates(app);
+    startAutoUpdates(app, console, readConfig());
+    if (VARIANT.badge) {
+      setTimeout(pollQueue, 1500);
+      setInterval(pollQueue, 60 * 1000).unref();
+    }
     if (!TEST) {
       refreshKeys();
       setInterval(refreshKeys, 24 * 60 * 60 * 1000).unref();
     }
     if (!TEST) {
       buildTray();
-      globalShortcut.register("CommandOrControl+Shift+V", verifyFromClipboard);
+      if (VARIANT.clipboard) globalShortcut.register("CommandOrControl+Shift+V", verifyFromClipboard);
   globalShortcut.register("CommandOrControl+Shift+P", () => (win && win.isVisible() && win.isFocused() ? win.hide() : showWindow()));
     }
   });

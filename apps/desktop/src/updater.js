@@ -5,7 +5,15 @@
 
 const HOURS = 60 * 60 * 1000;
 
-function startAutoUpdates(app, log = console) {
+/** Which release channel this install follows. "latest" (stable) unless a config.json says "beta" or the installed version is itself a pre-release (1.2.0-beta.1). */
+function pickChannel(cfg, version) {
+  const asked = cfg && typeof cfg.updateChannel === "string" ? cfg.updateChannel : "";
+  if (asked === "beta") return "beta";
+  if (asked === "latest") return "latest";
+  return /-beta(\.|$)/.test(String(version || "")) ? "beta" : "latest";
+}
+
+function startAutoUpdates(app, log = console, cfg = {}) {
   if (!app.isPackaged || process.env.PRAMAAN_TEST === "1" || process.env.PRAMAAN_NO_UPDATE === "1") return null;
   let autoUpdater;
   try {
@@ -14,6 +22,10 @@ function startAutoUpdates(app, log = console) {
     log.warn("auto-update unavailable:", err.message);
     return null;
   }
+  // Staged rollout (DSK-05): most people follow "latest", which an admin releases gradually with `stagingPercentage` in latest.yml (see desktop-rollout.yml);
+  // volunteers set {"updateChannel": "beta"} in config.json and get pre-releases first.
+  autoUpdater.channel = pickChannel(cfg, app.getVersion());
+  autoUpdater.allowPrerelease = autoUpdater.channel !== "latest";
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true; // applied the next time the user quits: never interrupts their work
   autoUpdater.allowDowngrade = false;
@@ -25,4 +37,4 @@ function startAutoUpdates(app, log = console) {
   return autoUpdater;
 }
 
-module.exports = { startAutoUpdates };
+module.exports = { startAutoUpdates, pickChannel };

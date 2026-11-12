@@ -13450,6 +13450,89 @@
         ]
       }
     },
+    "/v1/webhooks/{hook_id}/deliveries/{delivery_id}/replay": {
+      "post": {
+        "description": "Send a past delivery to your endpoint again: same event, same data, same delivery id, with `X-Pramaan-Replay: 1`. Payloads are kept for 30 days.",
+        "operationId": "replay_delivery_v1_webhooks__hook_id__deliveries__delivery_id__replay_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "hook_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Hook Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "delivery_id",
+            "required": true,
+            "schema": {
+              "title": "Delivery Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-api-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Replay Delivery",
+        "tags": [
+          "developer"
+        ]
+      }
+    },
     "/v1/webhooks/{hook_id}/rotate-secret": {
       "post": {
         "operationId": "rotate_secret_v1_webhooks__hook_id__rotate_secret_post",

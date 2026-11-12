@@ -22,6 +22,8 @@ Notable changes to the public API and behaviour, newest first. This is written f
 - OAuth 2.0 authorization code + PKCE (S256 only) for apps acting for a member: `POST /v1/oauth/clients`, the consent screen at `/oauth/authorize`, `POST /v1/oauth/token` (with refresh rotation), `POST /v1/oauth/revoke`, metadata at `/.well-known/oauth-authorization-server`. Apps get `profiles`, `search` and `verify` scopes only.
 - Per-key usage: `GET /v1/api-keys/{id}/usage`.
 
+- `POST /v1/webhooks/{id}/deliveries/{delivery_id}/replay`: send a past delivery again (same delivery id, header `X-Pramaan-Replay: 1`). Webhook payloads are kept 30 days and deleted when a person is erased.
+
 ### Changed
 - A profile can now be `suspended` (hidden from every public listing until restored). Clients that switch on `status` should handle it.
 - Staff sign-in requires an authenticator or recovery code once an authenticator is enrolled.

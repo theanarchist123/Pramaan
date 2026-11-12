@@ -1,0 +1,20 @@
+{
+  "appId": "in.pramaan.app",
+  "appName": "Pramaan",
+  "webDir": "www",
+  "server": {
+    "url": "https://pramaan.example.org",
+    "cleartext": false,
+    "allowNavigation": ["pramaan.example.org"],
+    "errorPath": "offline.html"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false,
+    "captureInput": true
+  },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 600, "backgroundColor": "#f8f4ec" },
+    "PushNotifications": { "presentationOptions": ["badge", "sound", "alert"] }
+  }
+}

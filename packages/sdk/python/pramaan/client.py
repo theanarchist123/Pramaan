@@ -177,6 +177,10 @@ class _Methods:
     def test_webhook(self, webhook_id: str):
         return self._call(_Req("POST", f"/v1/webhooks/{webhook_id}/test"))
 
+    def replay_webhook_delivery(self, webhook_id: str, delivery_id: str):
+        """Send a past delivery to your endpoint again (same event, data and delivery id; header X-Pramaan-Replay: 1). Payloads are kept 30 days."""
+        return self._call(_Req("POST", f"/v1/webhooks/{webhook_id}/deliveries/{delivery_id}/replay"))
+
     def webhook_deliveries(self, webhook_id: str):
         return self._call(_Req("GET", f"/v1/webhooks/{webhook_id}/deliveries"))
 
