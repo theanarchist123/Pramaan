@@ -140,7 +140,7 @@ async def message(
         raise HTTPException(502, "The assistant is temporarily unavailable. Please try again.") from exc
 
     session.add(ChatMessage(profile_id=profile.id, role="user", content=body.text))
-    created = svc.apply_turn(profile, turn, defs)
+    created = svc.apply_turn(profile, turn, defs, message=body.text)
     session.add(ChatMessage(profile_id=profile.id, role="assistant", content=turn.reply))
     await session.commit()
     created_ids = {c.id for c in created}

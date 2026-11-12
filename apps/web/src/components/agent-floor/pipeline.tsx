@@ -22,22 +22,22 @@ export function Pipeline({ events, now }: { events: AgentEvent[]; now: number })
   const handedOff = new Set(recent.filter((e) => e.kind === "handoff").map((e) => e.agent));
 
   return (
-    <ol aria-label="Order of work" className="flex flex-wrap items-center gap-y-3">
+    <ol aria-label="Order of work" className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:gap-y-3">
       {ORDER.map((name, i) => {
         const line = handedOff.has(name);
         return (
-          <li key={name} className="flex items-center">
-            <div className="flex flex-col items-center gap-1">
+          <li key={name} className="flex flex-col sm:flex-row sm:items-center">
+            <div className="flex items-center gap-3 sm:flex-col sm:gap-1">
               <AgentAvatar name={name} className={cn("size-9 text-xs", working.has(name) && "ring-2 ring-primary ring-offset-2 ring-offset-background")} />
               <span className="text-xs font-medium">{name}</span>
               <span className="text-xs text-muted-foreground">{working.has(name) ? "Working" : "Idle"}</span>
             </div>
             {i < ORDER.length - 1 && (
-              <span aria-hidden className="relative mx-2 mb-8 h-0.5 w-10 overflow-hidden rounded-full bg-border sm:w-16">
+              <span aria-hidden className="relative my-1 ml-[17px] h-5 w-0.5 overflow-hidden rounded-full bg-border sm:mx-2 sm:mb-8 sm:ml-2 sm:mt-0 sm:h-0.5 sm:w-16">
                 <span className={cn("absolute inset-0 rounded-full bg-primary transition-opacity", line ? "opacity-100" : "opacity-0")} />
                 {line && !reduced && (
                   <motion.span
-                    className="absolute top-1/2 size-1.5 -translate-y-1/2 rounded-full bg-background"
+                    className="absolute top-1/2 hidden size-1.5 -translate-y-1/2 rounded-full bg-background sm:block"
                     initial={{ x: -6 }}
                     animate={{ x: 64 }}
                     transition={{ duration: 0.9, repeat: 2, ease: "easeInOut" }}

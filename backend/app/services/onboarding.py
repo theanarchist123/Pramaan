@@ -103,6 +103,16 @@ def apply_delta(profile: Profile, delta: ProfileDelta, defs=()) -> None:
         )
 
 
+def literal_span(message: str, quote: str) -> str:
+    """The stretch of `message` that `quote` points at, taken from the MESSAGE itself (its own casing), or "" if the quote is not a literal
+    stretch of it. A model's rewording or a made-up quote therefore never becomes "what the person said" (fact capture, M-03)."""
+    q = quote.strip()
+    if len(q) < 4 or not message:
+        return ""
+    at = message.lower().find(q.lower())
+    return message[at : at + len(q)] if at >= 0 else ""
+
+
 def add_claims(
     profile: Profile,
     claims: list[ExtractedClaim],
@@ -124,13 +134,14 @@ def add_claims(
             year=item.year if item.year and 1800 <= item.year <= 2200 else None,
             status="self", confidence=0.2,
         )
-        quote = (quotes[i] if quotes and i < len(quotes) else item.value)[:1000]
+        quote = (quotes[i] if quotes and i < len(quotes) and quotes[i] else item.value)[:1000]
         claim.evidence.append(Evidence(kind=evidence_kind, url=evidence_url, quote=quote))
         profile.claims.append(claim)
         created.append(claim)
     return created
 
 
-def apply_turn(profile: Profile, turn: SaathiTurn, defs=()) -> list[Claim]:
+def apply_turn(profile: Profile, turn: SaathiTurn, defs=(), message: str = "") -> list[Claim]:
     apply_delta(profile, turn.profile_delta, defs)
-    return add_claims(profile, turn.new_claims)
+    # The chat evidence for each new claim is the person's own words when the model pointed at a real stretch of their message.
+    return add_claims(profile, turn.new_claims, quotes=[literal_span(message, c.source_quote) for c in turn.new_claims])

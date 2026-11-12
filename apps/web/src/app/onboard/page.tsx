@@ -131,7 +131,18 @@ export default function OnboardPage() {
     setThinking(true);
     try {
       const turn = await api<TurnOut>(`/v1/onboarding/${profile.id}/message`, { method: "POST", json: { text } });
-      setMessages((m) => [...m, { role: "assistant", content: turn.reply }]);
+      // Fact capture: mark, in the person's own message, the exact words each new fact was recorded from.
+      const quotes = turn.new_claims.flatMap((c) => c.evidence.filter((e) => e.kind === "chat").map((e) => e.quote));
+      setMessages((m) => {
+        const next = [...m];
+        for (let i = next.length - 1; i >= 0; i--) {
+          if (next[i].role === "user") {
+            next[i] = { ...next[i], captured: quotes };
+            break;
+          }
+        }
+        return [...next, { role: "assistant", content: turn.reply }];
+      });
       setProfile(turn.profile);
       if (turn.new_claims.length) toast.success(`Added ${turn.new_claims.length} achievement(s) to your profile`);
     } catch (err) {

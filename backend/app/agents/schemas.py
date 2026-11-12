@@ -12,6 +12,10 @@ class ExtractedClaim(BaseModel):
     field: Literal["award", "position", "education", "publication", "achievement", "membership", "other"]
     value: str = Field(description="One concise factual statement, in English, as the person said it")
     year: int | None = Field(description="Year if stated, else null")
+    source_quote: str = Field(
+        default="",
+        description="The EXACT words from the person's latest message that this fact came from, copied character for character (a short stretch, not the whole message). Empty if you cannot point to specific words.",
+    )
 
 
 class CustomValue(BaseModel):

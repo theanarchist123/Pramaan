@@ -46,8 +46,8 @@ export function ProofTable() {
       : [];
 
   return (
-    <section aria-label="A live check of the registry's latest certificate" className="rounded-3xl border border-border bg-card p-5 shadow-xl shadow-primary/5">
-      <p className="text-sm font-medium">Checked just now</p>
+    <section aria-label="A live check of the registry's latest certificate" className="paper-object p-6">
+      <p className="font-heading text-xl font-semibold">Checked just now</p>
       <p className="text-xs text-muted-foreground">The latest certificate in the registry, checked live against the registry when this page loaded, not a recording.</p>
       <div className="mt-4 min-h-40">
         {result === null && <p className="text-sm text-muted-foreground" role="status">Checking...</p>}

@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SiteHeader />
           <ConnectionBanner />
           <PwaRegister />
-          <main id="main">{children}</main>
+          <main id="main" className="pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
         </Providers>
       </body>
     </html>

@@ -17,7 +17,7 @@ export function SectorChip({ sector }: { sector: string }) {
   );
 }
 
-export function ResultCard({ hit, index = 0 }: { hit: SearchHit | (Summary & { score?: number; reasons?: string[]; claims?: SearchHit["claims"]; is_demo?: boolean }); index?: number }) {
+export function ResultCard({ hit, index = 0, className }: { hit: SearchHit | (Summary & { score?: number; reasons?: string[]; claims?: SearchHit["claims"]; is_demo?: boolean }); index?: number; className?: string }) {
   const reasons = "reasons" in hit ? hit.reasons ?? [] : [];
   const claims = "claims" in hit ? hit.claims ?? [] : [];
   const score = "score" in hit ? hit.score : undefined;
@@ -25,6 +25,7 @@ export function ResultCard({ hit, index = 0 }: { hit: SearchHit | (Summary & { s
   // M-09: cards reflow with a FLIP (layout) when filters change; reduced motion gets no movement, only the content.
   return (
     <motion.li
+      className={className}
       layout={!reduced}
       initial={reduced ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}

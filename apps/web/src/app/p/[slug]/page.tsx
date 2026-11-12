@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { BadgeCheck, ChevronRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectorChip } from "@/components/directory/result-card";
+import { BioProof } from "@/components/profile/bio-proof";
 import { ClaimCard } from "@/components/profile/claim-card";
+import { SectorImage } from "@/components/sector-image";
 import { decisionLine, summarise } from "@/lib/claim-summary";
 import { API_URL } from "@/lib/api";
 import { paletteFor } from "@/lib/certificate-art";
@@ -62,7 +64,9 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
 
       <div className="lg:grid lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start lg:gap-8">
       <header className="overflow-hidden rounded-3xl border border-border bg-card lg:sticky lg:top-20">
-        <div className="h-24" style={{ background: `linear-gradient(120deg, ${color.ink}, ${color.primary})` }} />
+        <div className="relative h-24 overflow-hidden" style={{ background: `linear-gradient(120deg, ${color.ink}, ${color.primary})` }}>
+          <SectorImage sector={p.sector} purpose="cover" width={900} className="absolute inset-0 size-full rounded-none opacity-90" />
+        </div>
         <div className="px-6 pb-6">
           <div className="-mt-10 flex size-20 items-center justify-center rounded-full border-4 border-card font-display text-3xl font-semibold text-white" style={{ background: color.ink }} aria-hidden="true">
             {p.full_name.replace(/^(Dr\.?|Prof\.?|Adv\.?|Justice)\s+/i, "").charAt(0)}
@@ -85,7 +89,7 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
               <BadgeCheck aria-hidden className="size-4" /> {sum.confirmed} of {sum.total} claims confirmed
             </p>
           </div>
-          {p.bio && <p className="mt-5 text-base leading-relaxed">{p.bio}</p>}
+          {p.bio && <BioProof bio={p.bio} claims={p.claims} />}
           {extras.length > 0 && (
             <dl className="mt-5 grid gap-x-8 gap-y-3 sm:grid-cols-2">
               {extras.map((d) => (

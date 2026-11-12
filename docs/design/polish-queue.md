@@ -16,3 +16,4 @@ gets a polish pass: compare against the references, adjust timings and compositi
 | Developers | PG-14 | deep links + tab keyboard only; docs shell and OpenAPI pages not built | patterns/developers.md | docs rail, search |
 | Profile / Agent Floor / Home (finish) | PG-15 | dossier two-column + sticky rail, handoff pipeline (M-11), ledger strip built; browser-untested | - | pipeline dot timing, mobile order of the rail |
 | Staff console: case workbench | ADM-02 | built + browser-tested; plain styling only | - | layout, density, evidence side-by-side view |
+| Theme (Seal & Ink on the public site) | PG-16 | colours mapped to tokens, light + dark; contrast gate passes | patterns/theme.md | typography, hero composition, header/cards, certificate palette |

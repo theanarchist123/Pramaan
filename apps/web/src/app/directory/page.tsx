@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Constellation } from "@/components/directory/constellation";
 import { IndiaMap } from "@/components/directory/india-map";
 import { ResultCard, SectorChip } from "@/components/directory/result-card";
+import { ResultRow } from "@/components/directory/result-row";
+import { Shelf } from "@/components/directory/shelf";
 import { api, ApiError } from "@/lib/api";
 import { paletteFor } from "@/lib/certificate-art";
 import {
@@ -35,6 +37,16 @@ export default function Directory() {
   const [graph, setGraph] = useState<{ nodes: GraphNode[]; links: GraphLink[] } | null>(null);
   const [stats, setStats] = useState<MapStats | null>(null);
   const [picked, setPicked] = useState<GraphNode | null>(null);
+
+  // A link such as /directory?sector=Science (from the home page's field tiles) starts with that field selected.
+  useEffect(() => {
+    try {
+      const wanted = new URLSearchParams(window.location.search).get("sector");
+      if (wanted && SECTORS.includes(wanted)) setSector(wanted);
+    } catch {
+      /* no query string available: show everyone */
+    }
+  }, []);
 
   // Initial data: everyone, the relationship graph, and per-state counts.
   useEffect(() => {
@@ -222,22 +234,15 @@ export default function Directory() {
             shelves ? (
               <div className="space-y-10">
                 {shelves.map(([name, people]) => (
-                  <section key={name} aria-label={`${name}, ${people.length} ${people.length === 1 ? "person" : "people"}`}>
-                    <div className="mb-3 flex items-baseline justify-between gap-3">
-                      <h2 className="flex items-center gap-2 text-xl font-semibold">
-                        <span aria-hidden className="size-2.5 rounded-full" style={{ background: paletteFor(name).primary }} /> {name}
-                        <span className="text-sm font-normal text-muted-foreground">{people.length}</span>
-                      </h2>
-                      <Button variant="link" className="h-auto p-0 text-sm" onClick={() => setSector(name)}>See all in {name}</Button>
-                    </div>
-                    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {people.slice(0, 3).map((h, i) => (
-                        <ResultCard key={h.id} hit={h as SearchHit} index={i} />
-                      ))}
-                    </ul>
-                  </section>
+                  <Shelf key={name} name={name} people={people} onSeeAll={() => setSector(name)} />
                 ))}
               </div>
+            ) : hasQuery ? (
+              <ol className="space-y-3" aria-label="Results, best match first">
+                {(shown as SearchHit[]).map((h, i) => (
+                  <ResultRow key={h.id} hit={h} rank={i + 1} />
+                ))}
+              </ol>
             ) : (
               <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <AnimatePresence mode="popLayout">

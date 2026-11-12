@@ -12,6 +12,9 @@ const KEY = "pramaan.lang";
  */
 const en = {
   "nav.directory": "Directory", "nav.verify": "Verify", "nav.mission": "Mission Control",
+  "nav.transparency": "Transparency", "nav.account": "Account and settings", "nav.myRecord": "My record", "nav.getListed": "Get listed",
+  "nav.primary": "Primary", "menu.dark": "Dark mode", "menu.largeText": "Larger text", "menu.reduceMotion": "Reduce motion", "menu.staff": "Staff console",
+  "menu.signedOut": "Not signed in",
   "nav.developers": "Developers", "nav.admin": "Admin", "nav.search": "Search", "nav.signin": "Sign in",
   "nav.signout": "Sign out", "nav.menu": "Open menu", "nav.largeText": "Toggle large text", "nav.reduceMotion": "Reduce motion",
   "nav.darkMode": "Toggle dark mode", "nav.language": "Switch language", "nav.install": "Install app", "nav.skip": "Skip to content",
@@ -67,6 +70,9 @@ export type Key = keyof typeof en;
 
 const hi: Partial<Record<Key, string>> = {
   "nav.directory": "निर्देशिका", "nav.verify": "सत्यापन", "nav.mission": "मिशन कंट्रोल",
+  "nav.transparency": "पारदर्शिता", "nav.account": "खाता और सेटिंग", "nav.myRecord": "मेरा रिकॉर्ड", "nav.getListed": "सूची में आएँ",
+  "nav.primary": "मुख्य", "menu.dark": "डार्क मोड", "menu.largeText": "बड़े अक्षर", "menu.reduceMotion": "गति कम करें", "menu.staff": "स्टाफ कंसोल",
+  "menu.signedOut": "साइन इन नहीं है",
   "nav.developers": "डेवलपर्स", "nav.admin": "एडमिन", "nav.search": "खोजें", "nav.signin": "साइन इन",
   "nav.signout": "साइन आउट", "nav.menu": "मेनू खोलें", "nav.largeText": "बड़े अक्षर चालू/बंद करें", "nav.reduceMotion": "गति कम करें",
   "nav.darkMode": "डार्क मोड चालू/बंद करें", "nav.language": "भाषा बदलें", "nav.install": "ऐप इंस्टॉल करें", "nav.skip": "सीधे सामग्री पर जाएँ",

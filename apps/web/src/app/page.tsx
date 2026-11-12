@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { LandingStats } from "@/components/landing/stats";
 import { AgentRoster } from "@/components/landing/agent-roster";
 import { LedgerStrip } from "@/components/landing/ledger-strip";
+import { DeskCertificate } from "@/components/landing/desk-certificate";
 import { ProofTable } from "@/components/landing/proof-table";
+import { SectorBento } from "@/components/landing/sector-bento";
 import { useI18n, type Key } from "@/lib/i18n";
 
 const STEPS: { icon: typeof BadgeCheck; title: Key; body: Key }[] = [
@@ -20,13 +22,13 @@ export default function Home() {
   const { t } = useI18n();
   return (
     <>
-      <section className="paper-glow">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 md:py-24 lg:grid-cols-[1.1fr_1fr]">
-          <div>
+      <section className="paper-glow border-b border-border">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 md:py-20 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+          <div className="min-w-0">
             <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
               <span className="size-1.5 rounded-full bg-verified" /> {t("home.badge")}
             </p>
-            <h1 className="text-5xl leading-[1.05] font-semibold md:text-6xl">
+            <h1 className="text-balance text-5xl leading-[1.02] font-semibold tracking-tight md:text-6xl xl:text-7xl">
               {t("home.h1a")}
               <br />
               <span className="text-primary">{t("home.h1b")}</span>
@@ -43,17 +45,30 @@ export default function Home() {
             <p className="mt-4 text-sm text-muted-foreground">{t("home.hint")}</p>
             <LandingStats />
           </div>
-          <ProofTable />
+          <div className="min-w-0">
+            <DeskCertificate />
+          </div>
         </div>
       </section>
 
       <LedgerStrip />
 
+      <section className="mx-auto max-w-7xl px-4 py-14" aria-labelledby="browse-h">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 id="browse-h" className="text-balance text-3xl font-semibold md:text-4xl">Browse by field</h2>
+            <p className="mt-1 max-w-xl text-muted-foreground">Fourteen fields, each with the people whose achievements have been checked. Pick one to see its shelf.</p>
+          </div>
+          <Button variant="outline" render={<Link href="/directory" />} nativeButton={false}>Open the registry <ArrowRight /></Button>
+        </div>
+        <div className="mt-6"><SectorBento /></div>
+      </section>
+
       <section className="mx-auto max-w-7xl px-4 py-16">
-        <h2 className="text-3xl font-semibold">{t("home.how")}</h2>
+        <h2 className="text-balance text-3xl font-semibold md:text-4xl">{t("home.how")}</h2>
         <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((s, i) => (
-            <li key={s.title} className="rounded-2xl border border-border bg-card p-5">
+            <li key={s.title} className="rounded-[var(--radius-panel)] border border-border border-t-[3px] border-t-primary bg-card p-5 shadow-[var(--lift-1)]">
               <div className="flex items-center gap-3">
                 <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <s.icon className="size-4.5" />
@@ -67,6 +82,16 @@ export default function Home() {
             </li>
           ))}
         </ol>
+      </section>
+
+      <section className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]" aria-labelledby="checks-h">
+        <div>
+          <h2 id="checks-h" className="text-balance text-3xl font-semibold md:text-4xl">What a check really does</h2>
+          <p className="mt-2 max-w-md text-muted-foreground">Verifying a certificate is four small, honest steps. This one ran when the page loaded, against the newest certificate in the registry.</p>
+        </div>
+        <div className="min-w-0">
+          <ProofTable />
+        </div>
       </section>
 
       <section className="border-y border-border bg-card/50">

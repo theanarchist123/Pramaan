@@ -149,3 +149,102 @@ test); did:web behind the production CDN; DNSSEC (ops). The @vocab namespace is 
 NOT built: a web UI for "download as verifiable credential"; the VC in the desktop/web verifier (verify-js verifies the legacy
 certificate and log proofs, not Data Integrity proofs yet); a second status list when 131,072 certificates are exceeded (the code
 refuses with a clear error instead).
+
+# Visual pass (v2/pg-16-visual-theme)
+User pointed out nothing had visibly changed. True: the public site kept its own cream/orange palette; only the staff console used the tokens. Now:
+colour system mapped to the Seal & Ink tokens (light + dark), paper-object component, stronger Home hero/steps, header underline. Contrast gate
+extended (on-stamp, paper inks) and passing. Screenshots reviewed by me for Home (light/dark), Directory (dark), Verify (light).
+Found by looking at screenshots: Verify code boxes wrapped; fixed. Tests: pages smoke 7/7 and Verify smoke 12/12 on the new theme; a Verify
+step (reduced motion) had a fragile 800 ms timeout, fixed to measure "all checks present once the first appears".
+NOT reviewed visually: Profile, Transparency, Developers, Agent Floor, Onboarding, the certificate, mobile widths, the staff console in the
+new composition. Typography (typeface) unchanged.
+
+# Visual review of the remaining pages (screenshots, light/dark/390px)
+Looked at: Profile, certificate result, Transparency, Agent Floor, Developers (dark), Home (mobile). Found and fixed:
+1. Mobile header overflowed at 390px: Sign in and the theme toggle were cut off. Install now shows from md, the language button is icon-only on
+   phones, and large-text/reduce-motion toggles show from sm (phones keep the OS-level settings). Measured: Sign in right edge 374 of 390, no
+   horizontal scroll.
+2. Agent Floor: Khoji-Pehle used the old "indigo", which now equals the stamp purple, so it matched Saathi. Gave it its own colour.
+Not changed / noted: the Developers code block is a light panel in dark mode (readable, a little jarring); the certificate keeps its
+tracked all-caps label (it is the artwork, not UI chrome); Profile leaves empty space under a short claim list (the sticky rail is fine).
+Not yet reviewed: Directory (light), Onboarding signed in, staff console in the new composition, the other phone pages beyond Home.
+
+# Visual review, second batch
+Reviewed (screenshots): Directory + certificate result + Agent Floor at 390px; signed-in Onboarding consent + chat/profile on desktop and phone.
+Fixed: (1) Agent Floor pipeline wrapped badly on phones (a dangling connector, a second row with none): now a vertical list with vertical
+connectors under sm, horizontal from sm up. (2) Onboarding stepper showed a half-spinner on "Tell us about yourself", which reads as loading;
+only the checking stage spins now, the current stage gets a still marker. Pages smoke 7/7 after the changes.
+Still not reviewed visually: the staff console in the new composition; Transparency/Developers/Profile at 390px individually; Hindi layout.
+
+# Home rebuilt to the section 6.1 layout (v2/pg-16-visual-theme)
+User was right (twice): section 6 specifies a different LAYOUT and signature interaction per page (I had only recoloured and added bits), and
+section 4.9 specifies live Unsplash API images on sector tiles / shelf headers / cover bands (the SectorImage component and backend service exist
+but NO page used them).
+Done for Home: editorial hero with a REAL certificate on a desk and an editable name (change a letter: the registry's /v1/verify/check says the
+signature is broken and the seal cracks, "NOT VALID"); bento "Browse by field" (14 tiles, two large, SectorImage with duotone + attribution,
+link to /directory?sector=X which now pre-selects the field); the step-by-step proof table moved below.
+Unsplash facts, checked in the docs on 2026-11-11: the API needs the application's access key (Authorization: Client-ID ...) for every request
+(users need no login); photos are hotlinked from images.unsplash.com. UNSPLASH_ACCESS_KEY is EMPTY in .env and the approved-image set is empty
+(/v1/images/sector/Science returns []), so tiles show the sector-colour pattern until a key is set and a person approves photos one at a time
+(spec: no bulk import). The staff console has NO page for that approval yet (endpoints exist): to build.
+Bugs found by the new tests/screenshots and fixed: certificate (1123px) forced the page wider than a phone (grid column min-width); tablet header
+overflowed at 768 (compact header until lg); Verify code boxes overflowed at 360 and were 21px (now 26-30px, "PRM-" prefix hidden below 440px).
+New permanent test step: no page scrolls sideways at 360/390/768/1024/1280 (pages smoke 8/8). Verify smoke 12/12.
+Known: Verify still overflows by 11px at 320px wide (not in the test widths). Hindi strings for the new Home text are not written (English only).
+Not yet redesigned to section 6: Directory (cover-band shelves + separate search mode), Profile (dossier with cover band + "Show what's proven"),
+Onboarding (fact capture), Agent Floor (stage with travelling tokens), Transparency (ledger tape), the header (compress on scroll, account menu,
+mobile bottom tab bar), the command palette.
+
+# Photograph curation + Unsplash slot tests (v2/pg-16-visual-theme)
+- Staff console /images: search Unsplash, look at candidates, approve ONE at a time into a field + slot (tile / cover band / empty state), remove
+  approved ones. No bulk import; nothing downloaded or re-hosted. Without UNSPLASH_ACCESS_KEY the search says exactly what to do. Browser test
+  apps/admin/scripts/smoke-images.mjs passes 3/3 (sign in, 14 fields, empty approved list, actionable no-key message).
+- Public site test (pages smoke step "UNSPLASH SLOTS"): with an approved photo (a clearly fake "Test Photographer", intercepted network; nothing
+  written to the DB) the tile hotlinks from images.unsplash.com, keeps the ixid, is sized with w/q/fm params, is fetched by the BROWSER, and the
+  credit has two linked, utm-tagged anchors. Passes.
+- Bento grid fixed to fill evenly (two large tiles span half the row each on desktop).
+- PERFORMANCE: measured. Production build: first API call at 289 ms, proof table done at 2.2 s; Home first-load JS 194 kB. The long-running dev
+  server degraded (JS took ~10 s to hydrate and later never finished in 60 s): dev-server slowness, not an app problem. Pages smoke 9/9 passes
+  against the production build (next start, port 3013).
+- STILL NEEDED FROM THE OWNER: register a free Unsplash app, set UNSPLASH_ACCESS_KEY in the backend .env, restart the API, open the console
+  /images and approve photos. Until then tiles show the sector-colour pattern.
+
+# Directory rebuilt to the section 6.2 layout (v2/pg-16-visual-theme)
+Two modes in one page. BROWSE: shelves, each with a cover band (SectorImage purpose=cover: approved attributed Unsplash photo with the sector duotone,
+else the sector-colour pattern) with the field's icon + name + "See all N", then ONE horizontal snap-scrolling row of people cards.
+SEARCH: a ranked ordered list (rank, name, headline, field + place, "Why this person" reasons, match score as number + bar) so no result appears
+without a reason. Components: directory/shelf.tsx, directory/result-row.tsx.
+Browser test (pages smoke, production build on :3013): 9/9 steps passed on the run that completed: shelves with sideways-scrolling rows; a real
+query returns a ranked list, rank 1 first, every top-level result explains itself. Two test bugs of mine were fixed on the way (header "Search"
+button was matched instead of the form; nested bullets were counted as results).
+CAVEAT, honest: that run still exited non-zero because of console errors. They were CORS-masked HTTP 500s: the API log shows
+ConnectionResetError / connection_lost talking to Postgres (engine already has pool_pre_ping=True), and the Docker engine later stopped
+responding altogether (`docker info` prints nothing). Environmental (Docker Desktop on this machine), not an app fault, but it means I do not have a
+fully green run of the final test file. Re-run after `docker compose up -d db redis`.
+
+# Baseline + Profile / Transparency / Onboarding to spec (v2/pg-16-visual-theme), 2026-11-12
+- FULL BACKEND SUITE on the stacked tip with Docker up: **340 passed, 0 failed** (5m16s).
+- Pages smoke on the production build: **10/10 pass, no console errors** (first fully green run). Fact-capture smoke 3/3.
+- Profile (6.3): cover-band slot (SectorImage, falls back to the gradient) and "Show what's proven": marks only sentences that repeat, word for
+  word, a claim the SERVER marks confirmed (document/issuer/reviewer); the legend says exactly that and that unmarked != false. Browser test seeds
+  a profile through the real API and asserts exactly one sentence is marked.
+- Transparency (6.6): nothing is checked until the button "Verify the whole chain in your browser"; progress bar while this browser re-computes
+  every SHA-256 link; ledger tape with a rail and link dots; newest 25 shown + "Show 50 more" (a broken link is always revealed).
+- Onboarding fact capture (M-03): the chat marks the exact words each new fact came from. This needed a BACKEND change, found while building it:
+  chat claims stored the model's reworded VALUE as the "chat quote", so with a real model nothing would have matched (the mock hides this because
+  its value equals the sentence). ExtractedClaim now has source_quote (the model must copy the person's words), and the server stores it only if
+  it is a literal case-insensitive stretch of the person's message (literal_span); otherwise it falls back to the value. 2 new unit tests.
+  NOT verified against a real model: whether Saathi follows the instruction well (LLM_MODE=mock here).
+- Test infra: bypassCSP in the test context only (Playwright's waitForFunction is blocked by the app's CSP, which is unchanged).
+- Still not to spec: Agent Floor (a public replay of RECORDED real runs needs a privacy decision: run messages can contain names), header
+  (compress on scroll, account menu, mobile bottom tab bar), command palette people preview, Hindi copy, Unsplash photos (owner step).
+
+# Header to spec 6.0 (v2/pg-16-visual-theme)
+Public nav is four places (Directory, Verify, Transparency, Developers); Mission Control and Admin leave the header (staff console is in the account
+menu for admins). Account menu (shadcn DropdownMenu): My record / Sign in, dark mode, larger text, reduce motion (checkbox items that report
+state and really change the page), Install app (via a new useInstall hook), Sign out. Header compresses on scroll (instant height change: no
+animation on layout properties). Phones: a bottom tab bar (Directory, Verify, Get listed or My record, Search) with safe-area padding; main reserves
+space so content is never covered. New strings in English AND Hindi (the Hindi object is typed against the English keys; Hindi wording is mine and
+needs a native-speaker review). Browser test apps/web/scripts/smoke-header.mjs 6/6 (needs no API). Test bugs of mine fixed on the way (menu stays
+open after a checkbox; role queries skip hidden elements; main includes its own padding).
+Not done: the command palette's People preview pane and `?` shortcuts overlay (spec M-24), footer strip "Sealed N certificates", offline banner.
