@@ -5,7 +5,7 @@ import { ArrowRight, BadgeCheck, FileSearch, MessagesSquare, ShieldCheck } from 
 import { Button } from "@/components/ui/button";
 import { LandingStats } from "@/components/landing/stats";
 import { AgentRoster } from "@/components/landing/agent-roster";
-import { HeroPreview } from "@/components/landing/hero-preview";
+import { ProofTable } from "@/components/landing/proof-table";
 import { useI18n, type Key } from "@/lib/i18n";
 
 const STEPS: { icon: typeof BadgeCheck; title: Key; body: Key }[] = [
@@ -42,7 +42,7 @@ export default function Home() {
             <p className="mt-4 text-sm text-muted-foreground">{t("home.hint")}</p>
             <LandingStats />
           </div>
-          <HeroPreview />
+          <ProofTable />
         </div>
       </section>
 
