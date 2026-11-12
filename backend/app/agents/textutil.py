@@ -44,3 +44,28 @@ def claim_specifics_in_quote(claim_text: str, claim_year: int | None, quote: str
     to have been careful (finding P-17)."""
     wanted = numbers_in(claim_text) | ({str(claim_year)} if claim_year else set())
     return wanted <= numbers_in(quote)
+
+
+_GENERIC = {"the", "and", "for", "from", "with", "award", "prize", "awarded", "winner", "received", "won", "university", "institute", "national",
+            "india", "indian", "dr", "prof", "shri", "smt", "sir", "state", "government", "of", "in", "at", "by", "medal", "member", "fellow"}
+
+
+def distinctive_names(claim_text: str, own_name: str = "") -> set[str]:
+    """Capitalised words in a claim that name something specific (an organisation, a place, a title), minus the person's own name and generic words."""
+    own = {t for t in normalize(own_name).split()}
+    out = set()
+    for w in re.findall(r"\b[A-Z][A-Za-zऀ-ॿ]{2,}\b", claim_text):
+        n = normalize(w)
+        if n and n not in _GENERIC and n not in own:
+            out.add(n)
+    return out
+
+
+def claim_names_in_quote(claim_text: str, quote: str, own_name: str = "", minimum: float = 0.6) -> bool:
+    """A real quote can still be about something else ("won the Padma Shri" is not backed by a sentence about the Sahitya Akademi).
+    At least `minimum` of the claim's distinctive names must appear in the quote. A miss only sends the claim to a person; it never approves anything."""
+    wanted = distinctive_names(claim_text, own_name)
+    if not wanted:
+        return True
+    have = set(normalize(quote).split())
+    return len(wanted & have) / len(wanted) >= minimum
