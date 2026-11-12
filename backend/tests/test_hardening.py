@@ -441,6 +441,9 @@ async def test_dns_that_changes_its_answer_between_check_and_connect_is_still_bl
 
 # --------------------------------------------------------------------------- scheduled email
 async def test_two_workers_never_send_the_same_scheduled_email_twice(client, make_user, monkeypatch):
+    from app.services import outreach as _o
+
+    monkeypatch.setattr(_o, "next_send_window", lambda n: n)  # these tests are about WHEN and HOW OFTEN, not the 09:00-18:00 India window (tests/test_doot_policy.py)
     from datetime import datetime, timedelta, timezone
 
     from app.models import OutboxMessage

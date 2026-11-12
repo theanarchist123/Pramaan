@@ -173,6 +173,9 @@ async def test_real_smtp_path_and_failure_returns_to_draft(client, make_user, mo
 
 
 async def test_scheduling_sends_only_when_due(client, make_user, monkeypatch):
+    from app.services import outreach as _o
+
+    monkeypatch.setattr(_o, "next_send_window", lambda n: n)  # these tests are about WHEN and HOW OFTEN, not the 09:00-18:00 India window (tests/test_doot_policy.py)
     monkeypatch.setattr(get_settings(), "smtp_host", "")
     _, admin, profile, _ = await _approved_profile_with_cert(client, make_user)
     _, admin2, profile2, _ = await _approved_profile_with_cert(client, make_user)
