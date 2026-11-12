@@ -57,3 +57,11 @@ Branch v2/agents-final. Tests first; the full backend suite was green before the
 REVIEW NEEDED (always-human paths): migrations 0019, 0020; app/deps.py earlier; the whole of agents/fixer.py's PROTECTED list; services/certificates.py (the signed payload now carries `art`).
 FINDING for the owner: live Saathi writes non-Latin names in Latin letters (ADR 0011).
 Your local dev database is behind: run `cd backend && alembic upgrade head` (0017-0020 are not applied there; the CLI evals that touch the DB failed on it until I made the eval database-free).
+
+## Sixth pass: the remaining non-agent work
+- API-05 DONE (no migration needed: the outbox already stores each delivery's data). Replay keeps the delivery id and adds X-Pramaan-Replay: 1; payloads kept 30 days; deleted on erasure.
+- API-06: Go and Kotlin SDKs WRITTEN, NOT COMPILED OR RUN (no toolchains). Python contract tests check their paths against the OpenAPI document and their webhook rule against the server's. First step for you: `go test ./...` in packages/sdk/go, `gradle test` in packages/sdk/kotlin.
+- DSK-04 DONE and exercised in real Electron (16 desktop checks): console variant, queue badge.
+- DSK-05 WRITTEN, NOT RUN: update channels (tested), per-OS signature checks, update-manifest check, staged-rollout workflow. The first tagged release is the first real test.
+- DSK-06: ADR only; the Tauri spike needs a Rust toolchain that is not set up here.
+- MOB-02: Capacitor scaffold with a tested safety config; not built on a device. Push needs a server-side token table (migration) and your Firebase files.

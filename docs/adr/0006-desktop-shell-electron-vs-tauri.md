@@ -20,3 +20,7 @@ Status: accepted for now (2026-11-12). This is a desk decision, not the "spike" 
 2. Run the offline verifier in the system web view on Windows 10, Windows 11, an older and a current macOS, and Ubuntu LTS; record where Ed25519 WebCrypto is missing.
 3. Measure installer size, idle memory and cold start on the same machine for both shells.
 4. Port the 12 security checks.
+
+## Update 2026-11-13: the spike was not run
+This machine has no usable Rust toolchain (`rustup` has no default toolchain) and installing one means downloading and changing the owner's development setup, so it was not done without asking.
+To run the spike: `rustup default stable`, install the Visual Studio C++ build tools (Windows) and WebView2 (preinstalled on Windows 11), `cargo install create-tauri-app`, then follow the four steps above.
