@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import uuid
 from dataclasses import dataclass, field
 from itertools import combinations
@@ -11,7 +12,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.textutil import normalize
-from app.models import Edge, Profile, ProfileEmbedding
+from app.models import Claim, Edge, Profile, ProfileEmbedding
 from app.services.embeddings import get_embedder
 
 VERIFIED = ("web", "document", "human", "issuer")
@@ -169,6 +170,39 @@ def _reasons(p: Profile, query: str, state: str | None, sector: str | None) -> l
 SECTOR_BOOST = 0.08
 
 
+VEC_WEIGHT, LEX_WEIGHT = 0.7, 0.3
+HONORIFICS = {"dr", "prof", "professor", "shri", "smt", "sir", "mr", "mrs", "ms", "justice", "adv"}
+_NOT_WORD = re.compile(r"[^\wऀ-ॿ]+")
+
+
+def combine(vec: float, lex: float) -> float:
+    """Blend the embedding similarity with the full-text score, both clamped to 0..1."""
+    v, l = min(1.0, max(0.0, vec)), min(1.0, max(0.0, lex))
+    return min(1.0, VEC_WEIGHT * v + LEX_WEIGHT * l)
+
+
+def name_boost(full_name: str, query: str) -> float:
+    """Re-rank step: someone asking for a person by name should see that person first."""
+    name = [t for t in normalize(full_name).split() if t not in HONORIFICS and len(t) >= 2]
+    q = set(normalize(query).split())
+    return 0.1 if len(name) >= 2 and all(t in q for t in name) else 0.0
+
+
+def lexical_query(query: str) -> str:
+    """The query as plain lower-case words: no operators, so it is safe to build a tsquery from (still bound as a parameter)."""
+    return _NOT_WORD.sub(" ", query or "").strip().lower()
+
+
+def _tsquery(words: str) -> str:
+    return " | ".join(dict.fromkeys(w for w in words.split() if len(w) >= 2))[:400]
+
+
+def _doc():
+    claims = select(func.string_agg(Claim.value, " ")).where(Claim.profile_id == Profile.id).correlate(Profile).scalar_subquery()
+    return func.to_tsvector("simple", func.concat_ws(" ", Profile.full_name, Profile.headline, Profile.bio, Profile.sector, Profile.state, Profile.city,
+                                                      func.array_to_string(Profile.institutions, " "), func.coalesce(claims, "")))
+
+
 async def search(
     session: AsyncSession,
     query: str,
@@ -178,28 +212,40 @@ async def search(
     boost_sector: str | None = None,
     limit: int = 12,
 ) -> list[Hit]:
-    """`state`/`sector` are hard filters (explicit user choices). `boost_sector` is a soft nudge for a
-    sector the language model merely *inferred*, since an inferred field is a guess and must never hide people."""
+    """Hybrid retrieval: embedding similarity AND Postgres full-text, merged, then re-ranked. `state`/`sector` are hard filters (explicit user choices) for BOTH
+    sides. `boost_sector` is a soft nudge for a sector the language model merely *inferred*, since an inferred field is a guess and must never hide people."""
     [qvec] = await get_embedder().embed([query])
     dist = ProfileEmbedding.embedding.cosine_distance(qvec)
-    stmt = (
-        select(Profile, dist.label("d"))
-        .join(ProfileEmbedding, ProfileEmbedding.profile_id == Profile.id)
-        .where(Profile.status == "approved")
-        .order_by(dist)
-        .limit(limit * 2 if boost_sector else limit)
-    )
-    if state:
-        stmt = stmt.where(Profile.state == state)
-    if sector:
-        stmt = stmt.where(Profile.sector == sector)
-    rows = (await session.execute(stmt)).all()
-    hits = []
-    for p, d in rows:
-        score = max(0.0, 1 - float(d)) + (SECTOR_BOOST if boost_sector and p.sector == boost_sector else 0.0)
-        hits.append(Hit(p, round(score, 3), _reasons(p, query, state, sector or boost_sector)))
-    hits.sort(key=lambda h: h.score, reverse=True)
-    return hits[:limit]
+    words = lexical_query(query)
+    tsq = _tsquery(words)
+    doc = _doc()
+    lex = func.ts_rank_cd(doc, func.to_tsquery("simple", tsq), 32) if tsq else None
+    n = (limit * 2) if boost_sector else limit
+
+    def base(stmt):
+        stmt = stmt.join(ProfileEmbedding, ProfileEmbedding.profile_id == Profile.id).where(Profile.status == "approved")
+        if state:
+            stmt = stmt.where(Profile.state == state)
+        if sector:
+            stmt = stmt.where(Profile.sector == sector)
+        return stmt
+
+    cols = [Profile, dist.label("d")] + ([lex.label("lex")] if lex is not None else [])
+    rows = (await session.execute(base(select(*cols)).order_by(dist).limit(n))).all()
+    if lex is not None:
+        rows += (await session.execute(base(select(*cols)).where(doc.op("@@")(func.to_tsquery("simple", tsq))).order_by(lex.desc()).limit(n))).all()
+    seen: dict[uuid.UUID, Hit] = {}
+    for row in rows:
+        p, d = row[0], float(row[1])
+        lx = float(row[2]) if lex is not None and row[2] is not None else 0.0
+        if p.id in seen:
+            continue
+        score = combine(max(0.0, 1 - d), lx) + name_boost(p.full_name, query) + (SECTOR_BOOST if boost_sector and p.sector == boost_sector else 0.0)
+        reasons = _reasons(p, query, state, sector or boost_sector)
+        if lx > 0 and not any("words you typed" in r for r in reasons):
+            reasons = (reasons + ["Matches the words you typed"])[:4]
+        seen[p.id] = Hit(p, round(min(1.0, score), 3), reasons)
+    return sorted(seen.values(), key=lambda h: h.score, reverse=True)[:limit]
 
 
 async def counts(session: AsyncSession) -> dict:

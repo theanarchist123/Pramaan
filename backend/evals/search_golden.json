@@ -1,0 +1,391 @@
+{
+ "note": "Fictional people. Golden set for AGT-08: each query has exactly one best profile. Languages: en, hi, hinglish.",
+ "corpus": [
+  {
+   "id": "p01",
+   "name": "Anita Menon",
+   "sector": "Energy",
+   "state": "Kerala",
+   "text": "Pioneered community solar microgrids in coastal villages",
+   "text_hi": "सौर ऊर्जा सूक्ष्म ग्रिड"
+  },
+  {
+   "id": "p02",
+   "name": "Vikram Rathore",
+   "sector": "Energy",
+   "state": "Rajasthan",
+   "text": "Built wind farms across the Thar desert",
+   "text_hi": "पवन ऊर्जा राजस्थान"
+  },
+  {
+   "id": "p03",
+   "name": "Sunita Deshmukh",
+   "sector": "Healthcare",
+   "state": "Maharashtra",
+   "text": "Led a rural maternal health programme that cut infant deaths",
+   "text_hi": "ग्रामीण मातृ स्वास्थ्य कार्यक्रम"
+  },
+  {
+   "id": "p04",
+   "name": "Arjun Pillai",
+   "sector": "Science",
+   "state": "Kerala",
+   "text": "Studies monsoon dynamics and ocean temperature",
+   "text_hi": "मानसून और समुद्र का तापमान"
+  },
+  {
+   "id": "p05",
+   "name": "Farah Siddiqui",
+   "sector": "Literature",
+   "state": "Uttar Pradesh",
+   "text": "Writes Urdu poetry about Lucknow and its lanes",
+   "text_hi": "लखनऊ पर उर्दू कविता"
+  },
+  {
+   "id": "p06",
+   "name": "Kavita Joshi",
+   "sector": "Education",
+   "state": "Uttarakhand",
+   "text": "Opened mountain schools for girls in remote hill villages",
+   "text_hi": "पहाड़ी गांवों में लड़कियों के स्कूल"
+  },
+  {
+   "id": "p07",
+   "name": "Ramesh Naidu",
+   "sector": "Agriculture",
+   "state": "Andhra Pradesh",
+   "text": "Developed drought resistant millet seed varieties",
+   "text_hi": "सूखा सहने वाली बाजरा किस्में"
+  },
+  {
+   "id": "p08",
+   "name": "Meera Kulkarni",
+   "sector": "Technology",
+   "state": "Karnataka",
+   "text": "Founded a Bengaluru startup building open source speech recognition for Indian languages",
+   "text_hi": "भारतीय भाषाओं के लिए आवाज पहचान"
+  },
+  {
+   "id": "p09",
+   "name": "Gurpreet Singh",
+   "sector": "Sports",
+   "state": "Punjab",
+   "text": "Won national medals in wrestling and coaches young athletes",
+   "text_hi": "कुश्ती राष्ट्रीय पदक"
+  },
+  {
+   "id": "p10",
+   "name": "Lakshmi Iyer",
+   "sector": "Arts & Culture",
+   "state": "Tamil Nadu",
+   "text": "Classical Bharatanatyam dancer who revived temple dance traditions",
+   "text_hi": "भरतनाट्यम नर्तकी"
+  },
+  {
+   "id": "p11",
+   "name": "Imran Sheikh",
+   "sector": "Law",
+   "state": "Delhi",
+   "text": "Argued landmark public interest cases on clean air",
+   "text_hi": "स्वच्छ हवा जनहित याचिका"
+  },
+  {
+   "id": "p12",
+   "name": "Neha Bhatt",
+   "sector": "Media",
+   "state": "West Bengal",
+   "text": "Investigative journalist who exposed river pollution in Kolkata",
+   "text_hi": "नदी प्रदूषण पर खोजी पत्रकारिता"
+  },
+  {
+   "id": "p13",
+   "name": "Sanjay Gupta",
+   "sector": "Business",
+   "state": "Gujarat",
+   "text": "Built a textile exporter employing five thousand weavers",
+   "text_hi": "कपड़ा निर्यात बुनकर"
+  },
+  {
+   "id": "p14",
+   "name": "Deepa Nair",
+   "sector": "Social Work",
+   "state": "Kerala",
+   "text": "Runs shelters and meals for homeless elderly people",
+   "text_hi": "बेघर बुजुर्गों के लिए आश्रय"
+  },
+  {
+   "id": "p15",
+   "name": "Harish Verma",
+   "sector": "Public Service",
+   "state": "Madhya Pradesh",
+   "text": "Retired collector known for transparent land records reform",
+   "text_hi": "भूमि अभिलेख सुधार"
+  },
+  {
+   "id": "p16",
+   "name": "Pooja Reddy",
+   "sector": "Healthcare",
+   "state": "Telangana",
+   "text": "Surgeon who pioneered low cost cardiac surgery for children",
+   "text_hi": "बच्चों की हृदय शल्य चिकित्सा"
+  },
+  {
+   "id": "p17",
+   "name": "Anil Chatterjee",
+   "sector": "Science",
+   "state": "West Bengal",
+   "text": "Astrophysicist researching dark matter and galaxy formation",
+   "text_hi": "डार्क मैटर खगोल भौतिकी"
+  },
+  {
+   "id": "p18",
+   "name": "Tenzin Dolma",
+   "sector": "Social Work",
+   "state": "Ladakh",
+   "text": "Protects glaciers and trains village ice stupa builders",
+   "text_hi": "ग्लेशियर संरक्षण लद्दाख"
+  },
+  {
+   "id": "p19",
+   "name": "Rohit Malhotra",
+   "sector": "Technology",
+   "state": "Haryana",
+   "text": "Created low cost drones for crop spraying",
+   "text_hi": "फसल छिड़काव के लिए ड्रोन"
+  },
+  {
+   "id": "p20",
+   "name": "Shobha Rao",
+   "sector": "Education",
+   "state": "Karnataka",
+   "text": "Designed a free maths curriculum used in government schools",
+   "text_hi": "सरकारी स्कूलों के लिए गणित पाठ्यक्रम"
+  },
+  {
+   "id": "p21",
+   "name": "Bhaskar Das",
+   "sector": "Arts & Culture",
+   "state": "Odisha",
+   "text": "Revived Pattachitra scroll painting among village artists",
+   "text_hi": "पट्टचित्र चित्रकला"
+  },
+  {
+   "id": "p22",
+   "name": "Zoya Ahmed",
+   "sector": "Sports",
+   "state": "Jammu and Kashmir",
+   "text": "Pioneered women's cricket coaching in the valley",
+   "text_hi": "महिला क्रिकेट प्रशिक्षण कश्मीर"
+  },
+  {
+   "id": "p23",
+   "name": "Manoj Tiwari",
+   "sector": "Energy",
+   "state": "Gujarat",
+   "text": "Designed biogas plants for dairy cooperatives",
+   "text_hi": "डेयरी सहकारी बायोगैस संयंत्र"
+  },
+  {
+   "id": "p24",
+   "name": "Ishita Roy",
+   "sector": "Literature",
+   "state": "West Bengal",
+   "text": "Bengali novelist writing about migration and partition",
+   "text_hi": "विभाजन और प्रवास पर बंगाली उपन्यास"
+  }
+ ],
+ "queries": [
+  {
+   "id": "q01",
+   "lang": "en",
+   "q": "solar power in villages of Kerala",
+   "expect": "p01"
+  },
+  {
+   "id": "q02",
+   "lang": "en",
+   "q": "wind energy rajasthan desert",
+   "expect": "p02"
+  },
+  {
+   "id": "q03",
+   "lang": "en",
+   "q": "maternal health rural programme",
+   "expect": "p03"
+  },
+  {
+   "id": "q04",
+   "lang": "en",
+   "q": "who studies the monsoon",
+   "expect": "p04"
+  },
+  {
+   "id": "q05",
+   "lang": "en",
+   "q": "urdu poet lucknow",
+   "expect": "p05"
+  },
+  {
+   "id": "q06",
+   "lang": "en",
+   "q": "schools for girls in the hills",
+   "expect": "p06"
+  },
+  {
+   "id": "q07",
+   "lang": "en",
+   "q": "drought tolerant millet",
+   "expect": "p07"
+  },
+  {
+   "id": "q08",
+   "lang": "en",
+   "q": "speech recognition for indian languages startup",
+   "expect": "p08"
+  },
+  {
+   "id": "q09",
+   "lang": "en",
+   "q": "wrestling champion coach",
+   "expect": "p09"
+  },
+  {
+   "id": "q10",
+   "lang": "en",
+   "q": "bharatanatyam dancer",
+   "expect": "p10"
+  },
+  {
+   "id": "q11",
+   "lang": "en",
+   "q": "public interest litigation air pollution",
+   "expect": "p11"
+  },
+  {
+   "id": "q12",
+   "lang": "en",
+   "q": "journalist river pollution kolkata",
+   "expect": "p12"
+  },
+  {
+   "id": "q13",
+   "lang": "en",
+   "q": "textile exporter weavers gujarat",
+   "expect": "p13"
+  },
+  {
+   "id": "q14",
+   "lang": "en",
+   "q": "shelter for homeless elderly",
+   "expect": "p14"
+  },
+  {
+   "id": "q15",
+   "lang": "en",
+   "q": "children heart surgeon low cost",
+   "expect": "p16"
+  },
+  {
+   "id": "q16",
+   "lang": "en",
+   "q": "dark matter researcher",
+   "expect": "p17"
+  },
+  {
+   "id": "q17",
+   "lang": "en",
+   "q": "ice stupa glacier ladakh",
+   "expect": "p18"
+  },
+  {
+   "id": "q18",
+   "lang": "en",
+   "q": "crop spraying drones",
+   "expect": "p19"
+  },
+  {
+   "id": "q19",
+   "lang": "hi",
+   "q": "सौर ऊर्जा से गांवों में बिजली",
+   "expect": "p01"
+  },
+  {
+   "id": "q20",
+   "lang": "hi",
+   "q": "राजस्थान में पवन चक्की",
+   "expect": "p02"
+  },
+  {
+   "id": "q21",
+   "lang": "hi",
+   "q": "गांव की महिलाओं की स्वास्थ्य सेवा",
+   "expect": "p03"
+  },
+  {
+   "id": "q22",
+   "lang": "hi",
+   "q": "लखनऊ की शायरी",
+   "expect": "p05"
+  },
+  {
+   "id": "q23",
+   "lang": "hi",
+   "q": "पहाड़ों में लड़कियों की पढ़ाई",
+   "expect": "p06"
+  },
+  {
+   "id": "q24",
+   "lang": "hi",
+   "q": "कुश्ती का खिलाड़ी",
+   "expect": "p09"
+  },
+  {
+   "id": "q25",
+   "lang": "hi",
+   "q": "भरतनाट्यम की नर्तकी",
+   "expect": "p10"
+  },
+  {
+   "id": "q26",
+   "lang": "hi",
+   "q": "बच्चों के दिल का ऑपरेशन",
+   "expect": "p16"
+  },
+  {
+   "id": "q27",
+   "lang": "hi",
+   "q": "बायोगैस डेयरी",
+   "expect": "p23"
+  },
+  {
+   "id": "q28",
+   "lang": "hinglish",
+   "q": "solar urja gaon microgrid",
+   "expect": "p01"
+  },
+  {
+   "id": "q29",
+   "lang": "hinglish",
+   "q": "pawan urja rajasthan",
+   "expect": "p02"
+  },
+  {
+   "id": "q30",
+   "lang": "hinglish",
+   "q": "ladakh glacier bachane wale",
+   "expect": "p18"
+  },
+  {
+   "id": "q31",
+   "lang": "hinglish",
+   "q": "kushti champion punjab",
+   "expect": "p09"
+  },
+  {
+   "id": "q32",
+   "lang": "hinglish",
+   "q": "bengali upanyas partition",
+   "expect": "p24"
+  }
+ ]
+}
