@@ -19,6 +19,8 @@ from app.agents.schemas import (
     DraftClaim,
     ExtractedClaim,
     FactCheckReport,
+    SetuEdgeProposal,
+    SetuProposals,
     ProfileDelta,
     SaathiTurn,
 )
@@ -240,7 +242,29 @@ def bio_audit(ctx: dict[str, Any]) -> BioAudit:
     return BioAudit(unsupported_sentences=[])
 
 
+def setu(ctx: dict[str, Any]) -> SetuProposals:
+    """Offline stand-in: propose a connection wherever a statement contains another person's full name next to a collaboration word."""
+    import re as _re
+
+    edges = []
+    for line in str(ctx.get("corpus", "")).split("\n"):
+        low = line.lower()
+        for name in ctx.get("candidates", []):
+            if name.lower() in low:
+                if _re.search(r"co-?author|paper|published|wrote", low):
+                    kind = "co_author"
+                elif _re.search(r"co-?found|founded", low):
+                    kind = "co_founder"
+                elif "board" in low:
+                    kind = "board"
+                else:
+                    kind = "joint_project"
+                edges.append(SetuEdgeProposal(other_name=name, kind=kind, span=line.strip()))
+    return SetuProposals(edges=edges)
+
+
 _DISPATCH = {
+    "SetuProposals": setu,
     "SaathiTurn": saathi,
     "DiscoveryDraft": discovery,
     "FactCheckReport": factcheck,

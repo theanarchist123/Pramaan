@@ -330,3 +330,14 @@ re-checked at send time (withdrawn after drafting => discarded), (3) a frequency
 GET /v1/outreach/unsubscribe, and POST /v1/admin/suppressions for staff. A dry run obeys the same rules. Migration 0015 (new table; rehearsal passes).
 6 new tests + all existing outreach/hardening tests: 52 passed. NOT done: templates and schedules as first-class objects, policy auto-send for approved low-risk
 kinds (AGT-09 asks for it; sending without a human is a decision for the owner), an unsubscribe landing PAGE (the link returns JSON), a staff screen for the list.
+
+# AGT-03 real Setu (v2/agt-03-setu, off agt-09)
+Setu was plain code (alumni / city / sector edges). It now ALSO proposes working connections (co-author, co-founder, board, joint project) with a model, and a
+deterministic validator decides: an edge stands only if it points at exactly ONE other approved person (never oneself, never an ambiguous name), its supporting
+span is a LITERAL stretch of the person's own claims/evidence (>= 25 normalised characters), and that span names the other person. Accepted edges carry the
+person's own words; they live in their own table (setu_edges, migration 0016) because the computed edges are wiped and rebuilt on every refresh. The model is only
+asked when someone else's name could be in the text (cheap deterministic pre-filter). POST /v1/admin/graph/setu runs it (profile.correct); idempotent. The graph
+shows them as "Stated working connection" with the span as the reason. Agent catalogue: Setu is now "hybrid" (it was "service"): the honesty test in
+test_hardening asserted the old kind and was updated, with this reason. 6 new tests; agents/directory/hardening/migration suites pass.
+NOT done: backfill of org-membership edges beyond what is stated, evidence from documents (only claims + evidence quotes are read), an eval set against a REAL model
+(runs on the mock here), Setu proposals needing a human to approve (they are auto-accepted when they validate).

@@ -32,7 +32,7 @@ const ForceGraph2D = dynamic(
 ) as unknown as React.ComponentType<Record<string, any>>;
 
 const LINK_LABEL: Record<GraphLink["type"], string> = {
-  alumni: "Shared institution", org: "Same organisation", city: "Same city", sector: "Same field & state",
+  alumni: "Shared institution", org: "Same organisation", city: "Same city", sector: "Same field & state", collab: "Stated working connection",
 };
 
 type FGNode = GraphNode & { x?: number; y?: number };
@@ -95,12 +95,12 @@ export function Constellation({
         backgroundColor="rgba(0,0,0,0)"
         cooldownTicks={140}
         nodeRelSize={5}
-        linkWidth={(l: any) => ((l as unknown as GraphLink).type === "alumni" ? 1.6 : 0.5)}
+        linkWidth={(l: any) => (["alumni", "collab"].includes((l as unknown as GraphLink).type) ? 1.6 : 0.5)}
         linkColor={(l: any) => {
           const s = (l as unknown as { source: FGNode }).source, t = (l as unknown as { target: FGNode }).target;
           const on = !focus || s.id === focus || t.id === focus;
-          const base = (l as unknown as GraphLink).type === "alumni" ? (dark ? "200,200,255" : "60,60,140") : dark ? "180,180,180" : "120,120,120";
-          return `rgba(${base},${on ? ((l as unknown as GraphLink).type === "alumni" ? 0.55 : 0.18) : 0.04})`;
+          const base = ["alumni", "collab"].includes((l as unknown as GraphLink).type) ? (dark ? "200,200,255" : "60,60,140") : dark ? "180,180,180" : "120,120,120";
+          return `rgba(${base},${on ? (["alumni", "collab"].includes((l as unknown as GraphLink).type) ? 0.55 : 0.18) : 0.04})`;
         }}
         linkLabel={(l: any) => LINK_LABEL[(l as unknown as GraphLink).type] + " — " + (l as unknown as GraphLink).why}
         onNodeHover={(n: any) => setHover(n ? (n as FGNode).id : null)}

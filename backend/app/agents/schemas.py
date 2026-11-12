@@ -131,3 +131,14 @@ class PluginProposal(BaseModel):
 class OutreachDraft(BaseModel):
     subject: str = Field(description="Under 70 characters, specific, no clickbait")
     body: str = Field(description="Plain text, 60-140 words, warm and brief, no links (links are added for you)")
+
+
+# ----- Setu (connections between people) -----
+class SetuEdgeProposal(BaseModel):
+    other_name: str = Field(description="The other person's name, exactly as given in <others>")
+    kind: Literal["co_author", "co_founder", "board", "joint_project"]
+    span: str = Field(description="The EXACT words from the person's own statements that say this, copied character for character; must name the other person")
+
+
+class SetuProposals(BaseModel):
+    edges: list[SetuEdgeProposal] = Field(default_factory=list)

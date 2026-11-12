@@ -29,7 +29,7 @@ CATALOG = [
     {"name": "Lipik", "kind": "llm", "role": "Document reader", "does": "Reads uploaded credentials (vision model) and checks the holder and issuer", "replaces": "Manual data entry from certificates"},
     {"name": "Pariksha", "kind": "llm", "role": "Fact-checker", "does": "Checks each claim against Wikipedia and Wikidata; a citation only counts if the quote is really in the source", "replaces": "Googling every claim"},
     {"name": "Prahari", "kind": "hybrid", "role": "Auditor", "does": "Fixed rules decide approve vs. escalate (a model only checks the bio); first listings and awards always go to a human", "replaces": "Reviewing every profile by hand"},
-    {"name": "Setu", "kind": "service", "role": "Connector", "does": "Links people who share an institution, sector or place (plain code, no model)", "replaces": "Manual tagging and clustering"},
+    {"name": "Setu", "kind": "hybrid", "role": "Connector", "does": "Links people who share an institution, sector or place (plain code), and proposes working connections people have stated; a connection stands only if their own words, quoted exactly, name the other person", "replaces": "Manual tagging and clustering"},
     {"name": "Khoji", "kind": "llm", "role": "Search", "does": "A model turns a plain-English question into filters; ranking is vector search", "replaces": "Building filters and queries"},
     {"name": "Chitrakar", "kind": "service", "role": "Certificate artwork", "does": "Draws each certificate's artwork deterministically from its hash, over a curated sector photo (no image model)", "replaces": "Designing certificates"},
     {"name": "Doot", "kind": "llm", "role": "Outreach", "does": "Drafts follow-up messages; a human approves every send", "replaces": "Writing emails"},

@@ -442,6 +442,22 @@ class OutboxMessage(Base):
     created_at: Mapped[datetime] = ts()
 
 
+class SetuEdge(Base):
+    """A connection Setu proposed AND the validator accepted (AGT-03): it always carries the words that justify it. Separate from the computed edges,
+    which are wiped and rebuilt on every refresh."""
+
+    __tablename__ = "setu_edges"
+    __table_args__ = (UniqueConstraint("a_id", "b_id", "kind", name="setu_edges_pair_kind_key"),)
+
+    id: Mapped[uuid.UUID] = pk()
+    a_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    b_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(16))  # co_author | co_founder | board | joint_project
+    span: Mapped[str] = mapped_column(String(500))  # the verbatim words from the person's own statements
+    from_profile_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))  # whose statements it came from
+    created_at: Mapped[datetime] = ts()
+
+
 class EmailSuppression(Base):
     """Someone who asked not to be emailed (AGT-09). Only a keyed hash of the address is stored, never the address itself."""
 
