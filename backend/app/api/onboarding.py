@@ -105,6 +105,7 @@ class TurnOut(BaseModel):
     new_claims: list[ClaimOut]
     missing: list[str]
     ready_to_submit: bool
+    coverage: dict | None = None
     run_id: uuid.UUID
 
 
@@ -147,13 +148,15 @@ async def message(
     profile = await svc.reload_profile(session, profile.id)
     await ctx.finish("done", f"{len(created)} claim(s) captured")
 
+    cov = svc.coverage(profile)
     return TurnOut(
         reply=turn.reply,
         detected_language=turn.detected_language,
         profile=ProfileOut.model_validate(profile),
         new_claims=[ClaimOut.model_validate(c) for c in profile.claims if c.id in created_ids],
         missing=turn.missing,
-        ready_to_submit=turn.ready_to_submit,
+        ready_to_submit=turn.ready_to_submit and cov["ready"],  # the model may suggest; the required fields are counted by code
+        coverage=cov,
         run_id=ctx.run_id,
     )
 

@@ -10,7 +10,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 
 const require = createRequire(import.meta.url);
-const { resolveDeepLink, findDeepLink } = require("../src/links.js");
+const { resolveDeepLink, findDeepLink, pathFromClipboard } = require("../src/links.js");
 // PRAMAAN_EXE=<path to Pramaan.exe> runs this same suite against the PACKAGED app instead of the dev one.
 const packaged = process.env.PRAMAAN_EXE || null;
 const electronPath = packaged || require("electron");
@@ -24,6 +24,14 @@ const step = async (name, fn) => {
   passed++;
   console.log("ok");
 };
+
+await step("verifier mode: one code in any copied text opens its check; none or two does not", () => {
+  assert.equal(pathFromClipboard("Please check prm-abcdefghjk before Friday"), "/verify/PRM-ABCDEFGHJK");
+  assert.equal(pathFromClipboard("PRM-ABCDEFGHJK and again PRM-ABCDEFGHJK"), "/verify/PRM-ABCDEFGHJK");
+  assert.equal(pathFromClipboard("PRM-ABCDEFGHJK vs PRM-ZZZZZZZZZZ"), null);
+  assert.equal(pathFromClipboard("nothing here https://evil.example/verify/PRM"), null);
+  assert.equal(pathFromClipboard(42), null);
+});
 
 // ---------------------------------------------------------------------------------- 1. link parsing
 await step("deep links: only exact, well-formed shapes resolve — to paths on our own origin", () => {
