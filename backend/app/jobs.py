@@ -172,6 +172,13 @@ async def drain() -> None:
 
 
 # ---------------------------------------------------------------------------- the jobs
+@task("sutradhar_run")
+async def _sutradhar_run(payload: dict[str, Any]) -> None:
+    from app.agents import sutradhar
+
+    await sutradhar.run_job(payload)
+
+
 @task("verify_profile")
 async def _verify_profile(payload: dict[str, Any]) -> None:
     from app.agents.events import RunContext

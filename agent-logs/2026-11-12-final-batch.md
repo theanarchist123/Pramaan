@@ -45,3 +45,15 @@ Merged (backend 439 passed): API-06 (SDK types regenerated + CI staleness job + 
 DSK-06 desk ADR 0006 (the spike itself NOT done), MOB-03 (shrink >4 MB photos before upload), AGT-05 (claim names must appear in the quote).
 Still open: AGT-02 (graph refactor), AGT-04 (Chitrakar), AGT-13 (fixer agent: AI-written-code pipeline, needs human review design), AGT-05 model entailment/adapters,
 API-05 replay (your decision), Go/Kotlin SDKs, DSK-04/05, MOB-02, voice, T2/T3 builder tiers, plus owner-only items.
+
+## Fifth pass: the remaining agents (AGT-01..13 all built, each with stated limits)
+Branch v2/agents-final. Tests first; the full backend suite was green before the last three items (505 passed; the only failures were the not-yet-implemented Doot tests, now passing).
+- AGT-05 evidence adapters (Wikipedia, Wikidata, OpenAlex) with provenance, reliability caps, circuit breaker, model entailment that can only refuse. ADR 0007.
+- AGT-01/02 Sutradhar + document/dispute/post-approval graphs (migration 0019). ADR 0008. test_infra enqueue test updated with a reason.
+- AGT-04 Chitrakar (closed motif vocabulary, validator, audit, web renderer; brief + photo hash signed into the certificate; photo now chosen BEFORE signing).
+- AGT-13 Nigrani + fixer (diff proposals only) + canary rule + incident screens + runbook. The fixer may not touch protected paths.
+- AGT-09 Doot policy (fixed template, send window, auto-send for welcome only, governed switch default off).
+- AGT-08 hybrid search + golden set + licences (ADR 0009). AGT-10 T2 view specs and T3 migration pipeline (migration 0020, ADR 0010). AGT-11 voice confirmation/privacy + Saathi multilingual eval (ADR 0011).
+REVIEW NEEDED (always-human paths): migrations 0019, 0020; app/deps.py earlier; the whole of agents/fixer.py's PROTECTED list; services/certificates.py (the signed payload now carries `art`).
+FINDING for the owner: live Saathi writes non-Latin names in Latin letters (ADR 0011).
+Your local dev database is behind: run `cd backend && alembic upgrade head` (0017-0020 are not applied there; the CLI evals that touch the DB failed on it until I made the eval database-free).

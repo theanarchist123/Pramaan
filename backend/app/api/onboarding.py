@@ -6,13 +6,13 @@ import re
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Header, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents import discovery as discovery_agent
-from app.agents import lipik, saathi
+from app.agents import lipik, saathi, sutradhar
 from app.agents.events import recent_events, start_run
 from app.agents.schemas import DiscoveryDraft, ExtractedClaim
 from app import jobs
@@ -26,6 +26,7 @@ from app.models import AgentRun, ChatMessage, Consent, Document, Profile, Review
 from app.schemas import ClaimOut, ProfileOut
 from app.services import fields as fields_svc
 from app.services import onboarding as svc
+from app.services.review_items import open_document_review
 
 router = APIRouter(prefix="/v1/onboarding", tags=["onboarding"])
 EDITABLE = ("draft", "rejected")
@@ -235,24 +236,6 @@ async def apply_discovery(
     return await svc.reload_profile(session, profile.id)
 
 
-async def _open_document_review(session: AsyncSession, profile: Profile, doc: Document, flags: list[str]) -> None:
-    """One open 'document' review item per profile; a newer upload refreshes it instead of piling up duplicates."""
-    ex = doc.extracted or {}
-    details = {
-        "kind": "document", "document_id": str(doc.id), "filename": doc.filename, "flags": list(flags),
-        "title": ex.get("title", ""), "issuer": ex.get("issuer", ""), "notes": ex.get("notes", ""),
-    }
-    reason = "Document needs attention: " + (", ".join(flags) if flags else f"low match score {doc.match_score:.2f}")
-    open_items = (
-        await session.execute(select(ReviewItem).where(ReviewItem.profile_id == profile.id, ReviewItem.status == "open"))
-    ).scalars().all()
-    existing = next((i for i in open_items if (i.details or {}).get("kind") == "document"), None)
-    if existing:
-        existing.reason, existing.confidence, existing.details = reason, doc.match_score or 0.0, details
-    else:
-        session.add(ReviewItem(profile_id=profile.id, reason=reason, confidence=doc.match_score or 0.0, details=details))
-
-
 @router.post("/{profile_id}/request-review", status_code=status.HTTP_201_CREATED)
 async def request_review(
     profile_id: uuid.UUID,
@@ -301,6 +284,14 @@ async def upload_document(
     session.add(doc)
     await session.flush()
 
+    adm = await sutradhar.admit("lipik")
+    if not adm.ok:
+        # Reading is switched off or over budget: keep the file and let a person read it. Nothing is lost and nothing is approved.
+        await open_document_review(session, profile, doc, ["reading_paused"])
+        await session.commit()
+        return {"sent_to_review": True, "document_id": str(doc.id), "extracted": {}, "match_score": None, "flags": ["reading_paused"],
+                "claims_verified_by_document": 0, "run_id": None}
+
     ctx = await start_run("document_intake", profile.id)
     try:
         result = await lipik.read_document(ctx, session, profile, doc, content_type, data)
@@ -317,7 +308,7 @@ async def upload_document(
     needs_review = bool(result.flags) or (doc.match_score or 0) < 0.95
     if needs_review:
         # A document the machine can't vouch for must reach a person — even if the profile is already published.
-        await _open_document_review(session, profile, doc, result.flags)
+        await open_document_review(session, profile, doc, result.flags)
     await session.commit()
     await ctx.finish("done", f"{result.upgraded_claims} claim(s) upgraded; flags: {result.flags or 'none'}")
     return {
@@ -333,7 +324,7 @@ async def upload_document(
 
 # ----- verification -----
 
-async def _start_verification(session: AsyncSession, profile: Profile) -> dict:
+async def _start_verification(session: AsyncSession, profile: Profile, idem: str = "") -> dict:
     # Idempotent: a verification already running for this profile is returned, never started a second time
     # (a double-click, a retry or two tabs used to produce two complete agent runs back to back).
     running = (
@@ -361,10 +352,10 @@ async def _start_verification(session: AsyncSession, profile: Profile) -> dict:
             session.add(ReviewItem(profile_id=profile.id, reason="Automated verification in progress", confidence=0.0))
     await session.commit()
 
-    ctx = await start_run("verify_profile", profile.id)
-    await jobs.enqueue("verify_profile", {"profile_id": str(profile.id), "run_id": str(ctx.run_id)},
-                       idempotency_key=f"verify:{profile.id}")
-    return {"run_id": str(ctx.run_id), "status": "started"}
+    # Sutradhar is the front door: it applies the idempotency key, the kill switches and the budgets, and records the versions the run used.
+    out = await sutradhar.dispatch("profile.submitted", key=f"verify:{profile.id}:{idem or uuid.uuid4().hex}", payload={"profile_id": str(profile.id)})
+    status_text = {"refused": "paused_sent_to_review", "deduped": "already_running"}.get(out.status, "started")
+    return {"run_id": str(out.run_id) if out.run_id else None, "status": status_text}
 
 @router.post("/{profile_id}/verify", status_code=status.HTTP_202_ACCEPTED)
 async def verify(
@@ -372,6 +363,7 @@ async def verify(
     background: BackgroundTasks,
     principal: Principal = Depends(require_scope("profiles:write")),
     session: AsyncSession = Depends(get_session),
+    idempotency_key: str | None = Header(default=None, max_length=80),
 ):
     """Kick off Pariksha → Prahari. Returns at once; follow progress on the agent stream."""
     profile = await _owned(session, profile_id, principal)
@@ -389,7 +381,7 @@ async def verify(
     try:
         # The lock closes the check-then-act race: two simultaneous requests must not both see "nothing running".
         async with short_lock(f"verify:{profile.id}"):
-            return await _start_verification(session, profile)
+            return await _start_verification(session, profile, idem=(idempotency_key or "").strip())
     except LockBusy as exc:
         raise HTTPException(409, "A verification is already being started for this profile") from exc
 

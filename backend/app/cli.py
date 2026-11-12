@@ -58,6 +58,17 @@ async def reset_mfa(email: str, reason: str, operator: str | None = None) -> dic
         return {"email": user.email, "reset": True, "operator": operator}
 
 
+async def nigrani_scan_command(window: int) -> dict:
+    """Look for spikes of agent failures and open or refresh incidents (cron-friendly). Prints a count; changes nothing else."""
+    from app.services import nigrani
+
+    async with get_sessionmaker()() as s:
+        signals = await nigrani.scan(s, window_minutes=window)
+        opened = await nigrani.record(s, signals)
+        await s.commit()
+    return {"signals": len(signals), "opened": len(opened)}
+
+
 async def seed_images_command(dry_run: bool, budget: int, cache_path: str) -> dict:
     """Pick and approve a tile and a cover photograph for every field, automatically (see app/services/image_seed.py)."""
     import json
@@ -92,10 +103,14 @@ def main(argv: list[str] | None = None) -> int:
     si.add_argument("--dry-run", action="store_true", help="choose and show the photos, approve nothing")
     si.add_argument("--budget", type=int, default=40, help="most Unsplash requests to spend this run (a demo key allows 50 an hour)")
     si.add_argument("--cache", default="image-seed-cache.json", help="where searches are remembered between runs")
+    ns = sub.add_parser("nigrani-scan", help="look for spikes of agent failures and open or refresh incidents (run from cron)")
+    ns.add_argument("--window", type=int, default=60, help="minutes to look back")
     args = ap.parse_args(argv)
 
     async def run() -> dict:
         try:
+            if args.cmd == "nigrani-scan":
+                return await nigrani_scan_command(args.window)
             if args.cmd == "seed-images":
                 return await seed_images_command(args.dry_run, args.budget, args.cache)
             if args.cmd == "mfa-status":

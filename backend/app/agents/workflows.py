@@ -17,6 +17,7 @@ from __future__ import annotations
 import dataclasses
 import logging
 import uuid
+from types import SimpleNamespace
 from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -32,8 +33,10 @@ from app.db import get_sessionmaker
 from app.domain import STATUS_SELF
 from app.llm.client import LLMError, LLMRefusal
 from app.models import Profile, ReviewItem
-from app.services import wikidata, wikipedia
-from app.services.wikipedia import Source
+from app import evidence
+from app.agents import sutradhar
+from app.agents.graphs.common import dispose_checkpointer, get_checkpointer
+from app.evidence.base import EvidenceDoc
 
 log = logging.getLogger("pramaan.workflow")
 SOURCE_NAME_MATCH = 0.75
@@ -65,13 +68,14 @@ async def _load_profile(session, profile_id: uuid.UUID) -> Profile:
 
 async def n_research(state: VerifyState) -> VerifyState:
     ctx = _ctx(state)
+    await sutradhar.check_run_budget(ctx.run_id)  # over its token cap: stop here and let a person take over (I-2)
     async with get_sessionmaker()() as session:
         profile = await _load_profile(session, ctx.profile_id)
-        name, qid = profile.full_name, profile.wikidata_qid
+        name, qid, institutions = profile.full_name, profile.wikidata_qid, list(profile.institutions or [])
     await ctx.emit("Pariksha", "tool", f"Looking for public evidence about {name}")
-    found = await wikipedia.fetch_sources(name, limit=3)
-    # Wikidata is used ONLY for the item the applicant confirmed is them; never the first same-named person.
-    found = [*found, *(await wikidata.fetch_by_qid(qid) if qid else [])]
+    # Pluggable adapters (Wikipedia, Wikidata for the item the applicant confirmed, OpenAlex for people with a stated institution). A failing source
+    # is skipped; every document is stamped with when it was fetched and a hash of exactly that text.
+    found = await evidence.gather(SimpleNamespace(name=name, qid=qid, institutions=institutions), evidence.default_adapters())
     # Only keep pages that are plausibly about this person, so a namesake can't vouch for them.
     sources = [s for s in found if name_similarity(s.title, name) >= SOURCE_NAME_MATCH]
     await ctx.emit(
@@ -84,7 +88,8 @@ async def n_research(state: VerifyState) -> VerifyState:
 
 async def n_factcheck(state: VerifyState) -> VerifyState:
     ctx = _ctx(state)
-    sources = [Source(**d) for d in state.get("sources", [])]
+    await sutradhar.check_run_budget(ctx.run_id)  # over its token cap: stop here and let a person take over (I-2)
+    sources = [EvidenceDoc(**d) for d in state.get("sources", [])]
     async with get_sessionmaker()() as session:
         profile = await _load_profile(session, ctx.profile_id)
         pending = [c for c in profile.claims if c.status == STATUS_SELF]
@@ -96,6 +101,7 @@ async def n_factcheck(state: VerifyState) -> VerifyState:
 
 async def n_audit(state: VerifyState) -> VerifyState:
     ctx = _ctx(state)
+    await sutradhar.check_run_budget(ctx.run_id)  # over its token cap: stop here and let a person take over (I-2)
     async with get_sessionmaker()() as session:
         profile = await _load_profile(session, ctx.profile_id)
         decision = await prahari.audit(ctx, session, profile)
@@ -127,6 +133,9 @@ async def _apply(state: VerifyState) -> VerifyState:
 
         if profile.status == "approved":
             webhooks.schedule("profile.approved", webhooks.profile_payload(profile))
+            from app.agents import sutradhar as _sutradhar
+
+            await _sutradhar.after_approval(profile.id, "decision")
         else:
             webhooks.schedule("review.queued", {"profile_id": str(profile.id), "slug": profile.slug,
                                                  "full_name": profile.full_name, "reasons": decision.reasons})
@@ -160,44 +169,19 @@ def build_graph(checkpointer=None):
 
 # ---------------------------------------------------------------------------- the graph + its checkpointer
 _graph = None
-_pool = None
 
 
 async def get_graph():
-    global _graph, _pool
-    if _graph is not None:
-        return _graph
-    import asyncio
-
-    saver = None
-    if get_settings().checkpoint_backend == "postgres":
-        if "Proactor" in type(asyncio.get_running_loop()).__name__:
-            log.warning("Windows' default event loop cannot run psycopg async: using the in-memory LangGraph checkpointer "
-                        "(a paused review will not survive a restart here; Linux/Docker uses Postgres)")
-        else:
-            from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-            from psycopg_pool import AsyncConnectionPool
-
-            from app.jobs import psycopg_dsn
-
-            _pool = AsyncConnectionPool(psycopg_dsn(), min_size=1, max_size=5, open=False, kwargs={"autocommit": True, "prepare_threshold": 0})
-            await _pool.open()
-            saver = AsyncPostgresSaver(_pool)
-            await saver.setup()  # creates its tables if missing
-    if saver is None:
-        from langgraph.checkpoint.memory import MemorySaver
-
-        saver = MemorySaver()
-    _graph = build_graph(saver)
+    global _graph
+    if _graph is None:
+        _graph = build_graph(await get_checkpointer())
     return _graph
 
 
 async def dispose_graph() -> None:
-    global _graph, _pool
+    global _graph
     _graph = None
-    if _pool is not None:
-        await _pool.close()
-    _pool = None
+    await dispose_checkpointer()
 
 
 # ---------------------------------------------------------------------------- running and resuming

@@ -232,6 +232,13 @@ async def issue_profile_certificate(
     if not cert.photo_id:  # themed photo for the person's field, chosen deterministically
         cert.photo_id = pick_photo(profile.sector, cert.digest)
     await session.commit()
+    try:  # AGT-09: the fixed welcome email, only if the governed switch is on; a failure here never affects the certificate
+        from app.services import outreach
+
+        await outreach.welcome_if_allowed(session, profile.id)
+        await session.commit()
+    except Exception:  # noqa: BLE001
+        await session.rollback()
     webhooks.schedule("certificate.issued", {
         "code": cert.code, "verify_url": f"{get_settings().public_base_url}/verify/{cert.code}",
         "issued_at": cert.issued_at.isoformat(), "profile": webhooks.profile_payload(profile),

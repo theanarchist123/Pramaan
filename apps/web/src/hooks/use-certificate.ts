@@ -13,7 +13,7 @@ export interface CertificateDetail {
   photo_id: string;
   issued_at: string;
   revoked: boolean;
-  payload: { redacted?: boolean; full_name?: string; claims?: { field: string; value: string; status: string }[]; issued_at?: string };
+  payload: { redacted?: boolean; art?: CertificateData["art"]; full_name?: string; claims?: { field: string; value: string; status: string }[]; issued_at?: string };
   profile: { slug: string; full_name: string; headline: string; sector: string; state: string } | null;
 }
 
@@ -50,6 +50,7 @@ export function toCertificateData(d: CertificateDetail): CertificateData | null 
     photo_id: d.photo_id,
     sector: d.profile?.sector,
     state: d.profile?.state,
+    art: d.payload.art ?? null,
   };
 }
 

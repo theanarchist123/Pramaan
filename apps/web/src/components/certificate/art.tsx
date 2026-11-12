@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { guillochePath, makeRosette, paletteFor, petalPath } from "@/lib/certificate-art";
+import { DENSITY_SCALE, motifPath, SYMMETRY_FOLDS } from "@/lib/motifs";
 
 /** The rosette seal. `seed` is the certificate digest. */
 export function Rosette({ seed, sector, size = 220, salt = 0 }: { seed: string; sector?: string | null; size?: number; salt?: number }) {
@@ -52,6 +53,30 @@ export function Guilloche({ seed, sector, size = 520 }: { seed: string; sector?:
     <svg viewBox="-100 -100 200 200" width={size} height={size} aria-hidden="true">
       <path d={d} fill="none" stroke={palette.primary} strokeWidth={0.18} opacity={0.7} />
       <path d={d} fill="none" stroke={palette.ink} strokeWidth={0.08} opacity={0.5} transform="rotate(7)" />
+    </svg>
+  );
+}
+
+export interface ArtBrief { motifs: string[]; density: string; symmetry: string; palette_key: string }
+
+/**
+ * The motif layers chosen by Chitrakar and signed into the certificate. Faint on purpose (never more than 12% ink) so text on top stays readable in
+ * print and in greyscale. Unknown motif names draw nothing. Deterministic from the signed brief and the digest.
+ */
+export function MotifLayer({ brief, seed, size = 520 }: { brief: ArtBrief; seed: string; size?: number }) {
+  const palette = paletteFor(brief.palette_key);
+  const folds = SYMMETRY_FOLDS[brief.symmetry] ?? 6;
+  const layers = useMemo(() => brief.motifs.map((m) => motifPath(m, seed, brief.density)).filter(Boolean), [brief, seed]);
+  const opacity = 0.08 + 0.04 * (DENSITY_SCALE[brief.density] ?? 1) / 1.4;
+  return (
+    <svg viewBox="-100 -100 200 200" width={size} height={size} aria-hidden="true" data-motifs={brief.motifs.join(" ")}>
+      {layers.map((d, i) => (
+        <g key={i} fill="none" stroke={i % 2 ? palette.secondary : palette.primary} strokeWidth={0.35} opacity={opacity}>
+          {Array.from({ length: folds }, (_, k) => (
+            <path key={k} d={d} transform={`rotate(${(360 / folds) * k})${brief.symmetry === "mirror" && k % 2 ? " scale(1,-1)" : ""}`} />
+          ))}
+        </g>
+      ))}
     </svg>
   );
 }

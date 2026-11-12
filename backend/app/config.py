@@ -130,6 +130,9 @@ class Settings(BaseSettings):
     unsplash_app_name: str = "pramaan"
     # Wikidata as a second public source next to Wikipedia (structured awards/occupation/education; no key needed).
     wikidata_enabled: bool = True
+    # OpenAlex (publications and co-authors; open data). Keyless basic use works; a free key raises the daily budget.
+    openalex_enabled: bool = True
+    openalex_api_key: str = ""
     # Wikimedia's bot policy requires a real contact (email or URL) in the User-Agent.
     # Without one, lookups are refused (403) and Pariksha simply finds no public evidence.
     wikimedia_contact: str = ""

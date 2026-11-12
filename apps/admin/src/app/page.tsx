@@ -75,6 +75,8 @@ export default function QueuePage() {
       <div className="row">
         <h1 className="grow">Review queue</h1>
         {perms.includes("agent_run.read") && <Link href="/calibration">Calibration</Link>}
+        {perms.includes("agent_run.read") && <Link href="/incidents">Incidents</Link>}
+        <Link href="/builder">Views and migrations</Link>
         <Link href="/images">Photographs</Link>
         {perms.includes("profile.suspend") && <Link href="/registry">Registry</Link>}
         <Link href="/security">Security</Link>

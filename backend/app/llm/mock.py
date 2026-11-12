@@ -263,7 +263,85 @@ def setu(ctx: dict[str, Any]) -> SetuProposals:
     return SetuProposals(edges=edges)
 
 
+def entailment(ctx: dict[str, Any]):
+    """Offline stand-in: a quote supports a claim when it contains most of the claim's content words; a different year makes it contradict."""
+    import re as _re
+
+    from app.agents.schemas import EntailmentVerdict
+
+    claim, quote = str(ctx.get("claim", "")), str(ctx.get("quote", ""))
+    words = {w for w in _re.findall(r"[a-zऀ-ॿ]{4,}", claim.lower())}
+    have = set(_re.findall(r"[a-zऀ-ॿ]{4,}", quote.lower()))
+    cy, qy = set(_re.findall(r"\b(?:19|20)\d{2}\b", claim)), set(_re.findall(r"\b(?:19|20)\d{2}\b", quote))
+    if cy and qy and not cy & qy:
+        return EntailmentVerdict(label="contradicts", note="different year")
+    overlap = len(words & have) / len(words) if words else 1.0
+    return EntailmentVerdict(label="supports" if overlap >= 0.5 else "unrelated", note="")
+
+
+def art_brief(ctx: dict[str, Any]):
+    """Offline stand-in: the deterministic design for this sector and seed."""
+    from app.agents.chitrakar import fallback_brief
+
+    return fallback_brief(str(ctx.get("sector", "Other")), str(ctx.get("seed", "")))
+
+
+def patch_proposal(ctx: dict[str, Any]):
+    """Offline stand-in: the mock never proposes code."""
+    from app.agents.fixer import PatchProposal
+
+    return PatchProposal(title="No safe fix proposed", rationale="Offline mode does not write code.", diff="")
+
+
+def view_proposal(ctx: dict[str, Any]):
+    """Offline stand-in: a members-per-state view built from the approved public endpoint."""
+    from app.agents.shilpkar import ViewProposal
+
+    spec = {"title": "Members per state", "layout": "grid2", "blocks": [
+        {"type": "heading", "text": "Where our members are", "level": 2},
+        {"type": "stat", "label": "Total members", "bind": {"endpoint": "/v1/stats/map", "path": "total"}},
+        {"type": "bar_chart", "label": "By state", "bind": {"endpoint": "/v1/stats/map", "path": "by_state"}}]}
+    return ViewProposal(summary="Approved members per state (read-only view).", spec=spec)
+
+
+def migration_proposal(ctx: dict[str, Any]):
+    """Offline stand-in: a small additive table, chained from the given head, with a real downgrade."""
+    import re as _re
+
+    from app.agents.shilpkar import MigrationProposal
+
+    head = str(ctx.get("head", ""))
+    m = _re.match(r"(\d{4})", head)
+    rev = f"{(int(m.group(1)) + 1) if m else 1:04d}_builder_notes"
+    src = MIGRATION_TEMPLATE.replace("@REV@", rev).replace("@HEAD@", head)
+    return MigrationProposal(summary="Adds a notes table (additive).", source=src)
+
+
+MIGRATION_TEMPLATE = """\"\"\"Expand: a notes table (additive).\"\"\"
+from alembic import op
+import sqlalchemy as sa
+
+revision = "@REV@"
+down_revision = "@HEAD@"
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    op.create_table("builder_notes", sa.Column("id", sa.Integer, primary_key=True), sa.Column("body", sa.Text, nullable=True))
+
+
+def downgrade() -> None:
+    op.execute("DROP TABLE IF EXISTS builder_notes")
+"""
+
+
 _DISPATCH = {
+    "MigrationProposal": migration_proposal,
+    "ViewProposal": view_proposal,
+    "PatchProposal": patch_proposal,
+    "ArtBrief": art_brief,
+    "EntailmentVerdict": entailment,
     "SetuProposals": setu,
     "SaathiTurn": saathi,
     "DiscoveryDraft": discovery,

@@ -316,6 +316,9 @@ async def set_status(
         from app.services import webhooks
 
         webhooks.schedule("profile.approved", webhooks.profile_payload(profile))
+        from app.agents import sutradhar as _sutradhar
+
+        await _sutradhar.after_approval(profile.id, "decision")
     return profile
 
 
@@ -396,3 +399,84 @@ async def api_key_usage_overview(days: int = 7, principal: Principal = Depends(r
         .group_by(ApiKey.id).order_by(func.sum(ApiKeyUsage.requests).desc()).limit(25)
     )).all()
     return [{"key_id": r[0], "name": r[1], "prefix": r[2], "revoked": r[3] is not None, "requests": int(r[4] or 0), "throttled": int(r[5] or 0)} for r in rows]
+
+
+class DisputeIn(BaseModel):
+    reason: str = Field(min_length=10, max_length=300)
+
+
+@router.post("/claims/{claim_id}/dispute", status_code=status.HTTP_202_ACCEPTED)
+async def dispute_claim(claim_id: uuid.UUID, body: DisputeIn, principal: Principal = Depends(require_permission("review.decide")),
+                        session: AsyncSession = Depends(get_session)):
+    """A reviewer says a confirmed claim looks wrong: the dispute graph re-fetches evidence, re-checks the claim and sends it to a person.
+    You cannot dispute a claim on your own profile (I-10). The key makes a double click a no-op."""
+    from app.agents import sutradhar
+
+    claim = await session.get(Claim, claim_id)
+    if claim is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Claim not found")
+    profile = await session.get(Profile, claim.profile_id)
+    if profile.owner_id == principal.user.id:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "You cannot dispute a claim on your own profile")
+    out = await sutradhar.dispatch("claim.disputed", key=f"dispute:{claim_id}:{principal.user.id}:{body.reason[:40]}",
+                                   payload={"profile_id": str(profile.id), "claim_id": str(claim_id), "reason": body.reason})
+    return {"status": out.status, "run_id": str(out.run_id) if out.run_id else None}
+
+
+# ----- incidents (Nigrani and the fixer, AGT-13) -----
+@router.get("/incidents")
+async def incidents(principal: Principal = Depends(require_permission("audit.read")), session: AsyncSession = Depends(get_session)):
+    from app.models import Incident
+
+    rows = (await session.execute(select(Incident).order_by(Incident.last_seen.desc()).limit(50))).scalars().all()
+    return [{"id": r.id, "signature": r.signature, "summary": r.summary, "count": r.count, "status": r.status, "first_seen": r.first_seen,
+             "last_seen": r.last_seen, "proposal": r.proposal or {}} for r in rows]
+
+
+@router.post("/incidents/scan")
+async def incidents_scan(principal: Principal = Depends(require_permission("agent_run.read")), session: AsyncSession = Depends(get_session)):
+    from app.services import nigrani
+
+    signals = await nigrani.scan(session)
+    opened = await nigrani.record(session, signals)
+    await session.commit()
+    return {"signals": len(signals), "opened": len(opened)}
+
+
+@router.post("/incidents/{incident_id}/propose", status_code=status.HTTP_202_ACCEPTED)
+async def incident_propose(incident_id: uuid.UUID, principal: Principal = Depends(require_permission("agent_run.read")),
+                           session: AsyncSession = Depends(get_session)):
+    """Ask the fixer for a patch PROPOSAL: a diff stored on the incident for people to review. Nothing is applied, merged or deployed."""
+    from app.agents import fixer, sutradhar
+    from app.agents.events import start_run
+    from app.models import Incident
+
+    inc = await session.get(Incident, incident_id)
+    if inc is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Incident not found")
+    adm = await sutradhar.admit("nigrani")
+    if not adm.ok:
+        raise HTTPException(status.HTTP_409_CONFLICT, adm.reason)
+    ctx = await start_run("incident_fix")
+    out = await fixer.propose(ctx, session, inc)
+    await session.commit()
+    await ctx.finish("done", "patch proposed" if out["ok"] else "no patch")
+    return {"ok": out["ok"], "problems": out.get("problems", []), "status": inc.status}
+
+
+class IncidentStatusIn(BaseModel):
+    status: str = Field(pattern="^(resolved|dismissed|open)$")
+
+
+@router.post("/incidents/{incident_id}/status")
+async def incident_status(incident_id: uuid.UUID, body: IncidentStatusIn, principal: Principal = Depends(require_permission("agent_run.read")),
+                          session: AsyncSession = Depends(get_session)):
+    from app.models import Incident
+
+    inc = await session.get(Incident, incident_id)
+    if inc is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Incident not found")
+    inc.status = body.status
+    inc.resolved_at = datetime.now(timezone.utc) if body.status != "open" else None
+    await session.commit()
+    return {"id": inc.id, "status": inc.status}

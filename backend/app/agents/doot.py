@@ -73,6 +73,13 @@ async def draft_message(ctx: RunContext, kind: str, facts: dict[str, Any], links
     return subject, body + footer(kind, links)
 
 
+def fixed_message(kind: str, facts: dict[str, Any], links: dict[str, str]) -> tuple[str, str]:
+    """The standard wording for a kind, with NO model involved: identical every time, so it can be sent without a person reading it first (AGT-09).
+    Only the kinds in outreach.AUTO_SEND_KINDS are ever sent this way."""
+    d = outreach_template(kind, facts)
+    return one_line(d.subject), sanitize(d.body) + footer(kind, links)
+
+
 def links_for(slug: str, cert_code: str | None) -> dict[str, str]:
     base = get_settings().public_base_url.rstrip("/")
     return {"profile": f"{base}/p/{slug}", "verify": f"{base}/verify/{cert_code}" if cert_code else f"{base}/p/{slug}",
