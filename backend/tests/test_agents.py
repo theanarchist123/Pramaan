@@ -347,3 +347,64 @@ async def test_the_same_file_on_two_profiles_is_flagged_and_not_upgraded(client,
         out.append(r.text)
     assert "duplicate_document" not in out[0]
     assert "duplicate_document" in out[1]
+
+
+# ---------------------------------------------------------------------------------- public Agent Floor replay (spec 6.7)
+async def _verify_run(client, make_user, *, demo: bool):
+    from sqlalchemy import update
+
+    from app.db import get_sessionmaker
+    from app.models import Profile
+
+    person, _ = await make_user()
+    profile = await _start(client, person)
+    await _interview(client, person, profile["id"])
+    if demo:
+        async with get_sessionmaker()() as s:
+            await s.execute(update(Profile).where(Profile.id == uuid.UUID(profile["id"])).values(is_demo=True))
+            await s.commit()
+    await client.post(f"/v1/onboarding/{profile['id']}/verify", headers=person)
+    return profile
+
+
+async def test_the_public_replay_only_ever_shows_a_demo_profiles_run_and_carries_no_identifiers(client, make_user, fake_wikipedia):
+    from sqlalchemy import select
+
+    from app.db import get_sessionmaker
+    from app.models import AgentRun, Profile
+
+    real = await _verify_run(client, make_user, demo=False)
+    demo = await _verify_run(client, make_user, demo=True)
+
+    r = await client.get("/v1/agents/replay")  # no sign-in needed
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["events"] and {"agent", "kind", "message", "t_ms"} <= set(body["events"][0])
+    assert body["demo"] is True and body["outcome"] in ("sealed", "with_reviewer", "stopped")
+    assert {e["agent"] for e in body["events"]} & {"Pariksha", "Prahari"}
+
+    # the run really belongs to a fictional demo profile, never to the real one
+    async with get_sessionmaker()() as s:
+        run = (await s.execute(select(AgentRun).where(AgentRun.id == uuid.UUID(body["run_id"])))).scalar_one()
+        assert (await s.get(Profile, run.profile_id)).is_demo is True
+        assert str(run.profile_id) == demo["id"] and str(run.profile_id) != real["id"]
+    # nothing that identifies a profile, a user or an owner is in the payload
+    flat = r.text
+    assert demo["id"] not in flat and real["id"] not in flat and "profile_id" not in flat and "owner" not in flat
+    # times are offsets from the start of the run, in order
+    ts = [e["t_ms"] for e in body["events"]]
+    assert ts == sorted(ts) and ts[0] == 0
+
+
+async def test_with_no_demo_run_the_replay_says_so_rather_than_showing_a_real_person(client, make_user, fake_wikipedia):
+    from sqlalchemy import update
+
+    from app.db import get_sessionmaker
+    from app.models import Profile
+
+    await _verify_run(client, make_user, demo=False)
+    async with get_sessionmaker()() as s:
+        await s.execute(update(Profile).values(is_demo=False))  # no demo profile anywhere
+        await s.commit()
+    r = await client.get("/v1/agents/replay")
+    assert r.status_code == 200 and r.json() == {"available": False}
