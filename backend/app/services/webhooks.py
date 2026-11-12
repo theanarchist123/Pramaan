@@ -122,8 +122,12 @@ def _envelope(delivery_id: str, event: str, data: dict[str, Any], created: datet
     return json.dumps(envelope, separators=(",", ":"), ensure_ascii=False).encode()
 
 
+REPLAY_HEADER = "X-Pramaan-Replay"
+RETENTION_DAYS = 30
+
+
 async def _attempt(
-    url: str, secret: str, delivery_id: str, event: str, body: bytes
+    url: str, secret: str, delivery_id: str, event: str, body: bytes, replay: bool = False
 ) -> tuple[bool, int | None, str, bool, int]:
     """One HTTP attempt. Returns (ok, status_code, error, retryable, duration_ms)."""
     ts = int(time.time())
@@ -134,6 +138,8 @@ async def _attempt(
         "X-Pramaan-Delivery": delivery_id,
         "X-Pramaan-Signature": f"t={ts},v1={sign(secret, ts, body)}",
     }
+    if replay:
+        headers[REPLAY_HEADER] = "1"  # the same delivery id, sent again on request: an idempotent consumer can recognise it
     started = time.perf_counter()
     status_code: int | None = None
     error, retryable = "", True
@@ -201,8 +207,10 @@ async def _run_job(session: AsyncSession, job: WebhookJob) -> None:
     if hook is None or not hook.active:
         job.status = "failed"  # paused or deleted since it was queued: drop it
         return
-    body = _envelope(job.delivery_id, job.event, job.data, job.created_at)
-    ok, status_code, error, retryable, ms = await _attempt(hook.url, hook.secret, job.delivery_id, job.event, body)
+    replay = bool((job.data or {}).get("_replay"))
+    data = {k: v for k, v in (job.data or {}).items() if k != "_replay"}
+    body = _envelope(job.delivery_id, job.event, data, job.created_at)
+    ok, status_code, error, retryable, ms = await _attempt(hook.url, hook.secret, job.delivery_id, job.event, body, replay=replay)
     job.attempt += 1
     session.add(WebhookDelivery(
         webhook_id=job.webhook_id, delivery_id=job.delivery_id, event=job.event, attempt=job.attempt,
@@ -214,6 +222,43 @@ async def _run_job(session: AsyncSession, job: WebhookJob) -> None:
         job.status = "failed"
     else:
         job.next_attempt_at = datetime.now(timezone.utc) + timedelta(seconds=RETRY_DELAYS[job.attempt - 1])
+
+
+async def replay(webhook_id: uuid.UUID, delivery_id: str) -> str:
+    """Queue the same event again for one webhook. Returns "queued", "missing" (no such stored delivery, or it was purged) or "pending" (still being delivered)."""
+    async with get_sessionmaker()() as session:
+        orig = (await session.execute(select(WebhookJob).where(WebhookJob.webhook_id == webhook_id, WebhookJob.delivery_id == delivery_id)
+                                      .order_by(WebhookJob.created_at.desc()).limit(1))).scalar_one_or_none()
+        if orig is None:
+            return "missing"
+        if orig.status == "pending":
+            return "pending"
+        session.add(WebhookJob(webhook_id=webhook_id, delivery_id=delivery_id, event=orig.event,
+                               data={**{k: v for k, v in (orig.data or {}).items() if k != "_replay"}, "_replay": True}))
+        await session.commit()
+    return "queued"
+
+
+async def purge_old(days: int = RETENTION_DAYS) -> int:
+    """Delete finished outbox rows (and so the stored payloads) older than `days`: payloads are kept only long enough to replay and debug."""
+    from sqlalchemy import delete
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    async with get_sessionmaker()() as session:
+        res = await session.execute(delete(WebhookJob).where(WebhookJob.created_at < cutoff, WebhookJob.status.in_(("done", "failed"))))
+        await session.commit()
+        return res.rowcount or 0
+
+
+async def purge_subject(session, slug: str) -> int:
+    """Right to erasure: remove every stored payload that names this profile (top-level `slug`, or nested under `profile`)."""
+    from sqlalchemy import delete, or_
+
+    res = await session.execute(delete(WebhookJob).where(or_(WebhookJob.data["slug"].astext == slug, WebhookJob.data["profile"]["slug"].astext == slug)))
+    return res.rowcount or 0
+
+
+_last_purge = 0.0
 
 
 async def process_due(*, force: bool = False, limit: int = 50) -> int:
@@ -234,6 +279,13 @@ async def process_due(*, force: bool = False, limit: int = 50) -> int:
             await _run_job(session, job)
             await session.commit()
         done += 1
+    global _last_purge
+    if time.time() - _last_purge > 3600:  # at most hourly
+        _last_purge = time.time()
+        try:
+            await purge_old()
+        except Exception:  # noqa: BLE001 - housekeeping must never stop deliveries
+            log.exception("could not purge old webhook payloads")
     return done
 
 

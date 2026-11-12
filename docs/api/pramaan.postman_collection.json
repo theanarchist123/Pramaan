@@ -2672,6 +2672,42 @@
       }
     },
     {
+      "name": "POST /v1/webhooks/{hook_id}/deliveries/{delivery_id}/replay",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/webhooks/{{hook_id}}/deliveries/{{delivery_id}}/replay",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "webhooks",
+            "{{hook_id}}",
+            "deliveries",
+            "{{delivery_id}}",
+            "replay"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Replay Delivery"
+      }
+    },
+    {
       "name": "POST /v1/webhooks/{hook_id}/rotate-secret",
       "request": {
         "method": "POST",

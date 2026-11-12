@@ -289,5 +289,8 @@ async def delete_my_data(
     for cert in certs:
         cert.revoked_at = datetime.now(timezone.utc)
         cert.payload = {"redacted": True}
+    from app.services import webhooks as _wh
+
+    await _wh.purge_subject(session, profile.slug)  # stored webhook payloads that name this person go too
     await session.delete(profile)
     await session.commit()
