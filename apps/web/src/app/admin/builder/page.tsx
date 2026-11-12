@@ -22,7 +22,7 @@ interface Proposal { key: string; label: string; type: string; options: string[]
 interface Step { name: string; ok: boolean; output: string }
 interface Change {
   id: string; request: string; slug: string; summary: string; status: string; files: Record<string, string>;
-  checks: { guard?: string[]; attempts?: number; history?: { step: string; output: string }[]; sandbox?: { ran: boolean; passed: boolean; reason?: string; steps: Step[]; seconds?: number } };
+  checks: { guard?: string[]; attempts?: number; history?: { step: string; output: string }[]; risk?: { score: number; level: "low" | "medium" | "high"; tables: string[]; reasons: string[] }; sandbox?: { ran: boolean; passed: boolean; reason?: string; steps: Step[]; seconds?: number } };
 }
 
 const STATUS: Record<string, { label: string; cls: string }> = {
@@ -259,6 +259,15 @@ function PluginsSection() {
                     Code guard {guard.length === 0 ? "passed" : "blocked it"}
                   </li>
                   {guard.map((g) => <li key={g} className="ml-6 text-xs text-destructive">{g}</li>)}
+                  {c.checks.risk && (
+                    <li className="flex items-start gap-2">
+                      {c.checks.risk.level === "low" ? <CircleCheck className="mt-0.5 size-4 text-verified" /> : <CircleX className="mt-0.5 size-4 text-destructive" />}
+                      <span>
+                        Risk: {c.checks.risk.level} ({c.checks.risk.score}/100), reads {c.checks.risk.tables.join(", ") || "nothing"}
+                        {c.checks.risk.reasons.map((r) => <span key={r} className="block text-xs text-muted-foreground">{r}</span>)}
+                      </span>
+                    </li>
+                  )}
                   {sb && !sb.ran && <li className="flex items-center gap-2"><CircleX className="size-4 text-destructive" /> Could not verify safely: {sb.reason}</li>}
                   {sb?.steps.map((s) => (
                     <li key={s.name}>
