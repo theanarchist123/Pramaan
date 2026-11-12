@@ -12,3 +12,9 @@ Verification: new unit tests pass; the DB-backed tests (including the ETag round
 and browser suites were NOT re-run on this branch. Not merged to main for that reason.
 
 Still open: AGT-02/04/05/07/08/10/11/13, API-01/02/05/06/07/09/10, DSK-02..06, MOB, owner-only items listed in earlier logs.
+
+## Later the same day (Docker back up)
+- Full backend suite on the merged tip: 395 passed. Two ETag tests I wrote were calling the async client synchronously; fixed (my bug, not the code).
+- API-01 (partial): read-only `pk_test_` keys (creation refuses write scopes; authentication clamps scopes again). No migration needed.
+- API-05 NOT done on purpose: replaying a delivery needs the payload stored, which needs a migration (always-human-review path) and
+  stores personal data in a table that today holds none. Decision for the owner: store payload hash + event id and rebuild on replay, or store payloads.
