@@ -311,7 +311,7 @@ if (!gotLock) {
     buildMenu();
     pendingLink = resolveDeepLink(findDeepLink(process.argv));
     createWindow();
-    startAutoUpdates(app);
+    startAutoUpdates(app, console, readConfig());
     if (VARIANT.badge) {
       setTimeout(pollQueue, 1500);
       setInterval(pollQueue, 60 * 1000).unref();

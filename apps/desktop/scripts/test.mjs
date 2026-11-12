@@ -12,6 +12,7 @@ import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
 const { resolveDeepLink, findDeepLink, pathFromClipboard } = require("../src/links.js");
 const { pickVariant, queueBadge, badgeLabel } = require("../src/variant.js");
+const { pickChannel } = require("../src/updater.js");
 // PRAMAAN_EXE=<path to Pramaan.exe> runs this same suite against the PACKAGED app instead of the dev one.
 const packaged = process.env.PRAMAAN_EXE || null;
 const electronPath = packaged || require("electron");
@@ -36,6 +37,15 @@ await step("console variant: chosen only by an explicit switch, with its own ser
   const c = pickVariant({ PRAMAAN_VARIANT: "console", PRAMAAN_CONSOLE_URL: "http://x.test:3011/" }, [], {});
   assert.deepEqual([c.title, c.url, c.dataSuffix, c.deepLinks, c.clipboard, c.badge], ["Pramaan staff console", "http://x.test:3011", "-console", false, false, true]);
   assert.equal(member.deepLinks && member.clipboard && !member.badge, true);
+});
+
+await step("update channel: stable by default, beta only by choice or on a beta build", () => {
+  assert.equal(pickChannel({}, "1.2.0"), "latest");
+  assert.equal(pickChannel({ updateChannel: "beta" }, "1.2.0"), "beta");
+  assert.equal(pickChannel({}, "1.3.0-beta.2"), "beta");
+  assert.equal(pickChannel({ updateChannel: "latest" }, "1.3.0-beta.2"), "latest");
+  assert.equal(pickChannel({ updateChannel: "weird" }, "1.2.0"), "latest");
+  assert.equal(pickChannel(null, undefined), "latest");
 });
 
 await step("queue badge: a count from the overview, nothing for anything else", () => {
