@@ -41,6 +41,16 @@ GOVERNED: dict[str, Spec] = {
                                    minimum=0.90, maximum=1.0),
 }
 
+# Sutradhar (AGT-01): a switch per agent, and budgets. All readable from the database, so they work without a deploy; changing one is a four-eyes change.
+AGENTS = ("saathi", "pariksha", "lipik", "setu", "doot", "chitrakar", "shilpkar", "khoji", "nigrani")
+for _a in AGENTS:
+    GOVERNED[f"agent_{_a}_enabled"] = Spec(bool, lambda: True, f"The {_a} agent may run (switch off to stop it; its work then goes to a person)")
+GOVERNED["run_token_cap"] = Spec(float, lambda: 300000.0, "Most model tokens one run may use before it is stopped and sent to a person", minimum=1000.0, maximum=5000000.0)
+GOVERNED["daily_token_budget"] = Spec(float, lambda: 0.0, "Most model tokens all agents may use per day; 0 means no daily limit. Reaching it pauses the agents.",
+                                      minimum=0.0, maximum=1e9)
+GOVERNED["run_wall_clock_seconds"] = Spec(float, lambda: 900.0, "Longest one run may take, in seconds, before it is stopped and sent to a person",
+                                          minimum=10.0, maximum=7200.0)
+
 _cache: dict[str, tuple[float, Any]] = {}
 TTL = 5.0  # seconds: a changed setting takes effect everywhere within this long
 

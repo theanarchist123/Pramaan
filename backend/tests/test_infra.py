@@ -233,13 +233,14 @@ async def test_verification_is_enqueued_as_a_job_and_deduped(client, make_user, 
     seen = []
 
     async def fake_enqueue(task_name, payload, idempotency_key=None):
-        seen.append((task_name, payload["profile_id"], idempotency_key))
+        seen.append((task_name, payload["payload"]["profile_id"], payload["graph"], idempotency_key))
         return jobs.EnqueueResult(job_id="j1", deduped=False, backend="test")
 
     monkeypatch.setattr(jobs, "enqueue", fake_enqueue)
     r = await client.post(f"/v1/onboarding/{profile['id']}/verify", headers=person)
     assert r.status_code == 202 and r.json()["status"] == "started"
-    assert seen == [("verify_profile", profile["id"], f"verify:{profile['id']}")]
+    # Verification now goes through Sutradhar (the front door): one "sutradhar_run" job for the verify graph, with an idempotency key.
+    assert len(seen) == 1 and seen[0][:3] == ("sutradhar_run", profile["id"], "verify") and seen[0][3].startswith(f"sutradhar:verify:{profile['id']}:")
     run = await start_run("verify_profile", uuid.UUID(profile["id"]))  # something already running: not enqueued again
     again = await client.post(f"/v1/onboarding/{profile['id']}/verify", headers=person)
     assert again.json() == {"run_id": str(run.run_id), "status": "already_running"} and len(seen) == 1

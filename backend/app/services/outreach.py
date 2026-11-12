@@ -203,3 +203,8 @@ async def scheduler_loop(interval: float = 30.0) -> None:  # kept for callers th
         except Exception:  # noqa: BLE001 - the loop must survive a bad tick
             log.exception("outreach scheduler tick failed")
         await asyncio.sleep(interval)
+
+
+async def welcome_if_allowed(session, profile_id) -> None:
+    """Placeholder until the Doot policy (AGT-09) lands: sends nothing."""
+    return None

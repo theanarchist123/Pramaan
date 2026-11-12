@@ -77,14 +77,14 @@ def _worth_asking(corpus: str, candidates: list[Candidate]) -> bool:
     return any((_tokens(c.name) or [""])[-1] in words for c in candidates)
 
 
-async def run(ctx: RunContext, session: AsyncSession, limit: int = 50) -> dict:
-    """Propose and validate connections for up to `limit` approved profiles. Caller commits. Safe to run repeatedly."""
+async def run(ctx: RunContext, session: AsyncSession, limit: int = 50, only: set[uuid.UUID] | None = None) -> dict:
+    """Propose and validate connections for up to `limit` approved profiles (or just `only`). Caller commits. Safe to run repeatedly."""
     profiles = (await session.execute(select(Profile).where(Profile.status == "approved").order_by(Profile.id))).scalars().all()
     report = {"profiles_checked": 0, "model_calls": 0, "proposed": 0, "accepted": 0, "rejected": 0, "reasons": []}
     existing = {(e.a_id, e.b_id, e.kind) for e in (await session.execute(select(SetuEdge))).scalars().all()}
     await ctx.emit("Setu", "thought", f"Looking for stated working connections among {len(profiles)} approved people")
 
-    for p in profiles[:limit]:
+    for p in profiles[:limit] if only is None else [x for x in profiles if x.id in only]:
         corpus = corpus_of(p)
         others = [Candidate(o.id, o.full_name) for o in profiles if o.id != p.id]
         if not corpus or not others or not _worth_asking(corpus, others):

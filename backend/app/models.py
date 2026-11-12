@@ -358,6 +358,10 @@ class AgentRun(Base):
     summary: Mapped[str] = mapped_column(Text, default="")
     started_at: Mapped[datetime] = ts()
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Sutradhar (AGT-01): a replay of the same event finds this run instead of starting another; `versions` records which prompts, policy and models
+    # made the decision, so it can be explained and replayed later.
+    idempotency_key: Mapped[str | None] = mapped_column(String(160), nullable=True, unique=True)
+    versions: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
 
 
 class AgentEvent(Base):
@@ -516,6 +520,22 @@ class OAuthToken(Base):
     created_at: Mapped[datetime] = ts()
     rotated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class Incident(Base):
+    """A spike of agent or API failures noticed by Nigrani (AGT-13). Counts and a safe summary only: no request bodies, no personal data."""
+
+    __tablename__ = "incidents"
+
+    id: Mapped[uuid.UUID] = pk()
+    signature: Mapped[str] = mapped_column(String(160), index=True)   # e.g. "agent:verify_profile:failed"
+    summary: Mapped[str] = mapped_column(Text, default="")
+    count: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(16), default="open")  # open|patch_proposed|resolved|dismissed
+    proposal: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)  # the fixer's proposed patch (a diff to review; never applied by the agent)
+    first_seen: Mapped[datetime] = ts()
+    last_seen: Mapped[datetime] = ts()
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class ApiKeyUsage(Base):

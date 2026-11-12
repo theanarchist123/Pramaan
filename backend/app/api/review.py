@@ -218,6 +218,9 @@ async def decide(item_id: uuid.UUID, body: DecideIn, request: Request,
 
             await session.refresh(profile)
             webhooks.schedule("profile.approved", webhooks.profile_payload(profile))
+            from app.agents import sutradhar as _sutradhar
+
+            await _sutradhar.after_approval(profile.id, "decision")
     return {"outcome": body.outcome, "decisions": len(rows), "case_status": item.status}
 
 

@@ -316,6 +316,9 @@ async def set_status(
         from app.services import webhooks
 
         webhooks.schedule("profile.approved", webhooks.profile_payload(profile))
+        from app.agents import sutradhar as _sutradhar
+
+        await _sutradhar.after_approval(profile.id, "decision")
     return profile
 
 
@@ -396,3 +399,25 @@ async def api_key_usage_overview(days: int = 7, principal: Principal = Depends(r
         .group_by(ApiKey.id).order_by(func.sum(ApiKeyUsage.requests).desc()).limit(25)
     )).all()
     return [{"key_id": r[0], "name": r[1], "prefix": r[2], "revoked": r[3] is not None, "requests": int(r[4] or 0), "throttled": int(r[5] or 0)} for r in rows]
+
+
+class DisputeIn(BaseModel):
+    reason: str = Field(min_length=10, max_length=300)
+
+
+@router.post("/claims/{claim_id}/dispute", status_code=status.HTTP_202_ACCEPTED)
+async def dispute_claim(claim_id: uuid.UUID, body: DisputeIn, principal: Principal = Depends(require_permission("review.decide")),
+                        session: AsyncSession = Depends(get_session)):
+    """A reviewer says a confirmed claim looks wrong: the dispute graph re-fetches evidence, re-checks the claim and sends it to a person.
+    You cannot dispute a claim on your own profile (I-10). The key makes a double click a no-op."""
+    from app.agents import sutradhar
+
+    claim = await session.get(Claim, claim_id)
+    if claim is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Claim not found")
+    profile = await session.get(Profile, claim.profile_id)
+    if profile.owner_id == principal.user.id:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "You cannot dispute a claim on your own profile")
+    out = await sutradhar.dispatch("claim.disputed", key=f"dispute:{claim_id}:{principal.user.id}:{body.reason[:40]}",
+                                   payload={"profile_id": str(profile.id), "claim_id": str(claim_id), "reason": body.reason})
+    return {"status": out.status, "run_id": str(out.run_id) if out.run_id else None}
