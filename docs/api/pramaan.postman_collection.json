@@ -40,6 +40,30 @@
       }
     },
     {
+      "name": "GET /.well-known/oauth-authorization-server",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/.well-known/oauth-authorization-server",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            ".well-known",
+            "oauth-authorization-server"
+          ]
+        },
+        "description": "Discovery"
+      }
+    },
+    {
       "name": "GET /.well-known/pramaan-keys.json",
       "request": {
         "method": "GET",
@@ -1015,6 +1039,214 @@
           ]
         },
         "description": "Sector Images"
+      }
+    },
+    {
+      "name": "GET /v1/oauth/authorize",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/oauth/authorize",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "oauth",
+            "authorize"
+          ]
+        },
+        "description": "Authorize Info"
+      }
+    },
+    {
+      "name": "POST /v1/oauth/authorize",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/oauth/authorize",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "oauth",
+            "authorize"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Authorize"
+      }
+    },
+    {
+      "name": "POST /v1/oauth/clients",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/oauth/clients",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "oauth",
+            "clients"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Register Client"
+      }
+    },
+    {
+      "name": "GET /v1/oauth/grants",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/oauth/grants",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "oauth",
+            "grants"
+          ]
+        },
+        "description": "Grants"
+      }
+    },
+    {
+      "name": "DELETE /v1/oauth/grants/{grant_id}",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/oauth/grants/{{grant_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "oauth",
+            "grants",
+            "{{grant_id}}"
+          ]
+        },
+        "description": "Remove Grant"
+      }
+    },
+    {
+      "name": "POST /v1/oauth/revoke",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/oauth/revoke",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "oauth",
+            "revoke"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Revoke"
+      }
+    },
+    {
+      "name": "POST /v1/oauth/token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/oauth/token",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "oauth",
+            "token"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Token"
       }
     },
     {

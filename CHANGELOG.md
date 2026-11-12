@@ -19,6 +19,9 @@ Notable changes to the public API and behaviour, newest first. This is written f
 - `POST /mcp`: a read-only MCP server with two tools (certificate check, people search).
 - Errors on `/v1` are `application/problem+json` (the `detail` field is unchanged); API-key and per-IP-limited calls return `RateLimit-*` headers; public GETs carry `ETag`; `pk_test_` read-only keys.
 
+- OAuth 2.0 authorization code + PKCE (S256 only) for apps acting for a member: `POST /v1/oauth/clients`, the consent screen at `/oauth/authorize`, `POST /v1/oauth/token` (with refresh rotation), `POST /v1/oauth/revoke`, metadata at `/.well-known/oauth-authorization-server`. Apps get `profiles`, `search` and `verify` scopes only.
+- Per-key usage: `GET /v1/api-keys/{id}/usage`.
+
 ### Changed
 - A profile can now be `suspended` (hidden from every public listing until restored). Clients that switch on `status` should handle it.
 - Staff sign-in requires an authenticator or recovery code once an authenticator is enrolled.

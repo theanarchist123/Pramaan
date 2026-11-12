@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ExternalLink, FlaskConical, KeyRound, Rocket, ShieldCheck, Webhook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiKeys } from "@/components/developers/api-keys";
+import { AuthorizedApps } from "@/components/developers/authorized-apps";
 import { BadgeGenerator } from "@/components/developers/badge";
 import { Playground } from "@/components/developers/playground";
 import { Quickstart } from "@/components/developers/quickstart";
@@ -99,7 +100,7 @@ export default function Developers() {
       <div className="mt-8" role="tabpanel" id="dev-panel" aria-labelledby={`tab-${section}`}>
         {section === "start" && <Quickstart />}
         {section === "play" && <Playground />}
-        {section === "keys" && (ready && user ? <ApiKeys /> : <SignInPrompt what="API keys" />)}
+        {section === "keys" && (ready && user ? <><ApiKeys /><AuthorizedApps /></> : <SignInPrompt what="API keys" />)}
         {section === "hooks" && (ready && user ? <Webhooks /> : <SignInPrompt what="webhooks" />)}
         {section === "badge" && <BadgeGenerator />}
       </div>

@@ -18,6 +18,7 @@ from app.core.security import TEST_KEY_SCOPES, decode_access_token, hash_api_key
 from app.db import get_session
 from app.models import ApiKey, User
 
+OAUTH_PATHS = ("/v1/profiles", "/v1/onboarding", "/v1/search", "/v1/verify", "/v1/auth/me", "/v1/badges")
 ALL_SCOPES = {"profiles:read", "profiles:write", "verify:read", "search:read", "webhooks:manage"}
 
 
@@ -30,7 +31,8 @@ class Principal:
 
     @property
     def is_admin(self) -> bool:
-        return self.user.role == "admin"
+        # An app a member authorised (OAuth) never acts as staff, whoever the member is.
+        return self.user.role == "admin" and self.via != "oauth"
 
 
 def _unauthorized(detail: str = "Authentication required") -> HTTPException:
@@ -134,6 +136,23 @@ async def get_principal(
         if token.startswith("pk_test_"):
             scopes &= TEST_KEY_SCOPES  # belt and braces: a test key never writes, whatever its row says
         return Principal(owner, "api_key", scopes, row.id)
+
+    # OAuth access token (a third-party app acting for a member, within the scopes the member approved)
+    if token.startswith("pat_"):
+        from app.services import oauth
+
+        found = await oauth.principal_for_token(session, token)
+        if found is None:
+            raise _unauthorized("Invalid, expired or revoked token")
+        tok, owner = found
+        # An app may only reach the member-data endpoints that check scopes. Sign-in, MFA, identity and account endpoints are never open to it.
+        if not request.url.path.startswith(OAUTH_PATHS):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "This endpoint is not available to apps")
+        allowed, remaining = await check_rate_limit(f"oauth:{tok.id}", 120)
+        request.state.rate_limit = (120, remaining)
+        if not allowed:
+            raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Rate limit exceeded", headers={"Retry-After": "60"})
+        return Principal(owner, "oauth", set(tok.scopes))
 
     # JWT
     claims = decode_access_token(token)

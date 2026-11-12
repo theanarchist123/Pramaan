@@ -470,6 +470,54 @@ class EmailSuppression(Base):
     created_at: Mapped[datetime] = ts()
 
 
+class OAuthClient(Base):
+    """A third-party app registered by a signed-in member (API-02). Public clients only: no client secret, PKCE is what protects the code."""
+
+    __tablename__ = "oauth_clients"
+
+    id: Mapped[uuid.UUID] = pk()
+    client_id: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    redirect_uris: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
+    owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = ts()
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class OAuthCode(Base):
+    """A one-time authorization code. Only its hash is stored; it lives five minutes and works once."""
+
+    __tablename__ = "oauth_codes"
+
+    code_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    client_id: Mapped[str] = mapped_column(String(40), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    scopes: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
+    redirect_uri: Mapped[str] = mapped_column(String(500))
+    code_challenge: Mapped[str] = mapped_column(String(128))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class OAuthToken(Base):
+    """One access + refresh token pair. Only hashes are stored. `family` ties every rotation back to the code that started it, so theft can revoke them all."""
+
+    __tablename__ = "oauth_tokens"
+
+    id: Mapped[uuid.UUID] = pk()
+    family: Mapped[str] = mapped_column(String(64), index=True)
+    access_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    refresh_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    client_id: Mapped[str] = mapped_column(String(40), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    scopes: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
+    access_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    refresh_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = ts()
+    rotated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class ApiKeyUsage(Base):
     """Per-key, per-day request counts (API-10). Counts only: no paths, no IPs, no payloads."""
 
