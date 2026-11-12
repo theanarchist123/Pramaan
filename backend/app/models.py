@@ -264,6 +264,8 @@ class Certificate(Base):
     photo_id: Mapped[str] = mapped_column(String(80), default="")
     issued_at: Mapped[datetime] = ts()
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Position in the Bitstring Status List (TRU-08). Random and unique, so the index says nothing about issue order.
+    status_index: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
 
 
 class TransparencyLog(Base):

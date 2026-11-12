@@ -117,6 +117,8 @@ class Settings(BaseSettings):
     # both run in containers (e.g. http://web:3000); empty means "same as public_base_url".
     render_base_url: str = ""
     api_base_url: str = "http://localhost:8000"
+    # Host of the registry's did:web identity (did:web:<host>), which must serve /.well-known/did.json. Empty = the host of api_base_url.
+    did_web_host: str = ""
     jwt_secret: str = _DEV_JWT_SECRET
     signing_key_b64: str = ""
     # Comma-separated base64 public keys of past signing keys, so old certificates keep verifying after rotation.

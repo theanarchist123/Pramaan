@@ -27,7 +27,7 @@ ADMIN = "postgresql://pramaan:pramaan@localhost:5432/{db}"
 ADDED_TABLES = ["llm_calls", "image_assets", "user_roles", "admin_audit_log", "approval_requests", "review_decisions",
                 "governed_setting_changes", "governed_settings", "mfa_recovery_codes"]
 ADDED_COLUMNS = {"profiles": ["decision_basis", "wikidata_qid"], "review_queue": ["assigned_to", "locked_until", "sla_due_at"],
-                 "users": ["totp_secret_enc", "mfa_enrolled_at", "stepup_until"]}
+                 "users": ["totp_secret_enc", "mfa_enrolled_at", "stepup_until"], "certificates": ["status_index"]}
 
 
 def alembic(db: str, *args: str) -> str:
