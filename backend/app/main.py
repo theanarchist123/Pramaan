@@ -103,6 +103,13 @@ from app.core import telemetry  # noqa: E402
 
 
 @app.middleware("http")
+async def conditional_get(request, call_next):
+    from app.core import etag
+
+    return await etag.apply(request, call_next)
+
+
+@app.middleware("http")
 async def audit_admin_writes(request, call_next):
     """Every state-changing request under /v1/admin is recorded (who, what, outcome). Handlers that know more (before/after,
     a reason) also write their own richer entries; this is the net that catches everything else."""
