@@ -179,6 +179,20 @@ async def main() -> None:
                                 "pariksha": p, "lipik": l}, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nsaved {path.relative_to(HERE.parent)}")
 
+    from evals.gate import check
+
+    baseline = None
+    base_path = HERE / "baseline-live.json"
+    if args.live and base_path.exists():
+        baseline = json.loads(base_path.read_text(encoding="utf-8"))
+    fails = check(p, l, baseline=baseline)
+    if fails:
+        print("\nRELEASE GATE: FAIL")
+        for f in fails:
+            print("  -", f)
+        raise SystemExit(1)
+    print("\nRELEASE GATE: pass")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
