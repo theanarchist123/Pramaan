@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "@/lib/api";
 import { paletteFor } from "@/lib/certificate-art";
-import { Guilloche, Rosette } from "@/components/certificate/art";
+import { Guilloche, MotifLayer, Rosette, type ArtBrief } from "@/components/certificate/art";
 import { LogoMark } from "@/components/logo";
 
 export const CERT_W = 1123;
@@ -19,6 +19,8 @@ export interface CertificateData {
   photo_id: string;
   sector?: string | null;
   state?: string | null;
+  /** The art brief signed into the certificate (absent on older certificates). */
+  art?: { brief: ArtBrief; brief_sha256: string; photo: { id: string; sha256: string } } | null;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -78,6 +80,11 @@ export function Certificate({ data, forceTamper = false, state }: { data: Certif
       <div style={{ position: "absolute", left: -90, top: 120, opacity: 0.55 }}>
         <Guilloche seed={data.digest} sector={data.sector} size={640} />
       </div>
+      {data.art?.brief && (
+        <div style={{ position: "absolute", left: 120, top: 60, opacity: 1 }} data-art-hash={data.art.brief_sha256}>
+          <MotifLayer brief={data.art.brief} seed={data.digest} size={560} />
+        </div>
+      )}
 
       {/* frames */}
       <div style={{ position: "absolute", inset: 20, border: `2px solid ${palette.ink}`, borderRadius: 6 }} />

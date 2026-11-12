@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import secrets
 from datetime import datetime, timezone
 
@@ -110,6 +111,21 @@ async def issue_certificate(
     )
     # Random salt: the public digest can't be used to confirm a guessed name/claims after erasure.
     payload["salt"] = secrets.token_hex(16)
+    # Chitrakar: the art brief and the frozen photo's hash are signed with the rest, so the art cannot be swapped later. The photo is chosen here,
+    # BEFORE signing (it used to be chosen after, so it was not covered). Art always works: a switched-off or failing agent means the deterministic design.
+    from app.agents import chitrakar, sutradhar
+    from app.agents.events import start_run
+    from app.domain import pick_photo
+
+    photo_id = photo_id or pick_photo(profile.sector, hashlib.sha256((code + payload["salt"]).encode()).hexdigest())
+    art_run = await start_run("certificate_art", profile.id)
+    seed = hashlib.sha256((code + payload["salt"]).encode()).hexdigest()
+    if (await sutradhar.admit("chitrakar")).ok:
+        result = await chitrakar.make_brief(art_run, profile.sector, [c["value"] for c in claims], seed=seed)
+    else:
+        result = chitrakar.BriefResult(chitrakar.fallback_brief(profile.sector, seed), "fallback", ["the art agent is switched off"])
+    payload["art"] = chitrakar.art_block(result.brief, photo_id, result.source)
+    await art_run.finish("done", f"art brief from {result.source}")
     digest = digest_payload(payload)
 
     # Serialise appends so the chain can never fork.
