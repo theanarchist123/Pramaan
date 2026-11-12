@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 def build(openapi: dict) -> dict:
     items = []
     for path, ops in sorted(openapi["paths"].items()):
-        if path.startswith("/v1/admin"):
+        if path.startswith(("/v1/admin", "/v1/plugins/")):  # plugins are created at runtime by the builder: not part of the fixed API
             continue
         for method, op in sorted(ops.items()):
             if method not in ("get", "post", "patch", "delete", "put"):
