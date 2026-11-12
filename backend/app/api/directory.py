@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.events import start_run
-from app.agents.khoji import plan_search
+from app.agents.khoji import chips, plan_search
 from app.core.ratelimit import check_rate_limit
 from app.db import get_session
 from app.models import Certificate, Profile
@@ -43,6 +43,7 @@ class SearchHit(ProfileSummary):
 class SearchOut(BaseModel):
     query: str
     plan: dict
+    chips: list[dict] = []
     relaxed: bool
     embedder: str
     took_ms: int
@@ -84,7 +85,7 @@ async def search(body: SearchIn, request: Request, session: AsyncSession = Depen
         await ctx.emit("Khoji", "warning", "No exact match for those filters — showing the closest people instead")
     await ctx.finish("done", f"{len(hits)} result(s)")
     return SearchOut(
-        query=body.query, plan=plan.model_dump(), relaxed=relaxed, embedder=get_embedder().kind,
+        query=body.query, plan=plan.model_dump(), chips=chips(plan), relaxed=relaxed, embedder=get_embedder().kind,
         took_ms=int((time.perf_counter() - t0) * 1000), results=[_hit(h) for h in hits],
     )
 
