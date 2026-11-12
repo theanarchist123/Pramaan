@@ -30,11 +30,14 @@ export function SectorImage({
   width = 640,
   className,
   index = 0,
+  creditAlign = "left",
 }: {
   sector: string;
   purpose?: "tile" | "cover" | "empty";
   width?: number;
   className?: string;
+  /** Which side the photographer credit sits on, so it never lands on top of something else (e.g. an avatar overlapping the banner). */
+  creditAlign?: "left" | "right";
   /** Which of the approved images to show (e.g. to vary neighbouring tiles). */
   index?: number;
 }) {
@@ -74,7 +77,7 @@ export function SectorImage({
             style={{ backgroundColor: img.dominant_color || undefined }}
           />
           <span aria-hidden className="absolute inset-0 mix-blend-color" style={{ background: tint, opacity: 0.85 }} />
-          <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1 text-[11px] text-white/90">
+          <figcaption className={cn("absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1 text-[11px] text-white/90", creditAlign === "right" && "text-right")}>
             Photo by{" "}
             <a href={img.attribution.photographer_url} target="_blank" rel="noopener noreferrer" className="underline">
               {img.attribution.photographer}
