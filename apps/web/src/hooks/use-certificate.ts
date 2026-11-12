@@ -32,6 +32,8 @@ export interface VerifyResult {
   log_position: number | null;
   log_size: number;
   entry_hash: string;
+  superseded_by?: string;
+  superseded_at?: string;
   changed_fields: string[];
   payload: CertificateDetail["payload"] | null;
 }

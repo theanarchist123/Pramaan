@@ -31,3 +31,5 @@ test-results/
 .next-prod/
 smoke-shots/
 *.tsbuildinfo
+apps/web/.next-smoke/
+apps/web/smoke-shots/

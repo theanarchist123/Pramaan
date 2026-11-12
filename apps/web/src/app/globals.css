@@ -181,6 +181,11 @@ body:has([data-print-route]) {
   margin: 0;
 }
 
+@keyframes scanline {
+  from { transform: translateY(0); }
+  to { transform: translateY(18rem); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

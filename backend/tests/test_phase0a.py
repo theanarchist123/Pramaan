@@ -275,3 +275,16 @@ async def test_the_audit_script_finds_certificates_whose_evidence_is_gone(client
 
     await audit_mod.audit(revoke=True)
     assert (await client.get(f"/v1/verify/{cert['code']}")).json()["revoked"] is True
+
+
+async def test_an_older_certificate_says_it_has_been_replaced_but_stays_genuine(client, make_user):
+    person, admin, profile, first = await _approved_profile_with_cert(client, make_user)
+    assert (await client.get(f"/v1/verify/{first['code']}")).json()["superseded_by"] == ""
+    await client.post(f"/v1/profiles/{profile['id']}/claims", headers=person, json={"field": "education", "value": "Studied at Cochin University"})
+    cid = next(c for c in (await client.get("/v1/profiles/mine", headers=person)).json()[0]["claims"] if c["field"] == "education")["id"]
+    await client.post(f"/v1/admin/claims/{cid}/verify", headers=admin, json=REASON)
+    second = await client.post(f"/v1/profiles/{profile['id']}/certificate", headers=person)
+    assert second.status_code == 201
+    old = (await client.get(f"/v1/verify/{first['code']}")).json()
+    assert old["valid"] is True and old["superseded_by"] == second.json()["code"] and "replaced" in old["reason"]
+    assert (await client.get(f"/v1/verify/{second.json()['code']}")).json()["superseded_by"] == ""
