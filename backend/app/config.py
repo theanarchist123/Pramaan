@@ -75,8 +75,9 @@ class Settings(BaseSettings):
     award_claims_need_human: bool = True
     # Extra issuer names to accept for documents, comma-separated (e.g. "Kerala Sahitya Akademi,Tata Trusts").
     trusted_issuers_extra: str = ""
-    # Staff must enrol an authenticator app, and sensitive staff actions need a fresh code (step-up). On by default.
-    staff_mfa_required: bool = True
+    # Staff must enrol an authenticator app, and sensitive staff actions need a fresh code (step-up). OFF by default: turn it
+    # on only after every staff member has enrolled and saved recovery codes (enrolment and recovery work either way).
+    staff_mfa_required: bool = False
     stepup_minutes: int = 10
     # Origin of the separate staff console (apps/admin). Empty = same as PUBLIC_BASE_URL (local dev).
     admin_base_url: str = ""

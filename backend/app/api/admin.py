@@ -143,11 +143,14 @@ async def review_queue(
     out = []
     for item in items:
         profile = await session.get(Profile, item.profile_id)  # claims + evidence load eagerly
-        out.append(
-            ReviewItemOut.model_validate(item).model_copy(
-                update={"profile": ProfileOut.model_validate(profile) if profile else None}
-            )
-        )
+        view = ReviewItemOut.model_validate(item)
+        if not (view.details or {}).get("reason_codes"):
+            # Cases opened by a person (submitted, edited after approval) never passed through Prahari: derive the code
+            # from the reason text so every queue row filters and reports the same way.
+            from app.agents.reasons import codes_for
+
+            view.details = {**(view.details or {}), "reason_codes": codes_for([item.reason])}
+        out.append(view.model_copy(update={"profile": ProfileOut.model_validate(profile) if profile else None}))
     return out
 
 

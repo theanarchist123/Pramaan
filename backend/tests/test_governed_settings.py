@@ -16,9 +16,18 @@ REASON = "Agreed in the weekly risk review"
 
 
 @pytest.fixture(autouse=True)
-def _fresh_cache():
+async def _no_governed_rows_left_behind(app_instance):
+    """A governed row overrides the environment (that is its job), so a test that creates one must remove it or it would
+    silently change every later test in the shared database."""
+    from sqlalchemy import delete
+
+    from app.models import GovernedSetting
+
     governed.clear_cache()
     yield
+    async with get_sessionmaker()() as s:
+        await s.execute(delete(GovernedSetting))
+        await s.commit()
     governed.clear_cache()
 
 

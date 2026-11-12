@@ -539,6 +539,18 @@ class GovernedSettingChange(Base):
     at: Mapped[datetime] = ts()
 
 
+class MfaRecoveryCode(Base):
+    """A single-use backup code for a staff member who lost their authenticator. Only a salted hash is stored."""
+
+    __tablename__ = "mfa_recovery_codes"
+
+    id: Mapped[uuid.UUID] = pk()
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = ts()
+
+
 class CodeChange(Base):
     """An AI-written plugin proposed by Shilpkar. It only ever goes live after passing the code guard,
     the sandbox checks, and a human clicking approve."""

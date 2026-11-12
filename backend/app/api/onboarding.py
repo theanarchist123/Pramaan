@@ -372,7 +372,7 @@ async def verify(
 ):
     """Kick off Pariksha → Prahari. Returns at once; follow progress on the agent stream."""
     profile = await _owned(session, profile_id, principal)
-    require_verified_email(principal)
+    await require_verified_email(principal)
     consent = (
         await session.execute(
             select(Consent).where(Consent.profile_id == profile.id, Consent.kind == "public_listing")

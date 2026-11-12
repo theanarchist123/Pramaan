@@ -50,7 +50,7 @@ jobs:
               c=await asyncpg.connect('postgresql://pramaan:pramaan@localhost:5432/postgres'); await c.execute('CREATE DATABASE pramaan_migcheck'); await c.close()
           asyncio.run(m())"
           alembic upgrade head && alembic upgrade head
-      - name: Evals (offline mock: checks the plumbing and the deterministic guards, not model quality)
+      - name: "Evals (offline mock - checks the plumbing and the deterministic guards, not model quality)"
         run: python -m evals.run
 
   web:
@@ -93,7 +93,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
-      - name: Backend image (lite: no embedding model baked in)
+      - name: "Backend image (lite, no embedding model baked in)"
         uses: docker/build-push-action@v6
         with:
           context: backend
@@ -101,7 +101,7 @@ jobs:
           build-args: WITH_EMBEDDINGS=false
           cache-from: type=gha,scope=backend
           cache-to: type=gha,scope=backend,mode=max
-      - name: Web image (build context is the repo root: pnpm workspace)
+      - name: "Web image (build context is the repo root, pnpm workspace)"
         uses: docker/build-push-action@v6
         with:
           context: .

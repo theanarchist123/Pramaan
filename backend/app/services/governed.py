@@ -57,24 +57,29 @@ def validate(key: str, value: Any) -> Any:
     return v
 
 
+_MISSING = object()
+
+
 async def get(key: str) -> Any:
-    """Current value: database override if there is one, else the environment default."""
+    """Current value: the database override if there is one, else the environment default. Only the DATABASE lookup is cached
+    (5 s); the default is always read fresh, so an environment change is never hidden behind the cache."""
     hit = _cache.get(key)
     if hit and time.monotonic() - hit[0] < TTL:
-        return hit[1]
-    from app.db import get_sessionmaker
-    from app.models import GovernedSetting
+        row_value = hit[1]
+    else:
+        from app.db import get_sessionmaker
+        from app.models import GovernedSetting
 
-    value = GOVERNED[key].default()
-    try:
-        async with get_sessionmaker()() as s:
-            row = (await s.execute(select(GovernedSetting).where(GovernedSetting.key == key))).scalar_one_or_none()
-            if row is not None:
-                value = row.value["v"]
-    except Exception:  # noqa: BLE001 - a settings read must never take verification down: fall back to the default
-        pass
-    _cache[key] = (time.monotonic(), value)
-    return value
+        row_value = _MISSING
+        try:
+            async with get_sessionmaker()() as s:
+                row = (await s.execute(select(GovernedSetting).where(GovernedSetting.key == key))).scalar_one_or_none()
+                if row is not None:
+                    row_value = row.value["v"]
+        except Exception:  # noqa: BLE001 - a settings read must never take verification down: fall back to the default
+            pass
+        _cache[key] = (time.monotonic(), row_value)
+    return GOVERNED[key].default() if row_value is _MISSING else row_value
 
 
 def clear_cache() -> None:
