@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { FileCheck2, FileWarning, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { API_URL, ApiError } from "@/lib/api";
+import { compressIfLarge } from "@/lib/compress-image";
 import type { DocumentResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ export function DocumentDrop({ profileId, onDone }: { profileId: string; onDone:
     setBusy(true);
     try {
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", await compressIfLarge(file));
       const res = await fetch(`${API_URL}/v1/onboarding/${profileId}/documents`, {
         method: "POST",
         credentials: "include",
