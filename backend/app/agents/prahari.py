@@ -15,6 +15,7 @@ from statistics import mean
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents import policy
 from app.agents.events import RunContext
 from app.agents.identity import is_common_name, secondary_signals
 from app.agents.lipik import NAME_MATCH_OK
@@ -64,7 +65,7 @@ async def audit(ctx: RunContext, session: AsyncSession, profile: Profile) -> Aud
         reasons.append(f"{len(unverified)} claim(s) have no supporting evidence")
     if contradicted:
         reasons.append(f"{len(contradicted)} claim(s) contradicted by public sources")
-        score = min(score, 0.4)
+        score = min(score, policy.CONTRADICTED_CAP)
 
     flags = {f for d in docs for f in (d.extracted or {}).get("flags", [])}
     identity_ok = any(
@@ -72,26 +73,26 @@ async def audit(ctx: RunContext, session: AsyncSession, profile: Profile) -> Aud
     )
     if "identity_mismatch" in flags:
         reasons.append("An uploaded document's holder name does not match the profile name")
-        score = min(score, 0.4)
+        score = min(score, policy.FLAG_CAPS["identity_mismatch"])
     if "suspicious" in flags:
         reasons.append("An uploaded document looks edited or inconsistent")
-        score = min(score, 0.5)
+        score = min(score, policy.FLAG_CAPS["suspicious"])
     if "unreadable" in flags:
         reasons.append("An uploaded document could not be read clearly")
-        score = min(score, 0.7)
+        score = min(score, policy.FLAG_CAPS["unreadable"])
     if not identity_ok and "identity_mismatch" not in flags:
         reasons.append("Identity not confirmed by a matching document")
-        score = min(score, 0.9)
+        score = min(score, policy.NO_IDENTITY_CAP)
 
     if "partial_match" in flags:
         reasons.append("The name on an uploaded document only partly matches the profile name; a person must confirm it is the same person")
-        score = min(score, 0.7)
+        score = min(score, policy.FLAG_CAPS["partial_match"])
     if "not_a_credential" in flags:
         reasons.append("An uploaded document is an article or clipping about the person, not a credential issued to them")
-        score = min(score, 0.7)
+        score = min(score, policy.FLAG_CAPS["not_a_credential"])
     if "issuer_unrecognised" in flags:
         reasons.append("A document's issuer is not a recognised body; a human must judge it")
-        score = min(score, 0.7)
+        score = min(score, policy.FLAG_CAPS["issuer_unrecognised"])
 
     if await governed.get("award_claims_need_human") and any(c.field == "award" for c in verified):
         reasons.append("Award claims are confirmed by a human reviewer")
@@ -126,11 +127,11 @@ async def audit(ctx: RunContext, session: AsyncSession, profile: Profile) -> Aud
         unsupported = result.unsupported_sentences
         if unsupported:
             reasons.append(f"Bio contains {len(unsupported)} unsupported statement(s)")
-            score = min(score, 0.8)
+            score = min(score, policy.UNSUPPORTED_BIO_CAP)
 
     score = round(score, 3)
     threshold = await governed.get("auto_approve_threshold")
-    decision = "auto_approve" if score >= threshold and not reasons else "escalate"
+    decision = policy.decide(score, reasons, threshold)
     await ctx.emit(
         "Prahari", "result",
         f"Confidence {score:.0%} (threshold {threshold:.0%}) → "
@@ -150,6 +151,7 @@ async def audit(ctx: RunContext, session: AsyncSession, profile: Profile) -> Aud
             "unsupported_bio": unsupported,
             "verified": len(verified),
             "total": len(claims),
+            "policy_version": policy.VERSION,
         },
     )
 
