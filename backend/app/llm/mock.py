@@ -263,7 +263,24 @@ def setu(ctx: dict[str, Any]) -> SetuProposals:
     return SetuProposals(edges=edges)
 
 
+def entailment(ctx: dict[str, Any]):
+    """Offline stand-in: a quote supports a claim when it contains most of the claim's content words; a different year makes it contradict."""
+    import re as _re
+
+    from app.agents.schemas import EntailmentVerdict
+
+    claim, quote = str(ctx.get("claim", "")), str(ctx.get("quote", ""))
+    words = {w for w in _re.findall(r"[a-zऀ-ॿ]{4,}", claim.lower())}
+    have = set(_re.findall(r"[a-zऀ-ॿ]{4,}", quote.lower()))
+    cy, qy = set(_re.findall(r"\b(?:19|20)\d{2}\b", claim)), set(_re.findall(r"\b(?:19|20)\d{2}\b", quote))
+    if cy and qy and not cy & qy:
+        return EntailmentVerdict(label="contradicts", note="different year")
+    overlap = len(words & have) / len(words) if words else 1.0
+    return EntailmentVerdict(label="supports" if overlap >= 0.5 else "unrelated", note="")
+
+
 _DISPATCH = {
+    "EntailmentVerdict": entailment,
     "SetuProposals": setu,
     "SaathiTurn": saathi,
     "DiscoveryDraft": discovery,

@@ -79,6 +79,13 @@ class FactCheckReport(BaseModel):
     verdicts: list[ClaimVerdict]
 
 
+class EntailmentVerdict(BaseModel):
+    """Does the quote, read on its own, support the claim? (AGT-05)"""
+
+    label: Literal["supports", "contradicts", "unrelated"]
+    note: str = Field(default="", description="One short sentence")
+
+
 # ----- Lipik (document reader) -----
 class DocumentExtraction(BaseModel):
     doc_type: str = Field(description="certificate, award letter, degree, ID, press clipping, other")

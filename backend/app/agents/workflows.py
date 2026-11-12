@@ -17,6 +17,7 @@ from __future__ import annotations
 import dataclasses
 import logging
 import uuid
+from types import SimpleNamespace
 from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -32,8 +33,8 @@ from app.db import get_sessionmaker
 from app.domain import STATUS_SELF
 from app.llm.client import LLMError, LLMRefusal
 from app.models import Profile, ReviewItem
-from app.services import wikidata, wikipedia
-from app.services.wikipedia import Source
+from app import evidence
+from app.evidence.base import EvidenceDoc
 
 log = logging.getLogger("pramaan.workflow")
 SOURCE_NAME_MATCH = 0.75
@@ -67,11 +68,11 @@ async def n_research(state: VerifyState) -> VerifyState:
     ctx = _ctx(state)
     async with get_sessionmaker()() as session:
         profile = await _load_profile(session, ctx.profile_id)
-        name, qid = profile.full_name, profile.wikidata_qid
+        name, qid, institutions = profile.full_name, profile.wikidata_qid, list(profile.institutions or [])
     await ctx.emit("Pariksha", "tool", f"Looking for public evidence about {name}")
-    found = await wikipedia.fetch_sources(name, limit=3)
-    # Wikidata is used ONLY for the item the applicant confirmed is them; never the first same-named person.
-    found = [*found, *(await wikidata.fetch_by_qid(qid) if qid else [])]
+    # Pluggable adapters (Wikipedia, Wikidata for the item the applicant confirmed, OpenAlex for people with a stated institution). A failing source
+    # is skipped; every document is stamped with when it was fetched and a hash of exactly that text.
+    found = await evidence.gather(SimpleNamespace(name=name, qid=qid, institutions=institutions), evidence.default_adapters())
     # Only keep pages that are plausibly about this person, so a namesake can't vouch for them.
     sources = [s for s in found if name_similarity(s.title, name) >= SOURCE_NAME_MATCH]
     await ctx.emit(
@@ -84,7 +85,7 @@ async def n_research(state: VerifyState) -> VerifyState:
 
 async def n_factcheck(state: VerifyState) -> VerifyState:
     ctx = _ctx(state)
-    sources = [Source(**d) for d in state.get("sources", [])]
+    sources = [EvidenceDoc(**d) for d in state.get("sources", [])]
     async with get_sessionmaker()() as session:
         profile = await _load_profile(session, ctx.profile_id)
         pending = [c for c in profile.claims if c.status == STATUS_SELF]
