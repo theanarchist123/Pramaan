@@ -376,3 +376,23 @@ async def set_claim_verification(
     await session.commit()
     await session.refresh(claim)
     return claim
+
+
+@router.get("/api-keys/usage")
+async def api_key_usage_overview(days: int = 7, principal: Principal = Depends(require_permission("audit.read")),
+                                 session: AsyncSession = Depends(get_session)):
+    """Abuse view (API-10): the busiest and most-throttled keys of the last few days. Counts and key names only; no owner contact details."""
+    from datetime import timedelta
+
+    from sqlalchemy import func
+
+    from app.models import ApiKey, ApiKeyUsage
+
+    days = max(1, min(days, 90))
+    since = datetime.now(timezone.utc).date() - timedelta(days=days - 1)
+    rows = (await session.execute(
+        select(ApiKey.id, ApiKey.name, ApiKey.prefix, ApiKey.revoked_at, func.sum(ApiKeyUsage.requests), func.sum(ApiKeyUsage.throttled))
+        .join(ApiKeyUsage, ApiKeyUsage.key_id == ApiKey.id).where(ApiKeyUsage.day >= since)
+        .group_by(ApiKey.id).order_by(func.sum(ApiKeyUsage.requests).desc()).limit(25)
+    )).all()
+    return [{"key_id": r[0], "name": r[1], "prefix": r[2], "revoked": r[3] is not None, "requests": int(r[4] or 0), "throttled": int(r[5] or 0)} for r in rows]

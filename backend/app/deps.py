@@ -111,6 +111,14 @@ async def get_principal(
             raise _unauthorized("Invalid or revoked API key")
         allowed, remaining = await check_rate_limit(f"key:{row.id}", row.rate_limit_per_min)
         request.state.rate_limit = (row.rate_limit_per_min, remaining)
+        try:
+            from app.services import usage
+
+            await usage.record(session, row.id, throttled=not allowed)
+            if not allowed:
+                await session.commit()  # the 429 below must still be counted
+        except Exception:  # noqa: BLE001 - counting must never turn a good request into an error
+            await session.rollback()
         if not allowed:
             raise HTTPException(
                 status.HTTP_429_TOO_MANY_REQUESTS,

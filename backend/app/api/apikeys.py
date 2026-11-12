@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +9,7 @@ from app.core.security import API_KEY_SCOPES, TEST_KEY_SCOPES, generate_api_key
 from app.db import get_session
 from app.deps import Principal, get_principal
 from app.models import ApiKey
+from app.services import usage
 from app.schemas import ApiKeyCreated, ApiKeyIn, ApiKeyOut
 
 router = APIRouter(prefix="/v1/api-keys", tags=["developer"])
@@ -57,6 +58,22 @@ async def create_key(
     await session.commit()
     await session.refresh(row)
     return ApiKeyCreated(**ApiKeyOut.model_validate(row).model_dump(), key=full)
+
+
+@router.get("/{key_id}/usage")
+async def key_usage(
+    key_id: uuid.UUID,
+    days: int = Query(default=30, ge=1, le=90),
+    principal: Principal = Depends(get_principal),
+    session: AsyncSession = Depends(get_session),
+):
+    """Requests per day for one of your own keys (counts only)."""
+    _jwt_only(principal)
+    row = await session.get(ApiKey, key_id)
+    if row is None or row.owner_id != principal.user.id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "API key not found")
+    data = await usage.series(session, key_id, days)
+    return {"key_id": key_id, "days": data, "total": sum(d["requests"] for d in data), "throttled": sum(d["throttled"] for d in data)}
 
 
 @router.delete("/{key_id}", status_code=status.HTTP_204_NO_CONTENT)
