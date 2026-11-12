@@ -341,3 +341,10 @@ shows them as "Stated working connection" with the span as the reason. Agent cat
 test_hardening asserted the old kind and was updated, with this reason. 6 new tests; agents/directory/hardening/migration suites pass.
 NOT done: backfill of org-membership edges beyond what is stated, evidence from documents (only claims + evidence quotes are read), an eval set against a REAL model
 (runs on the mock here), Setu proposals needing a human to approve (they are auto-accepted when they validate).
+
+# API-04 batch verify, API-07 llms.txt + changelog (v2/api-04-05-07)
+POST /v1/verify/batch (public, rate limited, 1..50 codes, normalised to upper case, duplicates answered once, order kept; each answer comes from the SAME function as
+GET /v1/verify/{code}, with a test that proves they agree). apps/web/public/llms.txt (every endpoint listed was checked against the app's own OpenAPI paths) and
+CHANGELOG.md. API-05: webhook test events and secret rotation ALREADY existed; replay is NOT built (deliveries may not store payloads: not checked). NOT done in API-*: live/test
+key modes (01), OAuth 2.0 + PKCE (02), idempotency keys / ETag / problem+json (03: changing the error format would break every client and test, needs a decision),
+NL search batch (04 second half), SDK generation in CI + Go/Kotlin SDKs (06), docs site / Postman / status page (07 rest), MCP upgrade (09), usage dashboard (10).
