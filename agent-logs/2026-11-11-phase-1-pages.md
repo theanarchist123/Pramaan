@@ -36,3 +36,9 @@ signed checkpoints, Hindi review of new strings. PG-13 polish pass still pending
   upgrade (I-2). 6 pure tests pass. NOT verified: the Lipik integration + duplicate query against a real DB (Docker down; SQL
   compiles). NOT built: QR decode + issuer-endpoint verification (needs a decoder dependency and per-issuer endpoints; a decision for
   the owner), image re-compression/ELA heuristics (unreliable, deliberately skipped), font/layout anomalies.
+- **TRU-09** (v2/tru-09-merkle, off tru-03): `core/merkle.py` RFC 6962/9162 root, inclusion and consistency proofs with verifiers;
+  `/v1/transparency/checkpoint` (signed `pramaan-log-checkpoint-v1`), `/proof/{code}`, `/consistency?first=n`. 24 pure tests pass,
+  exhaustive over sizes 1..19 plus a rewrite-detection test. NOT verified: the three endpoints against a real DB (Docker down).
+  NOT built: daily independent publication and the RFC 3161 timestamp (needs a chosen external TSA/publisher: an ADR + owner
+  decision, and a **(verify)** of the vendor), browser/verify-js consumption of proofs, witness cosigning.
+  Note the existing hash chain is kept; the Merkle tree is a second, additive view over the same entries.

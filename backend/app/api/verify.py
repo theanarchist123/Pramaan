@@ -123,3 +123,61 @@ async def public_stats(session: AsyncSession = Depends(get_session)):
     ).scalar_one()
     certs = (await session.execute(select(func.count()).select_from(Certificate))).scalar_one()
     return {"profiles": profiles, "certificates": certs, "key_id": get_signer().key_id}
+
+
+# --------------------------------------------------------------------------- #
+# Merkle view of the log (TRU-09): signed checkpoint, inclusion and consistency proofs
+# --------------------------------------------------------------------------- #
+async def _leaves(session: AsyncSession) -> tuple[list[TransparencyLog], list[bytes]]:
+    from app.core import merkle
+
+    rows = (await session.execute(select(TransparencyLog).order_by(TransparencyLog.id.asc()))).scalars().all()
+    return list(rows), [merkle.leaf_hash(bytes.fromhex(r.entry_hash)) for r in rows]
+
+
+def checkpoint_text(size: int, root_hex: str) -> str:
+    """What the registry signs. A fixed, human-readable form so anyone can rebuild it byte for byte."""
+    return f"pramaan-log-checkpoint-v1\nsize={size}\nroot={root_hex}\n"
+
+
+@router.get("/transparency/checkpoint")
+async def transparency_checkpoint(session: AsyncSession = Depends(get_session)):
+    import hashlib
+
+    from app.core import merkle
+
+    _, leaves = await _leaves(session)
+    root_hex = merkle.root(leaves).hex()
+    text = checkpoint_text(len(leaves), root_hex)
+    signer = get_signer()
+    return {
+        "size": len(leaves), "root": root_hex, "text": text, "key_id": signer.key_id,
+        "signature": signer.sign_digest(hashlib.sha256(text.encode()).hexdigest()),
+    }
+
+
+@router.get("/transparency/proof/{code}")
+async def transparency_inclusion(code: str, session: AsyncSession = Depends(get_session)):
+    from app.core import merkle
+
+    rows, leaves = await _leaves(session)
+    index = next((i for i, r in enumerate(rows) if r.certificate_code == code.strip().upper()), None)
+    if index is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "That certificate is not in the log")
+    return {
+        "index": index, "size": len(leaves), "entry_hash": rows[index].entry_hash,
+        "root": merkle.root(leaves).hex(), "proof": [p.hex() for p in merkle.inclusion_proof(leaves, index)],
+    }
+
+
+@router.get("/transparency/consistency")
+async def transparency_consistency(first: int = Query(ge=1), session: AsyncSession = Depends(get_session)):
+    from app.core import merkle
+
+    _, leaves = await _leaves(session)
+    if first > len(leaves):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "That size is larger than the log")
+    return {
+        "first": first, "second": len(leaves), "first_root": merkle.root(leaves[:first]).hex(),
+        "second_root": merkle.root(leaves).hex(), "proof": [p.hex() for p in merkle.consistency_proof(leaves, first)],
+    }
