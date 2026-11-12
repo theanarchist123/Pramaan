@@ -30,7 +30,7 @@ async def list_keys(
     rows = await session.execute(
         select(ApiKey).where(ApiKey.owner_id == principal.user.id).order_by(ApiKey.created_at.desc())
     )
-    return rows.scalars().all()
+    return [ApiKeyOut.model_validate(r).model_copy(update={"mode": "test" if r.prefix.startswith("t") else "live"}) for r in rows.scalars().all()]
 
 
 @router.post("", response_model=ApiKeyCreated, status_code=status.HTTP_201_CREATED)
@@ -57,7 +57,7 @@ async def create_key(
     session.add(row)
     await session.commit()
     await session.refresh(row)
-    return ApiKeyCreated(**ApiKeyOut.model_validate(row).model_dump(), key=full)
+    return ApiKeyCreated(**{**ApiKeyOut.model_validate(row).model_dump(), "mode": body.mode}, key=full)
 
 
 @router.get("/{key_id}/usage")

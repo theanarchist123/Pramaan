@@ -74,7 +74,8 @@ TEST_KEY_SCOPES = {"profiles:read", "verify:read", "search:read"}
 
 
 def generate_api_key(mode: str = "live") -> tuple[str, str, str]:
-    prefix = secrets.token_hex(4)
+    # A test key's prefix starts with 't' (never a hex digit), so the mode is visible in lists without storing another column.
+    prefix = ("t" + secrets.token_hex(3)) if mode == "test" else secrets.token_hex(4)
     secret = secrets.token_urlsafe(24)
     full = f"pk_{'test' if mode == 'test' else 'live'}_{prefix}_{secret}"
     return full, prefix, hash_api_key(full)

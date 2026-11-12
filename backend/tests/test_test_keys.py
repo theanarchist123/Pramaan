@@ -33,3 +33,12 @@ async def test_a_test_key_whose_row_somehow_has_write_scope_still_cannot_write(c
         await s.commit()
     key = r.json()["key"]
     assert (await client.post("/v1/profiles", headers={"X-API-Key": key}, json={"full_name": "Nope"})).status_code == 403
+
+
+async def test_the_list_says_which_keys_are_test_keys(client, make_user):
+    ratelimit.reset()
+    person, _ = await make_user()
+    await client.post("/v1/api-keys", headers=person, json={"name": "t", "scopes": ["profiles:read"], "mode": "test"})
+    await client.post("/v1/api-keys", headers=person, json={"name": "l", "scopes": ["profiles:read"]})
+    modes = {k["name"]: k["mode"] for k in (await client.get("/v1/api-keys", headers=person)).json()}
+    assert modes == {"t": "test", "l": "live"}

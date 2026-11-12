@@ -199,6 +199,7 @@ class ApiKeyOut(ORM):
     id: uuid.UUID
     name: str
     prefix: str
+    mode: Literal["live", "test"] = "live"
     scopes: list[str]
     rate_limit_per_min: int
     created_at: datetime
