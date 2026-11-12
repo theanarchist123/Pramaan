@@ -222,6 +222,12 @@ function buildTray() {
       { label: "Check the code on the clipboard", accelerator: "CommandOrControl+Shift+V", click: verifyFromClipboard },
       { label: "Search the registry", click: () => navigate("/directory") },
       { type: "separator" },
+      {
+        // Off by default; the person chooses. Not offered on Linux, where Electron cannot set it.
+        label: "Start Pramaan when I sign in", type: "checkbox", visible: process.platform !== "linux",
+        checked: app.getLoginItemSettings().openAtLogin,
+        click: (item) => app.setLoginItemSettings({ openAtLogin: item.checked }),
+      },
       { label: "Quit", click: () => app.quit() },
     ]),
   );
