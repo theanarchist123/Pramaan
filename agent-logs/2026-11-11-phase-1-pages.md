@@ -221,3 +221,20 @@ CAVEAT, honest: that run still exited non-zero because of console errors. They w
 ConnectionResetError / connection_lost talking to Postgres (engine already has pool_pre_ping=True), and the Docker engine later stopped
 responding altogether (`docker info` prints nothing). Environmental (Docker Desktop on this machine), not an app fault, but it means I do not have a
 fully green run of the final test file. Re-run after `docker compose up -d db redis`.
+
+# Baseline + Profile / Transparency / Onboarding to spec (v2/pg-16-visual-theme), 2026-11-12
+- FULL BACKEND SUITE on the stacked tip with Docker up: **340 passed, 0 failed** (5m16s).
+- Pages smoke on the production build: **10/10 pass, no console errors** (first fully green run). Fact-capture smoke 3/3.
+- Profile (6.3): cover-band slot (SectorImage, falls back to the gradient) and "Show what's proven": marks only sentences that repeat, word for
+  word, a claim the SERVER marks confirmed (document/issuer/reviewer); the legend says exactly that and that unmarked != false. Browser test seeds
+  a profile through the real API and asserts exactly one sentence is marked.
+- Transparency (6.6): nothing is checked until the button "Verify the whole chain in your browser"; progress bar while this browser re-computes
+  every SHA-256 link; ledger tape with a rail and link dots; newest 25 shown + "Show 50 more" (a broken link is always revealed).
+- Onboarding fact capture (M-03): the chat marks the exact words each new fact came from. This needed a BACKEND change, found while building it:
+  chat claims stored the model's reworded VALUE as the "chat quote", so with a real model nothing would have matched (the mock hides this because
+  its value equals the sentence). ExtractedClaim now has source_quote (the model must copy the person's words), and the server stores it only if
+  it is a literal case-insensitive stretch of the person's message (literal_span); otherwise it falls back to the value. 2 new unit tests.
+  NOT verified against a real model: whether Saathi follows the instruction well (LLM_MODE=mock here).
+- Test infra: bypassCSP in the test context only (Playwright's waitForFunction is blocked by the app's CSP, which is unchanged).
+- Still not to spec: Agent Floor (a public replay of RECORDED real runs needs a privacy decision: run messages can contain names), header
+  (compress on scroll, account menu, mobile bottom tab bar), command palette people preview, Hindi copy, Unsplash photos (owner step).

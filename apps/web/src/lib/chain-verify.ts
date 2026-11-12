@@ -27,10 +27,14 @@ export interface ChainResult {
  * Re-computes the chain on this device, the same rule the registry uses: entry_hash = SHA-256(prev_hash | digest | issued_at), and
  * each entry's prev_hash is the entry before it. `entries` must be oldest first. This trusts nothing the server concluded.
  */
-export async function verifyChainInBrowser(entries: LogEntry[]): Promise<ChainResult> {
+export async function verifyChainInBrowser(entries: LogEntry[], onProgress?: (done: number, total: number) => void): Promise<ChainResult> {
   let prev: string | null = null;
   for (let i = 0; i < entries.length; i++) {
     const e = entries[i];
+    if (onProgress && (i % 8 === 0 || i === entries.length - 1)) {
+      onProgress(i + 1, entries.length);
+      await new Promise((r) => setTimeout(r, 0)); // let the browser paint the progress bar between batches
+    }
     if (prev !== null && e.prev_hash !== prev) return { ok: false, badIndex: i, why: "link", fromStart: false };
     if ((await sha256Hex(`${e.prev_hash}|${e.digest}|${e.issued_at}`)) !== e.entry_hash) return { ok: false, badIndex: i, why: "hash", fromStart: false };
     prev = e.entry_hash;

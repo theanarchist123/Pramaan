@@ -8,11 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { AgentAvatar } from "@/components/agent-feed";
 import { VOICE_LANGS, speak, stopSpeaking, useSpeechInput } from "@/hooks/use-speech";
 import { speechLocale, useI18n } from "@/lib/i18n";
+import { markCaptured } from "@/lib/fact-capture";
 import { cn } from "@/lib/utils";
 
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  /** Exact quotes of the facts the registry recorded from this message (fact capture, M-03). */
+  captured?: string[];
 }
 
 export function ChatPanel({
@@ -124,7 +127,21 @@ export function ChatPanel({
                     : "rounded-tr-sm bg-primary text-primary-foreground",
                 )}
               >
-                {m.content}
+                {m.role === "user" && m.captured?.length
+                  ? markCaptured(m.content, m.captured).map((seg, k) =>
+                      seg.captured ? (
+                        <mark
+                          key={k}
+                          className="rounded-sm bg-primary-foreground/25 px-0.5 text-inherit underline decoration-2 underline-offset-4 transition-colors duration-700 motion-reduce:transition-none"
+                        >
+                          {seg.text}
+                          <span className="sr-only"> (recorded on your profile)</span>
+                        </mark>
+                      ) : (
+                        <span key={k}>{seg.text}</span>
+                      ),
+                    )
+                  : m.content}
               </p>
             </motion.div>
           ))}

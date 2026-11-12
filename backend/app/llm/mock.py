@@ -109,7 +109,7 @@ def saathi(ctx: dict[str, Any]) -> SaathiTurn:
     for sentence in _sentences(text):
         for field, pattern in _CLAIM_HINTS:
             if re.search(pattern, sentence, re.I):
-                claims.append(ExtractedClaim(field=field, value=sentence[:300], year=_year(sentence)))
+                claims.append(ExtractedClaim(field=field, value=sentence[:300], year=_year(sentence), source_quote=sentence.strip()))
                 break
 
     known_name = profile.get("name_known") or delta.full_name

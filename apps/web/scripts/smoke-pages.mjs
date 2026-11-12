@@ -2,6 +2,8 @@
 // Needs a RUNNING API + web app and the local docker database.  node scripts/smoke-pages.mjs [webUrl] [apiUrl]
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import assert from "node:assert/strict";
 
 const WEB = process.argv[2] ?? "http://localhost:3012";
@@ -10,7 +12,7 @@ mkdirSync("smoke-shots", { recursive: true });
 
 const browser = await chromium.launch();
 const errors = [];
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, bypassCSP: true }); // only lets Playwright run its own checks; the app CSP is unchanged
 const page = await ctx.newPage();
 page.setDefaultNavigationTimeout(90000); // a dev server compiles each route on first use
 page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
@@ -20,6 +22,24 @@ const shot = (n) => page.screenshot({ caret: "initial", path: `smoke-shots/${n}.
 
 const people = await (await fetch(`${API}/v1/profiles?limit=100`)).json();
 const slug = people[0]?.slug;
+// ---- seed one profile whose biography repeats a reviewer-CONFIRMED claim word for word, plus a sentence that matches nothing -------------------
+const tag = randomBytes(3).toString("hex");
+const sql = (q) => execFileSync("docker", ["exec", "pramaan-db", "psql", "-U", "pramaan", "-d", "pramaan", "-tAc", q], { encoding: "utf8" }).trim();
+const J = { "Content-Type": "application/json" };
+const post = (path, token, body, method = "POST") => fetch(`${API}${path}`, { method, headers: { ...J, ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
+const reg = async (email) => (await (await post("/v1/auth/register", null, { email, password: "password123", name: "Seed" })).json()).access_token;
+const CLAIM = "Sagar Samman for marine research";
+const adminTok = await reg(`bp-a-${tag}@example.com`);
+sql(`update users set role='admin' where email='bp-a-${tag}@example.com'`);
+const memberTok = await reg(`bp-m-${tag}@example.com`);
+sql(`update users set email_verified_at = now() where email='bp-m-${tag}@example.com'`);
+const bioProfile = await (await post("/v1/profiles", memberTok, { full_name: `Bio Proof ${tag}`, sector: "Science", state: "Kerala", consent_public_listing: true })).json();
+await post(`/v1/profiles/${bioProfile.id}`, memberTok, { bio: `She won the ${CLAIM} in 2024. She also enjoys long walks by the sea.` }, "PATCH");
+const bioClaim = await (await post(`/v1/profiles/${bioProfile.id}/claims`, memberTok, { field: "award", value: CLAIM })).json();
+await post(`/v1/profiles/${bioProfile.id}/submit`, memberTok);
+await post(`/v1/admin/claims/${bioClaim.id}/verify`, adminTok, { reason: "Checked against the published honours list", evidence_ref: "https://example.org/honours" });
+await post(`/v1/admin/profiles/${bioProfile.id}/status`, adminTok, { status: "approved" });
+
 
 await step("HOME: hero proof table checks a real certificate (or says there is none), ledger strip, no mock screenshot", async () => {
   await page.goto(`${WEB}/`);
@@ -102,11 +122,31 @@ if (slug) {
     await shot("profile");
   });
 }
+await step("PROFILE BIO PROOF: 'Show what's proven' marks only the sentence that repeats a confirmed claim word for word", async () => {
+  await page.goto(`${WEB}/p/${bioProfile.slug}`);
+  const toggle = page.getByRole("button", { name: /Show what.s proven/ });
+  await toggle.waitFor({ timeout: 20000 });
+  assert.equal(await page.locator("p span.bg-verified-soft").count(), 0, "nothing is marked until asked");
+  await toggle.click();
+  await page.getByRole("status").filter({ hasText: /1 sentence repeats a confirmed claim word for word/ }).waitFor();
+  const marked = await page.locator("p span.bg-verified-soft").allTextContents();
+  assert.equal(marked.length, 1, "exactly one sentence is marked");
+  assert.match(marked[0], /Sagar Samman for marine research/);
+  assert.doesNotMatch(marked[0], /long walks/, "the sentence with no confirmed claim behind it stays plain");
+  await toggle.click();
+  assert.equal(await page.locator("p span.bg-verified-soft").count(), 0, "off again");
+  await shot("profile-bio-proof");
+});
 await step("TRANSPARENCY: chain is re-computed in the browser; altering an entry breaks it; undo restores", async () => {
   await page.goto(`${WEB}/transparency`);
   const entries = await (await fetch(`${API}/v1/transparency?limit=500`)).json();
   if (entries.length === 0) { await page.getByText("No certificates issued yet.").waitFor(); return; }
-  await page.getByText(/Chain intact/).waitFor({ timeout: 8000 });
+  // nothing is checked until the person asks; then THIS browser re-computes every link
+  await page.getByText(/Not checked on this device yet/).waitFor({ timeout: 20000 });
+  assert.equal(await page.getByText(/Chain intact/).count(), 0, "no verdict before the button is pressed");
+  await page.getByRole("button", { name: "Verify the whole chain in your browser" }).click();
+  await page.getByText(/Chain intact/).waitFor({ timeout: 20000 });
+  await shot("transparency-intact");
   if (entries.length > 1) {
     await page.getByRole("button", { name: /Alter an entry/ }).click();
     await page.getByText(/Chain broken at entry/).waitFor();

@@ -22,6 +22,8 @@ Rules:
 - Write claim values and the bio in English. Each claim is ONE fact. Include the year only if stated.
 - sector must be one of: {", ".join(SECTORS)}.
 - state must be an Indian state or union territory from: {", ".join(INDIAN_STATES)}.
+- For each new claim, set source_quote to the exact words of the person's latest message it came from, copied
+  character for character (a short stretch). If you cannot point to specific words, leave it empty.
 - The bio uses only stated facts (2-4 sentences). Leave it null until you have enough.
 - What you still need: name, sector, state, at least one achievement. When you have all of them
   set ready_to_submit=true and tell the person to review their profile and submit it.
