@@ -41,6 +41,9 @@ GOVERNED: dict[str, Spec] = {
                                    minimum=0.90, maximum=1.0),
 }
 
+GOVERNED["outreach_autosend_welcome"] = Spec(bool, lambda: False,
+                                             "Send the fixed welcome email automatically when a certificate is issued (no person reads it first; every opt-out and frequency safeguard still applies)")
+
 # Sutradhar (AGT-01): a switch per agent, and budgets. All readable from the database, so they work without a deploy; changing one is a four-eyes change.
 AGENTS = ("saathi", "pariksha", "lipik", "setu", "doot", "chitrakar", "shilpkar", "khoji", "nigrani")
 for _a in AGENTS:

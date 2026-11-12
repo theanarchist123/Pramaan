@@ -178,13 +178,16 @@ async def send(session: AsyncSession, msg: OutboxMessage) -> OutboxMessage:
     return msg
 
 
-async def send_due() -> int:
-    """Scheduler tick: send messages an admin SCHEDULED whose time has come. Drafts are never sent."""
+async def send_due(now: datetime | None = None) -> int:
+    """Scheduler tick: send messages SCHEDULED (by an admin, or by the welcome policy) whose time has come and only inside the sending hours. Drafts are never sent."""
+    now = now or _now()
+    if next_send_window(now) > now:
+        return 0
     async with get_sessionmaker()() as session:
         due = (
             await session.execute(
                 select(OutboxMessage)
-                .where(OutboxMessage.status == "scheduled", OutboxMessage.scheduled_for <= _now())
+                .where(OutboxMessage.status == "scheduled", OutboxMessage.scheduled_for <= now)
                 # Row locks: with several replicas/workers each message is claimed by exactly one of them,
                 # the others skip it, so nobody gets the same email twice.
                 .with_for_update(skip_locked=True)
@@ -205,6 +208,54 @@ async def scheduler_loop(interval: float = 30.0) -> None:  # kept for callers th
         await asyncio.sleep(interval)
 
 
-async def welcome_if_allowed(session, profile_id) -> None:
-    """Placeholder until the Doot policy (AGT-09) lands: sends nothing."""
-    return None
+# ---- policy (AGT-09) ----------------------------------------------------------------------------------------------------------------------
+# Only a FIXED template (no model wording) of a low-risk kind may go out without a person reading it, and only while the governed switch is on.
+AUTO_SEND_KINDS = {"welcome_share"}
+SEND_START_HOUR, SEND_END_HOUR = 9, 18  # India time: nobody is emailed at night
+_IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def next_send_window(now: datetime) -> datetime:
+    """`now` if it is inside the sending hours (09:00-18:00 India time), otherwise the next 09:00."""
+    local = now.astimezone(_IST)
+    start = local.replace(hour=SEND_START_HOUR, minute=0, second=0, microsecond=0)
+    if local < start:
+        return start.astimezone(now.tzinfo or timezone.utc)
+    if local.hour >= SEND_END_HOUR:
+        return (start + timedelta(days=1)).astimezone(now.tzinfo or timezone.utc)
+    return now
+
+
+async def welcome_if_allowed(session: AsyncSession, profile_id, now: datetime | None = None) -> OutboxMessage | None:
+    """Send the fixed welcome email for a profile that has an active certificate, if and only if the governed switch is on.
+    Once per profile. Goes through send(), so suppression, withdrawn consent and the frequency cap all still apply."""
+    from app.services import governed
+
+    if not await governed.get("outreach_autosend_welcome"):
+        return None
+    now = now or _now()
+    profile = await session.get(Profile, profile_id)
+    if profile is None or profile.status != "approved" or profile.owner_id is None or profile.is_demo:
+        return None
+    cert = (await session.execute(select(Certificate).where(Certificate.profile_id == profile.id, Certificate.revoked_at.is_(None))
+                                  .order_by(Certificate.issued_at.desc()))).scalars().first()
+    if cert is None:
+        return None
+    already = (await session.execute(select(OutboxMessage.id).where(OutboxMessage.profile_id == profile.id, OutboxMessage.kind == "welcome_share",
+                                                                    OutboxMessage.status != "discarded"))).first()
+    if already:
+        return None
+    owner = await session.get(User, profile.owner_id)
+    if owner is None:
+        return None
+    facts = {"first_name": (owner.name or profile.full_name).split()[0], "status": profile.status, "claims": len(profile.claims),
+             "verified": sum(1 for c in profile.claims if c.status != "self")}
+    subject, body = doot.fixed_message("welcome_share", facts, doot.links_for(profile.slug, cert.code))
+    msg = OutboxMessage(profile_id=profile.id, kind="welcome_share", to_email=owner.email, subject=subject, body=body, status="draft")
+    session.add(msg)
+    window = next_send_window(now)
+    if window > now:
+        msg.status, msg.scheduled_for = "scheduled", window  # picked up by send_due() when the window opens
+    else:
+        await send(session, msg)
+    return msg
