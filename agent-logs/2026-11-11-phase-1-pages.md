@@ -270,3 +270,12 @@ TRU-11: docs/security/key-rotation.md + tests/test_key_rotation.py (2 pass): aft
 ones with the new one, both keys are in pramaan-keys.json AND did.json; dropping the retired PUBLIC key breaks old certificates (the mistake the
 runbook warns about). KNOWN GAPS written into the runbook: no compromised-key marker (the transparency log is the fallback check) and no KMS/HSM
 signer (provider Ed25519 support must be verified). No staging rotation was performed.
+
+# TRU-07 calibration report (v2/tru-07-calibration, off tru-05-11)
+services/calibration.py + GET /v1/admin/calibration (agent_run.read): from CLOSED review cases (approved/rejected by a person): how people decided per
+escalation reason code, and a SHADOW RUN: for candidate thresholds from the 0.90 floor up to today's threshold, which past escalated cases would have
+been auto-approved and how many of those people actually rejected. It is a REPORT: it applies nothing (I-1: rules decide; the threshold is a governed
+setting changed by two people, floor 0.90) and says so in its note; below 30 closed cases it says the numbers are anecdotes. 4 backend tests (exact
+numbers, floor respected, role gating). Console page /calibration (shown only with agent_run.read), browser test 2/2 (auditor sees it, reviewer is not
+offered it and the API refuses). Reason codes already existed (ADM-06).
+NOT done (AGT-07, Phase 4): policy-as-config with versions, a promotion workflow for candidate policies, any automatic use of the numbers.

@@ -74,6 +74,7 @@ export default function QueuePage() {
     <main>
       <div className="row">
         <h1 className="grow">Review queue</h1>
+        {perms.includes("agent_run.read") && <Link href="/calibration">Calibration</Link>}
         <Link href="/images">Photographs</Link>
         <Link href="/security">Security</Link>
         <button className="secondary" onClick={signOut}>Sign out</button>

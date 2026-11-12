@@ -52,6 +52,23 @@ def _no_self_review(principal: Principal, profile: Profile | None) -> None:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "You cannot review your own profile")
 
 
+@router.get("/calibration")
+async def calibration(_: Principal = Depends(require_permission("agent_run.read")), session: AsyncSession = Depends(get_session)):
+    """How people actually decided past escalated cases, and what a lower auto-approve threshold would have done to them. A report only: it
+    changes no setting (the threshold is governed and four-eyes) and decides nothing (I-1)."""
+    from app.agents.reasons import codes_for
+    from app.services import governed
+    from app.services.calibration import Case, calibrate
+
+    items = (await session.execute(select(ReviewItem).where(ReviewItem.status.in_(("approved", "rejected"))))).scalars().all()
+    cases = [
+        Case(confidence=float(i.confidence or 0.0), outcome=i.status,
+             reason_codes=list((i.details or {}).get("reason_codes") or codes_for([i.reason])))
+        for i in items
+    ]
+    return calibrate(cases, current_threshold=float(await governed.get("auto_approve_threshold")))
+
+
 @router.get("/overview")
 async def overview(principal: Principal = Depends(require_permission("review.read")), session: AsyncSession = Depends(get_session)):
     """Numbers for the command-centre tiles. Every figure is counted from the database now; sections a role cannot see are omitted
