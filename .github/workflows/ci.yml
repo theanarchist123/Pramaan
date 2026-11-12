@@ -69,6 +69,31 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm --filter web build
 
+  sdk-fresh:
+    # API-06: the SDK types are generated from the API itself; a stale copy fails here instead of surprising a developer.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - run: pip install "./backend[dev]"
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Regenerate OpenAPI and the TypeScript types
+        run: |
+          python backend/scripts/dump_openapi.py packages/sdk/openapi.json
+          pnpm --filter @pramaan/sdk generate
+      - name: The committed copies are current
+        run: git diff --exit-code packages/sdk
+      - run: pnpm --filter @pramaan/sdk typecheck
+
   desktop:
     runs-on: ubuntu-latest
     defaults:

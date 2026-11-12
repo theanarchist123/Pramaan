@@ -7,7 +7,7 @@
   "types": "dist/index.d.ts",
   "files": ["dist", "src"],
   "scripts": {
-    "generate": "openapi-typescript http://localhost:8000/openapi.json -o src/schema.d.ts",
+    "generate": "openapi-typescript ../openapi.json -o src/schema.d.ts",
     "build": "tsc -p .",
     "typecheck": "tsc -p . --noEmit"
   },
