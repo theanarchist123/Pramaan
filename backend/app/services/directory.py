@@ -103,12 +103,18 @@ async def rebuild_graph(session: AsyncSession) -> int:
     return n
 
 
+_SETU_LABEL = {"co_author": "Co-authored", "co_founder": "Co-founded", "board": "Same board", "joint_project": "Joint project"}
+
+
 async def graph_payload(session: AsyncSession) -> dict:
     profiles = (
         await session.execute(select(Profile).where(Profile.status == "approved"))
     ).scalars().all()
     ids = {p.id for p in profiles}
     edges = (await session.execute(select(Edge))).scalars().all()
+    from app.models import SetuEdge
+
+    setu_edges = (await session.execute(select(SetuEdge))).scalars().all()
     return {
         "nodes": [
             {"id": str(p.id), "slug": p.slug, "name": p.full_name, "sector": p.sector, "state": p.state,
@@ -118,6 +124,12 @@ async def graph_payload(session: AsyncSession) -> dict:
         "links": [
             {"source": str(e.a_id), "target": str(e.b_id), "type": e.type, "weight": e.weight, "why": e.evidence}
             for e in edges if e.a_id in ids and e.b_id in ids
+        ]
+        + [
+            # Setu's validated connections: the person's own words travel with the edge
+            {"source": str(e.a_id), "target": str(e.b_id), "type": "collab", "weight": 0.9,
+             "why": f"{_SETU_LABEL[e.kind]}: \u201c{e.span}\u201d"}
+            for e in setu_edges if e.a_id in ids and e.b_id in ids
         ],
     }
 

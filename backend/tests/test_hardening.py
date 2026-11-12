@@ -528,7 +528,8 @@ async def test_alembic_builds_the_whole_schema_on_an_empty_database_and_is_repea
 # --------------------------------------------------------------------------- honest labelling + visibility
 async def test_the_agent_catalog_says_what_each_agent_really_is(client):
     kinds = {a["name"]: a["kind"] for a in (await client.get("/v1/agents/catalog")).json()}
-    assert kinds["Setu"] == "service" and kinds["Chitrakar"] == "service"  # plain code, not models
+    assert kinds["Chitrakar"] == "service"  # plain code, not a model
+    assert kinds["Setu"] == "hybrid"  # since AGT-03: a model PROPOSES connections, a deterministic validator decides (it was plain code before)
     assert kinds["Prahari"] == "hybrid" and kinds["Pariksha"] == "llm"
     assert sum(k == "llm" for k in kinds.values()) == 7  # Saathi, Khoji-Pehle, Lipik, Pariksha, Khoji, Doot, Shilpkar
 

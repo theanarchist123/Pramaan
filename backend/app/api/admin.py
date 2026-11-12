@@ -69,6 +69,20 @@ async def calibration(_: Principal = Depends(require_permission("agent_run.read"
     return calibrate(cases, current_threshold=float(await governed.get("auto_approve_threshold")))
 
 
+@router.post("/graph/setu")
+async def run_setu(principal: Principal = Depends(require_permission("profile.correct")), session: AsyncSession = Depends(get_session)):
+    """Ask Setu to look for working connections people have stated about each other. The model only proposes; the validator accepts an edge only
+    when the person's own words (a verbatim span naming the other person) support it. Safe to run repeatedly."""
+    from app.agents import setu
+    from app.agents.events import start_run
+
+    ctx = await start_run("setu")
+    report = await setu.run(ctx, session)
+    await session.commit()
+    await ctx.finish("done", f"{report['accepted']} connection(s) accepted, {report['rejected']} dropped")
+    return report
+
+
 @router.get("/overview")
 async def overview(principal: Principal = Depends(require_permission("review.read")), session: AsyncSession = Depends(get_session)):
     """Numbers for the command-centre tiles. Every figure is counted from the database now; sections a role cannot see are omitted

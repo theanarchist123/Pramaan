@@ -44,7 +44,7 @@ export interface GraphNode {
 export interface GraphLink {
   source: string;
   target: string;
-  type: "alumni" | "org" | "city" | "sector";
+  type: "alumni" | "org" | "city" | "sector" | "collab";
   weight: number;
   why: string;
 }
