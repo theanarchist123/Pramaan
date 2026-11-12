@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown, ExternalLink, MapPin, Quote } from "lucide-react";
+import { FactCapture } from "@/components/motion/fact-capture";
 import { VerificationBadge } from "@/components/verification-badge";
 import { api } from "@/lib/api";
 import type { Claim, Profile } from "@/lib/types";
@@ -36,16 +37,10 @@ function ClaimRow({ claim }: { claim: Claim }) {
   const [open, setOpen] = useState(false);
   const evidence = claim.evidence.filter((e) => e.kind !== "chat" || claim.status === "self");
   return (
-    <motion.li
-      layout
-      initial={{ opacity: 0, x: 16, backgroundColor: "color-mix(in oklch, var(--primary) 14%, transparent)" }}
-      animate={{ opacity: 1, x: 0, backgroundColor: "rgba(0,0,0,0)" }}
-      transition={{ duration: 0.6 }}
-      className="rounded-xl border border-border p-3"
-    >
+    <FactCapture className="rounded-xl border border-border p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {FIELD_LABEL[claim.field] ?? claim.field}
             {claim.year ? ` · ${claim.year}` : ""}
           </p>
@@ -92,7 +87,7 @@ function ClaimRow({ claim }: { claim: Claim }) {
           </motion.ul>
         )}
       </AnimatePresence>
-    </motion.li>
+    </FactCapture>
   );
 }
 
@@ -154,7 +149,7 @@ export function ProfilePanel({ profile }: { profile: Profile }) {
             const v = profile.custom?.[d.key];
             return (
               <div key={d.key}>
-                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{d.label}</dt>
+                <dt className="text-xs text-muted-foreground">{d.label}</dt>
                 <dd className={cn("text-sm", v == null && "text-muted-foreground/60")}>
                   {v == null ? "— Saathi will ask" : Array.isArray(v) ? v.join(", ") : String(v)}
                 </dd>
