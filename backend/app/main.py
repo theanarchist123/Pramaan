@@ -102,6 +102,46 @@ app.add_middleware(
 from app.core import telemetry  # noqa: E402
 
 
+from fastapi.exceptions import RequestValidationError  # noqa: E402
+from starlette.exceptions import HTTPException as StarletteHTTPException  # noqa: E402
+
+
+@app.exception_handler(StarletteHTTPException)
+async def _problem_http(request, exc):
+    from app.core.problem import problem
+
+    if not request.url.path.startswith("/v1/"):
+        from fastapi.exception_handlers import http_exception_handler
+
+        return await http_exception_handler(request, exc)
+    return problem(exc.status_code, exc.detail, headers=getattr(exc, "headers", None))
+
+
+@app.exception_handler(RequestValidationError)
+async def _problem_validation(request, exc):
+    from app.core.problem import problem
+
+    if not request.url.path.startswith("/v1/"):
+        from fastapi.exception_handlers import request_validation_exception_handler
+
+        return await request_validation_exception_handler(request, exc)
+    errs = [{"loc": [str(x) for x in e.get("loc", [])], "msg": str(e.get("msg", ""))} for e in exc.errors()]
+    # `detail` stays a list with `msg` (what clients already read); inputs are stripped so nothing the caller sent is echoed back.
+    return problem(422, [{"loc": e["loc"], "msg": e["msg"]} for e in errs], errors=errs)
+
+
+@app.middleware("http")
+async def rate_limit_headers(request, call_next):
+    response = await call_next(request)
+    rl = getattr(request.state, "rate_limit", None)
+    if rl:
+        from app.core.problem import rate_headers
+
+        for k, v in rate_headers(*rl).items():
+            response.headers[k] = v
+    return response
+
+
 @app.middleware("http")
 async def conditional_get(request, call_next):
     from app.core import etag

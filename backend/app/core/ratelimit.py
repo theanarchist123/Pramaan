@@ -62,7 +62,8 @@ def ip_limit(scope: str, limit_per_min: int):
             return
         fwd = request.headers.get("x-forwarded-for", "")
         ip = fwd.split(",")[-1].strip() if fwd else (request.client.host if request.client else "?")
-        ok, _ = await check_rate_limit(f"ip:{scope}:{ip}", limit_per_min)
+        ok, remaining = await check_rate_limit(f"ip:{scope}:{ip}", limit_per_min)
+        request.state.rate_limit = (limit_per_min, remaining)
         if not ok:
             raise HTTPException(429, "Too many requests - slow down", headers={"Retry-After": "60"})
 
