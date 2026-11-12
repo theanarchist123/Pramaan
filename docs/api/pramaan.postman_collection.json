@@ -2458,6 +2458,55 @@
       }
     },
     {
+      "name": "GET /v1/views",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/views",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "views"
+          ]
+        },
+        "description": "List Views"
+      }
+    },
+    {
+      "name": "GET /v1/views/{slug}",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/views/{{slug}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "views",
+            "{{slug}}"
+          ]
+        },
+        "description": "Get View"
+      }
+    },
+    {
       "name": "GET /v1/webhooks",
       "request": {
         "method": "GET",
