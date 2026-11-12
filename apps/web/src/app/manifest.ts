@@ -18,6 +18,8 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
       { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
+    // Share a certificate link or code to Pramaan from another app: it opens straight on the check.
+    share_target: { action: "/verify", method: "GET", params: { title: "title", text: "text", url: "url" } },
     shortcuts: [
       { name: "Verify a certificate", short_name: "Verify", url: "/verify", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: "Create my verified profile", short_name: "My profile", url: "/onboard", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },

@@ -28,6 +28,14 @@ export default function VerifyLookup() {
   const [recent, setRecent] = useState<RecentCheck[]>([]);
   const [sample, setSample] = useState<string | null>(null);
 
+  // Opened through the browser's share sheet (see manifest share_target): find a certificate code in what was shared and go straight to the check.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const shared = [q.get("url"), q.get("text"), q.get("title")].filter(Boolean).join(" ");
+    const m = /PRM-[A-Z0-9-]{4,32}/i.exec(shared);
+    if (m) router.replace(`/verify/${encodeURIComponent(m[0].toUpperCase())}`);
+  }, [router]);
+
   useEffect(() => {
     setRecent(readRecent());
     api<{ certificate_code: string }[]>("/v1/transparency?limit=1", { auth: false }).then((l) => setSample(l[0]?.certificate_code ?? null)).catch(() => {});
