@@ -23,6 +23,7 @@ Public verification needs no key. The API base URL is shown on the Developers pa
 - GET /v1/transparency/checkpoint: a signed Merkle root and size. GET /v1/transparency/proof/{code} and /v1/transparency/consistency?first=N return inclusion and consistency proofs (RFC 9162).
 
 ## People and search
+- POST /mcp: a read-only MCP server (tools: verify_certificate, search_people).
 - GET /v1/profiles and GET /v1/profiles/{slug}: approved, consenting people only.
 - POST /v1/search: plain-language search; every result says why it matched.
 - GET /v1/graph: connections between people; a stated working connection always carries the person's own words.

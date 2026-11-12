@@ -1,0 +1,2436 @@
+{
+  "info": {
+    "name": "Pramaan API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Generated from /openapi.json. Public verification needs no key."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "api_key",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "GET /.well-known/did.json",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/.well-known/did.json",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            ".well-known",
+            "did.json"
+          ]
+        },
+        "description": "Did Json"
+      }
+    },
+    {
+      "name": "GET /.well-known/pramaan-keys.json",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/.well-known/pramaan-keys.json",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            ".well-known",
+            "pramaan-keys.json"
+          ]
+        },
+        "description": "Public Keys"
+      }
+    },
+    {
+      "name": "GET /healthz",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/healthz",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "healthz"
+          ]
+        },
+        "description": "Healthz"
+      }
+    },
+    {
+      "name": "GET /mcp",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/mcp",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "mcp"
+          ]
+        },
+        "description": "Mcp Get"
+      }
+    },
+    {
+      "name": "POST /mcp",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/mcp",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "mcp"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Mcp"
+      }
+    },
+    {
+      "name": "GET /v1/agents/catalog",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/agents/catalog",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "agents",
+            "catalog"
+          ]
+        },
+        "description": "Catalog"
+      }
+    },
+    {
+      "name": "GET /v1/agents/replay",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/agents/replay",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "agents",
+            "replay"
+          ]
+        },
+        "description": "Replay"
+      }
+    },
+    {
+      "name": "GET /v1/agents/runs",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/agents/runs",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "agents",
+            "runs"
+          ]
+        },
+        "description": "Runs"
+      }
+    },
+    {
+      "name": "GET /v1/agents/runs/{run_id}/events",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/agents/runs/{{run_id}}/events",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "agents",
+            "runs",
+            "{{run_id}}",
+            "events"
+          ]
+        },
+        "description": "Run Events"
+      }
+    },
+    {
+      "name": "GET /v1/agents/stream",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/agents/stream",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "agents",
+            "stream"
+          ]
+        },
+        "description": "Stream"
+      }
+    },
+    {
+      "name": "GET /v1/api-keys",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/api-keys",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "api-keys"
+          ]
+        },
+        "description": "List Keys"
+      }
+    },
+    {
+      "name": "POST /v1/api-keys",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/api-keys",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "api-keys"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Create Key"
+      }
+    },
+    {
+      "name": "DELETE /v1/api-keys/{key_id}",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/api-keys/{{key_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "api-keys",
+            "{{key_id}}"
+          ]
+        },
+        "description": "Revoke Key"
+      }
+    },
+    {
+      "name": "POST /v1/auth/login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/auth/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Login"
+      }
+    },
+    {
+      "name": "POST /v1/auth/logout",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/auth/logout",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "auth",
+            "logout"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Logout"
+      }
+    },
+    {
+      "name": "GET /v1/auth/me",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/auth/me",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "auth",
+            "me"
+          ]
+        },
+        "description": "Me"
+      }
+    },
+    {
+      "name": "POST /v1/auth/mfa/confirm",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/auth/mfa/confirm",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "auth",
+            "mfa",
+            "confirm"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Mfa Confirm"
+      }
+    },
+    {
+      "name": "POST /v1/auth/mfa/enroll",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/auth/mfa/enroll",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "auth",
+            "mfa",
+            "enroll"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Mfa Enroll"
+      }
+    },
+    {
+      "name": "POST /v1/auth/mfa/recover",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/auth/mfa/recover",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "auth",
+            "mfa",
+            "recover"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Mfa Recover"
+      }
+    },
+    {
+      "name": "POST /v1/auth/mfa/recovery-codes",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/auth/mfa/recovery-codes",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "auth",
+            "mfa",
+            "recovery-codes"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Mfa Regenerate Recovery Codes"
+      }
+    },
+    {
+      "name": "GET /v1/auth/mfa/status",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/auth/mfa/status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "auth",
+            "mfa",
+            "status"
+          ]
+        },
+        "description": "Mfa Status"
+      }
+    },
+    {
+      "name": "POST /v1/auth/mfa/stepup",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/auth/mfa/stepup",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "auth",
+            "mfa",
+            "stepup"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Mfa Stepup"
+      }
+    },
+    {
+      "name": "POST /v1/auth/otp/request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/auth/otp/request",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "auth",
+            "otp",
+            "request"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Otp Request"
+      }
+    },
+    {
+      "name": "POST /v1/auth/otp/verify",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/auth/otp/verify",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "auth",
+            "otp",
+            "verify"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Otp Verify"
+      }
+    },
+    {
+      "name": "POST /v1/auth/register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/auth/register",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "auth",
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Register"
+      }
+    },
+    {
+      "name": "GET /v1/badge/certificate/{code}.svg",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/badge/certificate/{{code}.sv}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "badge",
+            "certificate",
+            "{{code}.sv}}"
+          ]
+        },
+        "description": "Certificate Badge"
+      }
+    },
+    {
+      "name": "GET /v1/badge/profile/{slug}.svg",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/badge/profile/{{slug}.sv}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "badge",
+            "profile",
+            "{{slug}.sv}}"
+          ]
+        },
+        "description": "Profile Badge"
+      }
+    },
+    {
+      "name": "GET /v1/certificates/{code}",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/certificates/{{code}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "certificates",
+            "{{code}}"
+          ]
+        },
+        "description": "Certificate Detail"
+      }
+    },
+    {
+      "name": "GET /v1/certificates/{code}/image.png",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/certificates/{{code}}/image.png",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "certificates",
+            "{{code}}",
+            "image.png"
+          ]
+        },
+        "description": "Certificate Png"
+      }
+    },
+    {
+      "name": "GET /v1/certificates/{code}/pdf",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/certificates/{{code}}/pdf",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "certificates",
+            "{{code}}",
+            "pdf"
+          ]
+        },
+        "description": "Certificate Pdf"
+      }
+    },
+    {
+      "name": "GET /v1/certificates/{code}/qr.svg",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/certificates/{{code}}/qr.svg",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "certificates",
+            "{{code}}",
+            "qr.svg"
+          ]
+        },
+        "description": "Certificate Qr"
+      }
+    },
+    {
+      "name": "GET /v1/certificates/{code}/vc",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/certificates/{{code}}/vc",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "certificates",
+            "{{code}}",
+            "vc"
+          ]
+        },
+        "description": "Certificate As Vc"
+      }
+    },
+    {
+      "name": "GET /v1/fields",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/fields",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "fields"
+          ]
+        },
+        "description": "Public Fields"
+      }
+    },
+    {
+      "name": "GET /v1/graph",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/graph",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "graph"
+          ]
+        },
+        "description": "Graph"
+      }
+    },
+    {
+      "name": "GET /v1/images/sector/{sector}",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/images/sector/{{sector}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "images",
+            "sector",
+            "{{sector}}"
+          ]
+        },
+        "description": "Sector Images"
+      }
+    },
+    {
+      "name": "POST /v1/onboarding/discover",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/onboarding/discover",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "onboarding",
+            "discover"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Discover"
+      }
+    },
+    {
+      "name": "POST /v1/onboarding/start",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/onboarding/start",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "onboarding",
+            "start"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Start"
+      }
+    },
+    {
+      "name": "GET /v1/onboarding/{profile_id}/agent-events",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/onboarding/{{profile_id}}/agent-events",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "onboarding",
+            "{{profile_id}}",
+            "agent-events"
+          ]
+        },
+        "description": "Profile Agent Events"
+      }
+    },
+    {
+      "name": "POST /v1/onboarding/{profile_id}/apply-discovery",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/onboarding/{{profile_id}}/apply-discovery",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "onboarding",
+            "{{profile_id}}",
+            "apply-discovery"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Apply Discovery"
+      }
+    },
+    {
+      "name": "POST /v1/onboarding/{profile_id}/documents",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/onboarding/{{profile_id}}/documents",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "onboarding",
+            "{{profile_id}}",
+            "documents"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Upload Document"
+      }
+    },
+    {
+      "name": "POST /v1/onboarding/{profile_id}/message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/onboarding/{{profile_id}}/message",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "onboarding",
+            "{{profile_id}}",
+            "message"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Message"
+      }
+    },
+    {
+      "name": "GET /v1/onboarding/{profile_id}/messages",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/onboarding/{{profile_id}}/messages",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "onboarding",
+            "{{profile_id}}",
+            "messages"
+          ]
+        },
+        "description": "Messages"
+      }
+    },
+    {
+      "name": "POST /v1/onboarding/{profile_id}/request-review",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/onboarding/{{profile_id}}/request-review",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "onboarding",
+            "{{profile_id}}",
+            "request-review"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Request Review"
+      }
+    },
+    {
+      "name": "POST /v1/onboarding/{profile_id}/verify",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/onboarding/{{profile_id}}/verify",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "onboarding",
+            "{{profile_id}}",
+            "verify"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Verify"
+      }
+    },
+    {
+      "name": "GET /v1/onboarding/{profile_id}/wikidata-candidates",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/onboarding/{{profile_id}}/wikidata-candidates",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "onboarding",
+            "{{profile_id}}",
+            "wikidata-candidates"
+          ]
+        },
+        "description": "Wikidata Candidates"
+      }
+    },
+    {
+      "name": "POST /v1/onboarding/{profile_id}/wikidata-confirm",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/onboarding/{{profile_id}}/wikidata-confirm",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "onboarding",
+            "{{profile_id}}",
+            "wikidata-confirm"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Wikidata Confirm"
+      }
+    },
+    {
+      "name": "GET /v1/outreach/unsubscribe",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/outreach/unsubscribe",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "outreach",
+            "unsubscribe"
+          ]
+        },
+        "description": "Unsubscribe"
+      }
+    },
+    {
+      "name": "GET /v1/profiles",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles"
+          ]
+        },
+        "description": "List Profiles"
+      }
+    },
+    {
+      "name": "POST /v1/profiles",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Create Profile"
+      }
+    },
+    {
+      "name": "GET /v1/profiles/mine",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/mine",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "mine"
+          ]
+        },
+        "description": "My Profiles"
+      }
+    },
+    {
+      "name": "DELETE /v1/profiles/{profile_id}",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{profile_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{profile_id}}"
+          ]
+        },
+        "description": "Delete My Data"
+      }
+    },
+    {
+      "name": "PATCH /v1/profiles/{profile_id}",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{profile_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{profile_id}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Patch Profile"
+      }
+    },
+    {
+      "name": "POST /v1/profiles/{profile_id}/certificate",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{profile_id}}/certificate",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{profile_id}}",
+            "certificate"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Issue Profile Certificate"
+      }
+    },
+    {
+      "name": "GET /v1/profiles/{profile_id}/certificates",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{profile_id}}/certificates",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{profile_id}}",
+            "certificates"
+          ]
+        },
+        "description": "List Profile Certificates"
+      }
+    },
+    {
+      "name": "POST /v1/profiles/{profile_id}/claims",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{profile_id}}/claims",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{profile_id}}",
+            "claims"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Add Claim"
+      }
+    },
+    {
+      "name": "GET /v1/profiles/{profile_id}/export",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{profile_id}}/export",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{profile_id}}",
+            "export"
+          ]
+        },
+        "description": "Export My Data"
+      }
+    },
+    {
+      "name": "GET /v1/profiles/{profile_id}/identity",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{profile_id}}/identity",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{profile_id}}",
+            "identity"
+          ]
+        },
+        "description": "List Bindings"
+      }
+    },
+    {
+      "name": "POST /v1/profiles/{profile_id}/identity/email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{profile_id}}/identity/email",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{profile_id}}",
+            "identity",
+            "email"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Start Email"
+      }
+    },
+    {
+      "name": "POST /v1/profiles/{profile_id}/identity/email/confirm",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{profile_id}}/identity/email/confirm",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{profile_id}}",
+            "identity",
+            "email",
+            "confirm"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Confirm Email"
+      }
+    },
+    {
+      "name": "POST /v1/profiles/{profile_id}/identity/page",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{profile_id}}/identity/page",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{profile_id}}",
+            "identity",
+            "page"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Start Page"
+      }
+    },
+    {
+      "name": "POST /v1/profiles/{profile_id}/identity/page/check",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{profile_id}}/identity/page/check",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{profile_id}}",
+            "identity",
+            "page",
+            "check"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Check Page"
+      }
+    },
+    {
+      "name": "POST /v1/profiles/{profile_id}/submit",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{profile_id}}/submit",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{profile_id}}",
+            "submit"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Submit For Review"
+      }
+    },
+    {
+      "name": "GET /v1/profiles/{slug}",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/profiles/{{slug}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "profiles",
+            "{{slug}}"
+          ]
+        },
+        "description": "Get Profile"
+      }
+    },
+    {
+      "name": "GET /v1/public/{slug}/certificates",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/public/{{slug}}/certificates",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "public",
+            "{{slug}}",
+            "certificates"
+          ]
+        },
+        "description": "Public Certificates"
+      }
+    },
+    {
+      "name": "POST /v1/search",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/search",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "search"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Search"
+      }
+    },
+    {
+      "name": "GET /v1/stats",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/stats",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "stats"
+          ]
+        },
+        "description": "Public Stats"
+      }
+    },
+    {
+      "name": "GET /v1/stats/map",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/stats/map",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "stats",
+            "map"
+          ]
+        },
+        "description": "Map Stats"
+      }
+    },
+    {
+      "name": "GET /v1/status/revocation/{list_id}",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/status/revocation/{{list_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "status",
+            "revocation",
+            "{{list_id}}"
+          ]
+        },
+        "description": "Revocation Status List"
+      }
+    },
+    {
+      "name": "GET /v1/transparency",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/transparency",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "transparency"
+          ]
+        },
+        "description": "Transparency"
+      }
+    },
+    {
+      "name": "GET /v1/transparency/checkpoint",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/transparency/checkpoint",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "transparency",
+            "checkpoint"
+          ]
+        },
+        "description": "Transparency Checkpoint"
+      }
+    },
+    {
+      "name": "GET /v1/transparency/consistency",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/transparency/consistency",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "transparency",
+            "consistency"
+          ]
+        },
+        "description": "Transparency Consistency"
+      }
+    },
+    {
+      "name": "GET /v1/transparency/proof/{code}",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/transparency/proof/{{code}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "transparency",
+            "proof",
+            "{{code}}"
+          ]
+        },
+        "description": "Transparency Inclusion"
+      }
+    },
+    {
+      "name": "GET /v1/transparency/verify",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/transparency/verify",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "transparency",
+            "verify"
+          ]
+        },
+        "description": "Transparency Verify"
+      }
+    },
+    {
+      "name": "POST /v1/verify/batch",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/verify/batch",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "verify",
+            "batch"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Verify Batch"
+      }
+    },
+    {
+      "name": "POST /v1/verify/check",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/verify/check",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "verify",
+            "check"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Verify Check"
+      }
+    },
+    {
+      "name": "GET /v1/verify/{code}",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/verify/{{code}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "verify",
+            "{{code}}"
+          ]
+        },
+        "description": "Verify"
+      }
+    },
+    {
+      "name": "GET /v1/webhooks",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/webhooks",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "webhooks"
+          ]
+        },
+        "description": "List Webhooks"
+      }
+    },
+    {
+      "name": "POST /v1/webhooks",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/webhooks",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "webhooks"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Create Webhook"
+      }
+    },
+    {
+      "name": "GET /v1/webhooks/events",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/webhooks/events",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "webhooks",
+            "events"
+          ]
+        },
+        "description": "List Events"
+      }
+    },
+    {
+      "name": "DELETE /v1/webhooks/{hook_id}",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/webhooks/{{hook_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "webhooks",
+            "{{hook_id}}"
+          ]
+        },
+        "description": "Delete Webhook"
+      }
+    },
+    {
+      "name": "PATCH /v1/webhooks/{hook_id}",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/webhooks/{{hook_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "webhooks",
+            "{{hook_id}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Update Webhook"
+      }
+    },
+    {
+      "name": "GET /v1/webhooks/{hook_id}/deliveries",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/webhooks/{{hook_id}}/deliveries",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "webhooks",
+            "{{hook_id}}",
+            "deliveries"
+          ]
+        },
+        "description": "Deliveries"
+      }
+    },
+    {
+      "name": "POST /v1/webhooks/{hook_id}/rotate-secret",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/webhooks/{{hook_id}}/rotate-secret",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "webhooks",
+            "{{hook_id}}",
+            "rotate-secret"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Rotate Secret"
+      }
+    },
+    {
+      "name": "POST /v1/webhooks/{hook_id}/test",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/webhooks/{{hook_id}}/test",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "webhooks",
+            "{{hook_id}}",
+            "test"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Send Test"
+      }
+    }
+  ]
+}
