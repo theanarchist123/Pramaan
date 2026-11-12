@@ -147,7 +147,7 @@ async def approve(approval_id: uuid.UUID, request: Request, principal: Principal
         raise HTTPException(403, "Staff session required")
     require_stepup(principal)
     a = await _load_decidable(session, approval_id, principal)
-    result = await _execute(session, a)
+    result = await _execute(session, a, principal)
     a.status, a.decided_by = "approved", principal.user.id
     a.decided_at = a.executed_at = datetime.now(timezone.utc)
     await audit.record(session, actor_id=principal.user.id, actor_role=await _actor_role(session, principal),
@@ -171,7 +171,7 @@ async def reject(approval_id: uuid.UUID, body: DecideIn, request: Request, princ
     return _out(a)
 
 
-async def _execute(session: AsyncSession, a: ApprovalRequest) -> dict:
+async def _execute(session: AsyncSession, a: ApprovalRequest, decider: Principal) -> dict:
     """Run the approved action. Each executor re-checks its own preconditions: the world may have changed."""
     if a.action == "role.assign":
         uid, role = uuid.UUID(a.payload["user_id"]), a.payload["role"]
@@ -185,6 +185,17 @@ async def _execute(session: AsyncSession, a: ApprovalRequest) -> dict:
         if cert.revoked_at is None:
             cert.revoked_at = datetime.now(timezone.utc)
         return {"code": cert.code, "revoked": True}
+    if a.action == "claim.override":
+        from app.api.admin import _no_self_review, apply_claim_override
+        from app.models import Claim, Profile
+
+        claim = await session.get(Claim, uuid.UUID(a.payload["claim_id"]))
+        if claim is None:
+            raise HTTPException(409, "Claim no longer exists")
+        _no_self_review(decider, await session.get(Profile, claim.profile_id))  # the approver is not the profile's owner (I-10)
+        await apply_claim_override(session, claim, status_=a.payload["status"], confidence=a.payload["confidence"], reason=a.reason,
+                                   evidence_ref=a.payload["evidence_ref"], actor_id=decider.user.id, action="claim.override.approved")
+        return {"claim_id": str(claim.id), "status": claim.status}
     if a.action == "setting.change":
         from app.models import GovernedSetting, GovernedSettingChange
         from app.services import governed

@@ -85,3 +85,11 @@ when the server asks. 4 new tests; test_mfa + test_admin_origin + test_mfa_recov
 KNOWN GAP: a member-login Bearer token still reaches /v1/admin (the cookie split protects browsers only). With STAFF_MFA_REQUIRED the
 enrolment gate and step-up still apply, but an enrolled staff member's password-only Bearer token is not code-checked. Closing it
 means binding staff API access to the admin login (a breaking change for API clients/tests): needs an owner decision.
+
+# Phase 2: claim override as four-eyes (v2/adm-07-override-four-eyes, off adm-04b)
+Governed setting `claim_override_four_eyes` (default OFF so existing reviewer workflows and tests are unchanged; turning it on is itself
+a four-eyes change). When ON, raising a claim to "confirmed by a reviewer" files an approval request (202); a different person with
+claim.override approves it, and the approver may not be the profile's owner (I-10). Lowering a claim stays immediate (safe direction).
+One function (`apply_claim_override`) changes claim status for both paths; the audit action is `claim.override.approved` for the second.
+3 new tests; related suites 63 passed. NOT done: console UI for filing/approving this action (the generic approvals screen may list
+it; not checked in a browser), and nothing turns the setting on, that is your decision.

@@ -73,6 +73,9 @@ class Settings(BaseSettings):
     # Session cookie SameSite: "auto" = lax locally, none (cross-site web + API hosts) in production.
     # Award claims earn the highest trust, so a human confirms them (turn off only once issuers are checked at source).
     award_claims_need_human: bool = True
+    # Raising a claim to "confirmed by a reviewer" needs a second person (off by default so existing reviewer workflows keep working; a
+    # governed setting, so turning it on or off is itself a four-eyes change).
+    claim_override_four_eyes: bool = False
     # Extra issuer names to accept for documents, comma-separated (e.g. "Kerala Sahitya Akademi,Tata Trusts").
     trusted_issuers_extra: str = ""
     # Staff must enrol an authenticator app, and sensitive staff actions need a fresh code (step-up). OFF by default: turn it

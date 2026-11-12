@@ -314,3 +314,63 @@ async def test_the_merkle_endpoints_prove_a_real_certificate_is_in_the_signed_lo
     assert merkle.verify_consistency(cs["first"], cs["second"], bytes.fromhex(cs["first_root"]), bytes.fromhex(cs["second_root"]), [bytes.fromhex(x) for x in cs["proof"]])
     assert (await client.get("/v1/transparency/proof/PRM-NOSUCHCODE")).status_code == 404
     assert cert1["code"] != cert2["code"]
+
+
+# ---------------------------------------------------------------------------------- claim override as four-eyes (ADM-07)
+async def _profile_with_one_self_claim(client, make_user):
+    person, _ = await make_user()
+    profile = (await client.post("/v1/profiles", headers=person, json={"full_name": "Four Eyes Person", "consent_public_listing": True})).json()
+    claim = (await client.post(f"/v1/profiles/{profile['id']}/claims", headers=person, json={"field": "award", "value": "Test Prize"})).json()
+    return person, profile, claim
+
+
+async def test_with_four_eyes_on_a_reviewer_cannot_raise_a_claim_alone(client, make_user, monkeypatch):
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "claim_override_four_eyes", True)
+    owner, profile, claim = await _profile_with_one_self_claim(client, make_user)
+    a, _ = await make_user(promote_to_admin=True)
+    b, _ = await make_user(promote_to_admin=True)
+    mine = lambda: client.get("/v1/profiles/mine", headers=owner)  # noqa: E731
+
+    filed = await client.post(f"/v1/admin/claims/{claim['id']}/verify", headers=a, json=REASON)
+    assert filed.status_code == 202 and filed.json()["status"] == "pending"
+    still = (await mine()).json()[0]["claims"][0]
+    assert still["status"] == "self"  # nothing changed yet
+
+    assert (await client.post(f"/v1/admin/approvals/{filed.json()['approval_id']}/approve", headers=a)).status_code == 403  # not by the requester
+    done = await client.post(f"/v1/admin/approvals/{filed.json()['approval_id']}/approve", headers=b)
+    assert done.status_code == 200, done.text
+    now = (await mine()).json()[0]["claims"][0]
+    assert now["status"] == "human" and any(e["kind"] == "human" for e in now["evidence"])
+
+
+async def test_lowering_a_claim_is_always_immediate_and_the_default_is_unchanged(client, make_user, monkeypatch):
+    from app.config import get_settings
+
+    _, profile, claim = await _profile_with_one_self_claim(client, make_user)
+    a, _ = await make_user(promote_to_admin=True)
+    assert (await client.post(f"/v1/admin/claims/{claim['id']}/verify", headers=a, json=REASON)).status_code == 200  # setting off: as before
+    monkeypatch.setattr(get_settings(), "claim_override_four_eyes", True)
+    down = await client.post(f"/v1/admin/claims/{claim['id']}/verify", headers=a, json={**REASON, "status": "self"})
+    assert down.status_code == 200 and down.json()["status"] == "self"  # the safe direction needs no second person
+
+
+async def test_the_profile_owner_cannot_approve_the_request_for_their_own_claim(client, make_user, monkeypatch):
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "claim_override_four_eyes", True)
+    owner, profile, claim = await _profile_with_one_self_claim(client, make_user)
+    a, _ = await make_user(promote_to_admin=True)
+    filed = (await client.post(f"/v1/admin/claims/{claim['id']}/verify", headers=a, json=REASON)).json()
+    # the owner becomes staff (legacy admin) and tries to decide on their own profile (I-10)
+    from sqlalchemy import update
+
+    from app.db import get_sessionmaker
+    from app.models import User
+
+    async with get_sessionmaker()() as s:
+        me = (await client.get("/v1/auth/me", headers=owner)).json()
+        await s.execute(update(User).where(User.id == uuid.UUID(me["id"])).values(role="admin"))
+        await s.commit()
+    assert (await client.post(f"/v1/admin/approvals/{filed['approval_id']}/approve", headers=owner)).status_code == 403
