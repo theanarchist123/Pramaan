@@ -76,6 +76,13 @@ export default function Directory() {
   const hasQuery = Boolean(response);
   const shown: (SearchHit | Summary)[] = hasQuery ? response!.results : filteredEveryone;
   const states = Object.keys(stats?.by_state ?? {}).sort();
+  // With no question and no filter the page is a set of shelves, one per field, instead of one long undifferentiated list.
+  const shelves: [string, Summary[]][] | null =
+    hasQuery || sector || state || shown.length < 6
+      ? null
+      : Object.entries(
+          filteredEveryone.reduce<Record<string, Summary[]>>((acc, p) => ((acc[p.sector] ??= []).push(p), acc), {}),
+        ).sort((a, b) => b[1].length - a[1].length);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -212,11 +219,34 @@ export default function Directory() {
               <p className="mt-1 text-sm">{t("dir.noneHint")}</p>
             </div>
           ) : (
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {shown.map((h, i) => (
-                <ResultCard key={h.id} hit={h as SearchHit} index={i} />
-              ))}
-            </ul>
+            shelves ? (
+              <div className="space-y-10">
+                {shelves.map(([name, people]) => (
+                  <section key={name} aria-label={`${name}, ${people.length} ${people.length === 1 ? "person" : "people"}`}>
+                    <div className="mb-3 flex items-baseline justify-between gap-3">
+                      <h2 className="flex items-center gap-2 text-xl font-semibold">
+                        <span aria-hidden className="size-2.5 rounded-full" style={{ background: paletteFor(name).primary }} /> {name}
+                        <span className="text-sm font-normal text-muted-foreground">{people.length}</span>
+                      </h2>
+                      <Button variant="link" className="h-auto p-0 text-sm" onClick={() => setSector(name)}>See all in {name}</Button>
+                    </div>
+                    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {people.slice(0, 3).map((h, i) => (
+                        <ResultCard key={h.id} hit={h as SearchHit} index={i} />
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <AnimatePresence mode="popLayout">
+                  {shown.map((h, i) => (
+                    <ResultCard key={h.id} hit={h as SearchHit} index={i} />
+                  ))}
+                </AnimatePresence>
+              </ul>
+            )
           )
         )}
 

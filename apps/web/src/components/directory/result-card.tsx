@@ -5,12 +5,13 @@ import { motion } from "motion/react";
 import { MapPin, Sparkles } from "lucide-react";
 import { VerificationBadge } from "@/components/verification-badge";
 import { paletteFor } from "@/lib/certificate-art";
+import { useMotionPreference } from "@/lib/motion-preference";
 import type { SearchHit, Summary } from "@/lib/directory-types";
 
 export function SectorChip({ sector }: { sector: string }) {
   const c = paletteFor(sector);
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
       <span className="size-2 rounded-full" style={{ background: c.primary }} /> {sector}
     </span>
   );
@@ -20,11 +21,15 @@ export function ResultCard({ hit, index = 0 }: { hit: SearchHit | (Summary & { s
   const reasons = "reasons" in hit ? hit.reasons ?? [] : [];
   const claims = "claims" in hit ? hit.claims ?? [] : [];
   const score = "score" in hit ? hit.score : undefined;
+  const { reduced } = useMotionPreference();
+  // M-09: cards reflow with a FLIP (layout) when filters change; reduced motion gets no movement, only the content.
   return (
     <motion.li
-      initial={{ opacity: 0, y: 10 }}
+      layout={!reduced}
+      initial={reduced ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.05, 0.4) }}
+      exit={reduced ? undefined : { opacity: 0 }}
+      transition={reduced ? { duration: 0 } : { delay: Math.min(index * 0.05, 0.4), layout: { duration: 0.28 } }}
     >
       <Link
         href={`/p/${hit.slug}`}
@@ -38,7 +43,7 @@ export function ResultCard({ hit, index = 0 }: { hit: SearchHit | (Summary & { s
           {score != null && (
             <div className="shrink-0 text-right" title="How closely this person matches your question">
               <p className="font-display text-xl font-semibold tabular-nums text-primary">{Math.round(score * 100)}</p>
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">match</p>
+              <p className="text-xs text-muted-foreground">match</p>
             </div>
           )}
         </div>
@@ -50,7 +55,7 @@ export function ResultCard({ hit, index = 0 }: { hit: SearchHit | (Summary & { s
             </span>
           )}
           {"is_demo" in hit && hit.is_demo && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">Demo</span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">Fictional demo</span>
           )}
         </div>
         {reasons.length > 0 && (

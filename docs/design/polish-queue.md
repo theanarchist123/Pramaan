@@ -9,3 +9,4 @@ gets a polish pass: compare against the references, adjust timings and compositi
 | Verify (entry + result) | PG-05 | built, browser test pending | patterns/verify.md | cascade timing, mobile banner, Hindi copy, scanner on Firefox/Safari |
 | Onboarding | PG-08 | built (stepper + fact capture), browser test not written | patterns/onboarding.md | stepper connectors, mobile, Hindi copy |
 | Profile | PG-09 | built (claim cards, paper slip), dossier two-column layout not done | patterns/profile.md | sticky rail, share card, Hindi copy |
+| Directory | PG-10 | shelves + FLIP built; search-mode layout and card seals not done | patterns/directory.md | list endpoint needs claim counts |
