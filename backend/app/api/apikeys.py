@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import API_KEY_SCOPES, generate_api_key
+from app.core.security import API_KEY_SCOPES, TEST_KEY_SCOPES, generate_api_key
 from app.db import get_session
 from app.deps import Principal, get_principal
 from app.models import ApiKey
@@ -42,7 +42,9 @@ async def create_key(
     unknown = set(body.scopes) - API_KEY_SCOPES
     if unknown:
         raise HTTPException(422, f"Unknown scopes: {sorted(unknown)}")
-    full, prefix, key_hash = generate_api_key()
+    if body.mode == "test" and set(body.scopes) - TEST_KEY_SCOPES:
+        raise HTTPException(422, f"A test key is read-only; these scopes need a live key: {sorted(set(body.scopes) - TEST_KEY_SCOPES)}")
+    full, prefix, key_hash = generate_api_key(body.mode)
     row = ApiKey(
         owner_id=principal.user.id,
         name=body.name,
