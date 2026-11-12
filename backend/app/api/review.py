@@ -57,6 +57,55 @@ async def reason_codes(_: Principal = Depends(require_permission("review.read"))
     return REASON_CODES
 
 
+@router.get("/{item_id}")
+async def case_detail(item_id: uuid.UUID, principal: Principal = Depends(require_permission("review.read")),
+                      session: AsyncSession = Depends(get_session)):
+    """Everything a reviewer needs on one page. Documents are shown as metadata and the forensic flags only: never the file, its
+    storage path or its raw hash (opening the file itself is a separate, audited step)."""
+    from app.agents.reasons import codes_for
+    from app.models import Document
+    from app.api.admin import ReviewItemOut
+    from app.schemas import ProfileOut
+    from app.services.doc_forensics import FLAG_TEXT
+
+    item = await _item(session, item_id)
+    profile = await session.get(Profile, item.profile_id)
+    docs = (await session.execute(select(Document).where(Document.profile_id == item.profile_id).order_by(Document.created_at))).scalars().all()
+    view = ReviewItemOut.model_validate(item)
+    if not (view.details or {}).get("reason_codes"):
+        view.details = {**(view.details or {}), "reason_codes": codes_for([item.reason])}
+    perms = await permissions_for_user(session, principal.user)
+    holds = bool(item.assigned_to == principal.user.id and item.locked_until and item.locked_until > _now())
+    ex = lambda d: d.extracted or {}  # noqa: E731
+    return {
+        "item": view,
+        "profile": ProfileOut.model_validate(profile) if profile else None,
+        "documents": [
+            {"id": str(d.id), "filename": d.filename, "uploaded_at": d.created_at, "match_score": d.match_score,
+             "holder_name": ex(d).get("holder_name", ""), "title": ex(d).get("title", ""), "issuer": ex(d).get("issuer", ""),
+             "flags": ex(d).get("flags", []), "flag_notes": [FLAG_TEXT[f] for f in ex(d).get("flags", []) if f in FLAG_TEXT]}
+            for d in docs
+        ],
+        "permissions": {"can_decide": "review.decide" in perms and holds and item.status == "open", "holds_lock": holds,
+                        "own_profile": bool(profile and profile.owner_id == principal.user.id)},
+    }
+
+
+@router.get("/{item_id}/namesakes")
+async def namesakes(item_id: uuid.UUID, _: Principal = Depends(require_permission("review.read")),
+                    session: AsyncSession = Depends(get_session)):
+    """Other people with this name on Wikidata, beside the item the applicant confirmed is them, so a reviewer can tell who might be
+    mistaken for whom. Read-only; it is the same public lookup the applicant saw."""
+    from app.services import wikidata
+
+    item = await _item(session, item_id)
+    profile = await session.get(Profile, item.profile_id)
+    if profile is None:
+        raise HTTPException(404, "Profile not found")
+    return {"name": profile.full_name, "confirmed_qid": profile.wikidata_qid or "",
+            "candidates": await wikidata.candidates(profile.full_name)}
+
+
 @router.post("/{item_id}/claim")
 async def lock_case(item_id: uuid.UUID, principal: Principal = Depends(require_permission("review.claim")),
                     session: AsyncSession = Depends(get_session)):

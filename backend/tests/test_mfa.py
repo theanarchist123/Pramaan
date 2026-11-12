@@ -137,3 +137,11 @@ async def test_repeated_wrong_codes_lock_the_login(cookie_client, client, make_u
     codes = [(await _staff_login(cookie_client, user["email"], code=bad)).status_code for _ in range(8)]
     assert 429 in codes
     assert (await _staff_login(cookie_client, user["email"], code=totp.code_at(secret))).status_code == 429  # even the right code, while locked
+
+
+async def test_login_says_whether_mfa_is_required_so_the_console_does_not_trap_unenrolled_staff(cookie_client, make_user, monkeypatch):
+    _, user = await make_user(promote_to_admin=True)
+    off = (await _staff_login(cookie_client, user["email"])).json()
+    assert off["mfa_required"] is False and off["mfa_enrolled"] is False
+    monkeypatch.setattr(get_settings(), "staff_mfa_required", True)
+    assert (await _staff_login(cookie_client, user["email"])).json()["mfa_required"] is True

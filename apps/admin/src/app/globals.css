@@ -22,3 +22,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 code { font-family: ui-monospace, Menlo, monospace; background: var(--bond); padding: 1px 4px; border-radius: var(--radius-data); }
 table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--rule); vertical-align: top; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+.claim { border-top: 1px solid var(--rule); padding: 10px 0; }
+.claim.focused { box-shadow: inset 3px 0 0 var(--stamp); padding-left: 10px; }
+blockquote { margin: 6px 0 6px 12px; }
+select, textarea { background: var(--bond); color: var(--ink); border: 1px solid var(--rule); border-radius: var(--radius-control); font: inherit; padding: 6px 8px; }
+textarea { width: 100%; }
+label.inline { display: inline-flex; gap: 6px; align-items: center; margin: 0; font-weight: 500; }
