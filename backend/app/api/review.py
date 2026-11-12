@@ -63,7 +63,7 @@ async def case_detail(item_id: uuid.UUID, principal: Principal = Depends(require
     """Everything a reviewer needs on one page. Documents are shown as metadata and the forensic flags only: never the file, its
     storage path or its raw hash (opening the file itself is a separate, audited step)."""
     from app.agents.reasons import codes_for
-    from app.models import Document
+    from app.models import Document, IdentityBinding
     from app.api.admin import ReviewItemOut
     from app.schemas import ProfileOut
     from app.services.doc_forensics import FLAG_TEXT
@@ -74,6 +74,9 @@ async def case_detail(item_id: uuid.UUID, principal: Principal = Depends(require
     view = ReviewItemOut.model_validate(item)
     if not (view.details or {}).get("reason_codes"):
         view.details = {**(view.details or {}), "reason_codes": codes_for([item.reason])}
+    # Only VERIFIED bindings, and only the domain/host: evidence for the reviewer to weigh, never an approval.
+    bindings = (await session.execute(select(IdentityBinding).where(IdentityBinding.profile_id == item.profile_id, IdentityBinding.status == "verified")
+                                      .order_by(IdentityBinding.verified_at))).scalars().all()
     perms = await permissions_for_user(session, principal.user)
     holds = bool(item.assigned_to == principal.user.id and item.locked_until and item.locked_until > _now())
     ex = lambda d: d.extracted or {}  # noqa: E731
@@ -86,6 +89,7 @@ async def case_detail(item_id: uuid.UUID, principal: Principal = Depends(require
              "flags": ex(d).get("flags", []), "flag_notes": [FLAG_TEXT[f] for f in ex(d).get("flags", []) if f in FLAG_TEXT]}
             for d in docs
         ],
+        "bindings": [{"kind": b.kind, "subject": b.subject, "verified_at": b.verified_at} for b in bindings],
         "permissions": {"can_decide": "review.decide" in perms and holds and item.status == "open", "holds_lock": holds,
                         "own_profile": bool(profile and profile.owner_id == principal.user.id)},
     }

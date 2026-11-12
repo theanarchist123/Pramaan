@@ -42,6 +42,20 @@ async def _db_available() -> bool:
         return False
 
 
+@pytest.fixture(autouse=True)
+def _never_send_real_email(monkeypatch):
+    """The developer's real .env may have SMTP configured. No test may reach it: SMTP is off, and the sender itself raises if anything tries.
+    A test that needs the send path replaces outreach._smtp_send (and sets smtp_host) itself, after this runs."""
+    from app.config import get_settings
+    from app.services import outreach
+
+    def boom(*args, **kwargs):
+        raise AssertionError("a test tried to send a real email: replace outreach._smtp_send in that test")
+
+    monkeypatch.setattr(get_settings(), "smtp_host", "")
+    monkeypatch.setattr(outreach, "_smtp_send", boom)
+
+
 @pytest_asyncio.fixture(scope="session")
 async def app_instance():
     if not await _db_available():

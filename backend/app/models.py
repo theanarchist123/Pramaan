@@ -404,6 +404,26 @@ class Consent(Base):
     created_at: Mapped[datetime] = ts()
 
 
+class IdentityBinding(Base):
+    """Evidence that the applicant controls something tied to an institution (TRU-04): an email at its domain, or a page on its site.
+    Only the DOMAIN or HOST is kept, never the email address. A binding is evidence for a reviewer, not proof of identity."""
+
+    __tablename__ = "identity_bindings"
+
+    id: Mapped[uuid.UUID] = pk()
+    profile_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(20))  # domain_email | page_code
+    subject: Mapped[str] = mapped_column(String(255))  # the domain or host that was bound
+    status: Mapped[str] = mapped_column(String(10), default="pending")  # pending | verified
+    code_hash: Mapped[str] = mapped_column(String(64), default="")  # email flow: hash of the one-time code
+    challenge: Mapped[str] = mapped_column(String(80), default="")  # page flow: the token to publish
+    target: Mapped[str] = mapped_column(String(500), default="")  # page flow: the exact URL to fetch
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = ts()
+
+
 class OutboxMessage(Base):
     __tablename__ = "outbox"
 
