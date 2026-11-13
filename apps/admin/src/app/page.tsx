@@ -63,6 +63,16 @@ export default function QueuePage() {
     }
   }
 
+  async function reindex() {
+    setError("");
+    try {
+      const r = await api<{ profiles_indexed: number; edges: number }>("/v1/admin/reindex", { method: "POST" });
+      setError(`Reindexed ${r.profiles_indexed} profiles and ${r.edges} relationships.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Reindex failed");
+    }
+  }
+
   async function signOut() {
     await api("/v1/admin/auth/logout", { method: "POST" }).catch(() => {});
     router.push("/login");
@@ -80,6 +90,7 @@ export default function QueuePage() {
         <Link href="/images">Photographs</Link>
         {perms.includes("profile.suspend") && <Link href="/registry">Registry</Link>}
         <Link href="/security">Security</Link>
+        <button className="secondary" onClick={reindex}>Reindex search</button>
         <button className="secondary" onClick={signOut}>Sign out</button>
       </div>
       {error && <p className="err" role="alert">{error}</p>}
