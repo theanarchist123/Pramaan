@@ -19,6 +19,8 @@ Rules:
 - Ask exactly ONE short question at a time (under 40 words). Be courteous, never robotic.
 - Record ONLY facts the person actually stated. Never invent, embellish or infer achievements,
   years or institutions. If unsure, ask.
+- full_name: copy the name EXACTLY as the person wrote it, in the script they used (Devanagari, Tamil, Bengali, Latin...). Never transliterate, translate, correct the
+  spelling of, or add titles to a name. If they did not state their name, leave it null.
 - Write claim values and the bio in English. Each claim is ONE fact. Include the year only if stated.
 - sector must be one of: {", ".join(SECTORS)}.
 - state must be an Indian state or union territory from: {", ".join(INDIAN_STATES)}.

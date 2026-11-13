@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 import secrets
 from difflib import get_close_matches
 from typing import Any
@@ -160,7 +161,41 @@ def add_claims(
     return created
 
 
+_NAME_PUNCT = re.compile(r"[\.,;:!?()\[\]\"'।॥]")
+
+
+def _name_tokens(text: str) -> list[tuple[str, int, int]]:
+    """(comparison key, start, end) for each word: NFC, case-folded, with ASCII/danda punctuation removed but every letter and combining mark kept.
+    start/end cover the word without punctuation around it, so a returned stretch never carries a trailing comma or full stop."""
+    out = []
+    for m in re.finditer(r"\S+", text):
+        raw = m.group(0)
+        core = _NAME_PUNCT.sub("", unicodedata.normalize("NFC", raw)).casefold()
+        if not core:
+            continue
+        lead = len(raw) - len(raw.lstrip(".,;:!?()[]\"'।॥"))
+        trail = len(raw) - len(raw.rstrip(".,;:!?()[]\"'।॥"))
+        out.append((core, m.start() + lead, m.end() - trail))
+    return out
+
+
+def literal_name(message: str, proposed: str) -> str:
+    """The person's own words for their name: the stretch of `message` (in its own spelling, casing and script) that matches `proposed` word for word, or "" if the
+    proposed name is not literally in what they said. So a model that transliterates, translates or corrects a name never changes what is recorded."""
+    want = [k for k, _, _ in _name_tokens(proposed or "")]
+    have = _name_tokens(message or "")
+    if len(" ".join(want)) < 2 or not have:
+        return ""
+    for i in range(len(have) - len(want) + 1):
+        if [k for k, _, _ in have[i:i + len(want)]] == want:
+            return message[have[i][1]:have[i + len(want) - 1][2]]
+    return ""
+
+
 def apply_turn(profile: Profile, turn: SaathiTurn, defs=(), message: str = "") -> list[Claim]:
+    if message and turn.profile_delta.full_name:
+        # A name is recorded only as the person wrote it (their script, their spelling). Anything else is dropped and they are asked again.
+        turn.profile_delta.full_name = literal_name(message, turn.profile_delta.full_name) or None
     apply_delta(profile, turn.profile_delta, defs)
     # The chat evidence for each new claim is the person's own words when the model pointed at a real stretch of their message.
     return add_claims(profile, turn.new_claims, quotes=[literal_span(message, c.source_quote) for c in turn.new_claims])

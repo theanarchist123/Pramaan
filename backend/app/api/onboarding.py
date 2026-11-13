@@ -142,7 +142,15 @@ async def message(
         raise HTTPException(502, "The assistant is temporarily unavailable. Please try again.") from exc
 
     session.add(ChatMessage(profile_id=profile.id, role="user", content=body.text))
+    proposed_name = turn.profile_delta.full_name
     created = svc.apply_turn(profile, turn, defs, message=body.text)
+    if proposed_name and profile.full_name == svc.PLACEHOLDER_NAME:
+        # The model offered a name that is not literally what the person wrote (for example a transliteration): it was NOT recorded. Say so and ask again.
+        ask = "मैं आपका नाम ठीक वैसे ही लिखना चाहता हूँ जैसे आप लिखते हैं। कृपया अपना पूरा नाम एक बार फिर लिखिए या बोलिए।" if turn.detected_language.lower().startswith("hin") else "I want to write your name exactly as you write it. Could you type or say your full name once more?"
+        turn.reply = f"{turn.reply}\n\n{ask}"
+        if "name" not in turn.missing:
+            turn.missing = ["name", *turn.missing]
+        turn.ready_to_submit = False
     session.add(ChatMessage(profile_id=profile.id, role="assistant", content=turn.reply))
     await session.commit()
     created_ids = {c.id for c in created}
