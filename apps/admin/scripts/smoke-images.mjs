@@ -29,10 +29,15 @@ await step("all 14 fields are offered, and nothing is approved yet", async () =>
   assert.equal(await page.getByLabel("Approve into").locator("option").count(), 14);
   await page.getByText(/None yet\./).waitFor();
 });
-await step("searching without a key says exactly what to do, and does not crash", async () => {
+await step("searching either shows candidates (key connected) or says exactly what to do (no key), and never crashes", async () => {
   await page.getByLabel("Search Unsplash").fill("wind turbines");
   await page.getByRole("button", { name: "Search" }).click();
-  await page.getByRole("alert").getByText(/UNSPLASH_ACCESS_KEY/).waitFor();
+  // With UNSPLASH_ACCESS_KEY set in the backend, results appear. Without it, a clear alert names the variable. Either is correct; anything else is a failure.
+  const outcome = await Promise.race([
+    page.getByRole("alert").getByText(/UNSPLASH_ACCESS_KEY/).waitFor().then(() => "no-key"),
+    page.getByRole("button", { name: /Approve/ }).first().waitFor().then(() => "key"),
+  ]);
+  console.log(`(${outcome})`);
 });
 await b.close();
 assert.deepEqual(errors, []);

@@ -65,3 +65,14 @@ Your local dev database is behind: run `cd backend && alembic upgrade head` (001
 - DSK-05 WRITTEN, NOT RUN: update channels (tested), per-OS signature checks, update-manifest check, staged-rollout workflow. The first tagged release is the first real test.
 - DSK-06: ADR only; the Tauri spike needs a Rust toolchain that is not set up here.
 - MOB-02: Capacitor scaffold with a tested safety config; not built on a device. Push needs a server-side token table (migration) and your Firebase files.
+
+## Seventh pass: the "matters for the project" list (2026-11-13)
+- Trust core: external-key (KMS) signer (AWS KMS ECC_NIST_EDWARDS25519/ED25519_SHA_512, Google EC_SIGN_ED25519; provider facts checked; fake-provider tests only), compromised-key marker
+  (SIGNING_COMPROMISED_KEYS, trusted only for log entries before the reported time; the key stops issuing; published in the keys document), scripts/verify_rotation.py (runbook step 6 against a live API), runbook updated.
+  Human review needed: core/keys.py, services/certificates.py, docs/security/key-rotation.md.
+- Names are recorded exactly as the person wrote them (literal_name + prompt). Live Saathi eval: names 12/12 (was 6/12), state 12/12, field 8/12 (ADR 0011 updated).
+- Hindi copy review sheet generated: docs/review/hindi-copy-review.md (91 strings + the one Saathi sentence in the backend).
+- Browser suites re-run on the final code against the local docker database (migrated to head): Verify 12/12, pages 11/11, header 6/6 (test fixed: page grows while scrolling), widget 7/7, fact capture 3/3, case workbench 4/4,
+  calibration 2/2, photographs 3/3 (test fixed: passes with or without an Unsplash key configured), plus a NEW smoke-newpages (published view, OAuth consent Allow/Deny/hostile redirect, off-site ?next= ignored) 3/3.
+  Backend 606 passed; desktop 16 passed.
+- Still not run: Go and Kotlin SDK tests (no Go; a Gradle run left only a problems report, probably the JDK 17 pin I removed), real AWS/Google KMS, a staging key rotation, DigiLocker (needs your partner approval).

@@ -68,8 +68,14 @@ await step("phone: a bottom tab bar with four tabs, the top nav hidden, and noth
 });
 
 await step("phone: the tab bar never covers the end of the page", async () => {
-  await m.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await m.waitForTimeout(400);
+  // Pages grow as lazy content loads while you scroll, so keep scrolling until the page stops growing (a single jump can stop short of the real end).
+  let prev = -1;
+  for (let i = 0; i < 12; i++) {
+    const h = await m.evaluate(() => { window.scrollTo(0, document.documentElement.scrollHeight); return document.documentElement.scrollHeight; });
+    await m.waitForTimeout(500);
+    if (h === prev) break;
+    prev = h;
+  }
   const bar = await m.getByRole("navigation", { name: "Primary" }).last().boundingBox();
   // main reserves bottom padding for the bar, so measure the last piece of CONTENT, which must end above the bar
   const last = await m.locator("main > :last-child").boundingBox();
