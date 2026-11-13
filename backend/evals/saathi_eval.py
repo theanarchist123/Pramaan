@@ -66,6 +66,10 @@ async def run(live: bool) -> dict:
         try:
             turn = await saathi.interview_turn(ctx, profile=profile_context(blank), history=[], user_text=c["say"])
             delta = turn.profile_delta.model_dump()
+            # Score what the app would actually RECORD: the same literal-name rule as production (a name that is not what the person wrote is not recorded).
+            from app.services.onboarding import literal_name
+
+            delta["full_name"] = literal_name(c["say"], delta.get("full_name") or "") or None
         except (LLMError, LLMRefusal):
             errors += 1
             delta = {}

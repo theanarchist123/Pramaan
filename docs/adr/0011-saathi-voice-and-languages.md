@@ -20,3 +20,8 @@ The offline mock only checks the plumbing (it cannot read Hindi).
 ## Not done
 - The Hindi notice and any other Hindi copy have not been reviewed by a native speaker.
 - No larger multilingual golden set, and no live run on the nightly workflow for Saathi yet (`evals/saathi_eval.py --live` is the command to add).
+
+## Update 2026-11-13: names are now kept in the script the person used
+Decision taken (owner approval pending): a name is recorded **only as the person wrote it**. `onboarding.literal_name` keeps a model's transliterated or corrected name out of the record, the Saathi prompt says to copy names exactly, and the person is asked again (English or Hindi) when a name could not be recorded.
+Live eval after the change (two runs, same 12 cases; the second run had no provider errors): name 12/12 in every language (first run 10/12, with 2 counted provider errors), state 12/12, field (sector) 8/12.
+The remaining misses are sector inference in Hindi/Hinglish/Marathi, which is asked about later in the interview and is not a safety issue. Cases per language are 1-4: indicative only.
