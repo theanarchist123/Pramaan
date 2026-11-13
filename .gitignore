@@ -38,3 +38,7 @@ apps/web/smoke-shots/
 apps/web/public/pramaan-verify/
 
 image-seed-cache.json
+
+# Gradle output (Kotlin SDK)
+packages/sdk/kotlin/.gradle/
+packages/sdk/kotlin/build/
