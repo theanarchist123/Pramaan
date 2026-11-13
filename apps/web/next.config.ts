@@ -37,6 +37,16 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, "../../"),
   // Lets a production build live beside a running `next dev` without clobbering its .next folder.
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  // Staff work lives in the separate admin console (its own sign-in and cookie). The old /admin pages in this app signed in as a member, which the API now refuses (401),
+  // so they send people to the console instead. Set NEXT_PUBLIC_ADMIN_URL to the console's address.
+  async redirects() {
+    const admin = (process.env.NEXT_PUBLIC_ADMIN_URL || "http://localhost:3001").replace(/\/$/, "");
+    return [
+      { source: "/admin", destination: `${admin}/`, permanent: false },
+      { source: "/admin/builder", destination: `${admin}/builder`, permanent: false },
+      { source: "/admin/:path*", destination: `${admin}/`, permanent: false },
+    ];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

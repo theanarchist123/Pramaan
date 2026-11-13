@@ -129,7 +129,7 @@ export function SiteHeader() {
                 ) : (
                   <DropdownMenuItem render={<Link href="/auth?mode=login" />}><UserRound /> {t("nav.signin")}</DropdownMenuItem>
                 )}
-                {user?.role === "admin" && <DropdownMenuItem render={<Link href="/admin" />}><ShieldCheck /> {t("menu.staff")}</DropdownMenuItem>}
+                {user?.role === "admin" && <DropdownMenuItem render={<a href={process.env.NEXT_PUBLIC_ADMIN_URL || "http://localhost:3001"} />}><ShieldCheck /> {t("menu.staff")}</DropdownMenuItem>}
                 <DropdownMenuSeparator />
                 <DropdownMenuCheckboxItem checked={mounted && resolvedTheme === "dark"} onCheckedChange={(on) => setTheme(on ? "dark" : "light")}>
                   {t("menu.dark")}
