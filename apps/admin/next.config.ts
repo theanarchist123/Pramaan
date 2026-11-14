@@ -14,7 +14,9 @@ const csp = [
   "frame-ancestors 'none'", "base-uri 'self'", "form-action 'self'", "object-src 'none'",
 ].join("; ");
 
+// Served under /staff so the console shares the site's address (the web app proxies /staff to this server). Its own cookie, sign-in and CSP are unchanged.
 const nextConfig: NextConfig = {
+  basePath: "/staff",
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../../"),
   transpilePackages: ["@pramaan/ui"],

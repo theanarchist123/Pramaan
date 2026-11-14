@@ -11,12 +11,14 @@ const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1360, height: 900 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
-page.on("console", (m) => m.type() === "error" && !m.text().includes("404") && errors.push(`console: ${m.text()}`));
+page.on("console", (m) => m.type() === "error" && !m.text().includes("404") && !m.text().includes("caret-color") /* Playwright adds this style to inputs when it takes a screenshot */ && !m.text().includes("401") /* a signed-out visitor always gets 401 from the "who am I" probe */ && errors.push(`console: ${m.text()}`));
 const step = async (name, fn) => { process.stdout.write(`• ${name} … `); await fn(); console.log("ok"); };
 
 await step("directory lists the demo registry", async () => {
+  // The page lists the newest 100 people; a database with many other profiles can push the seeded demo people out of that window, so ask for her by name.
+  await page.goto(`${BASE}/directory?q=${encodeURIComponent("Ananya Rekhi")}`);
+  await page.getByText("Ananya Rekhi").first().waitFor({ timeout: 60000 });
   await page.goto(`${BASE}/directory`);
-  await page.getByText("Ananya Rekhi").first().waitFor({ timeout: 20000 });
   await page.screenshot({ path: `${OUT}/10-directory.png` });
 });
 
@@ -44,30 +46,23 @@ await step("India map: states render and clicking filters", async () => {
 });
 
 await step("public profile page shows verified claims with evidence", async () => {
-  await page.goto(`${BASE}/directory`);
+  await page.goto(`${BASE}/directory?q=${encodeURIComponent("Ananya Rekhi")}`);
   await page.getByText("Ananya Rekhi").first().click();
   await page.waitForURL(/\/p\/demo-/);
-  await page.getByText(/claims verified/).waitFor();
+  // the registry's wording is "confirmed" (a public-source claim is never counted as verified): smoke-pages checks the negative
+  await page.locator("#main").getByText(/claims confirmed/).waitFor();
   await page.getByText("Show the evidence").first().click();
   await page.getByText("Fictional demo profile").waitFor();
   await page.screenshot({ path: `${OUT}/14-profile.png`, fullPage: true });
 });
 
-await step("admin signs in and reviews the queue", async () => {
-  await page.goto(`${BASE}/auth?next=/admin`);
-  await page.getByRole("button", { name: /Already have an account/ }).click();
-  await page.getByLabel("Email").fill("admin@pramaan.demo");
-  await page.getByLabel("Password").fill("pramaan-demo-1");
-  await page.getByRole("button", { name: "Sign in" }).last().click();
-  await page.waitForURL(/\/admin/);
-  await page.getByRole("heading", { name: "Review queue" }).waitFor();
-  await page.waitForTimeout(1200);
-  await page.screenshot({ path: `${OUT}/15-admin.png`, fullPage: true });
-  const approve = page.getByRole("button", { name: /Approve & publish/ }).first();
-  if (await approve.count()) {
-    await approve.click();
-    await page.getByText(/approved and added to the directory/).waitFor({ timeout: 15000 });
-  }
+// v3: the web app's own /admin pages were retired. Staff work lives in the Desk, served from the same address under /staff
+// (its own sign-in is covered by apps/admin/scripts/smoke.mjs), so the old address must lead there instead of showing a queue.
+await step("the old /admin address leads to the staff Desk on the same port", async () => {
+  await page.goto(`${BASE}/admin`);
+  await page.waitForURL(/\/staff/, { timeout: 20000 });
+  await page.getByRole("heading", { name: /The Desk\./ }).waitFor({ timeout: 30000 });
+  await page.screenshot({ path: `${OUT}/15-admin.png` });
 });
 
 await browser.close();

@@ -22,8 +22,9 @@ from app.core.ratelimit import check_rate_limit
 from app.db import get_session
 from app.deps import Principal, require_scope, require_verified_email
 from app.llm.client import LLMError, LLMRefusal, get_llm
-from app.models import AgentRun, ChatMessage, Consent, Document, Profile, ReviewItem
+from app.models import AgentRun, ChatMessage, Claim, Consent, Document, Profile, ReviewItem
 from app.schemas import ClaimOut, ProfileOut
+from app.services import eligibility as eligibility_svc
 from app.services import fields as fields_svc
 from app.services import onboarding as svc
 from app.services.review_items import open_document_review
@@ -183,6 +184,18 @@ async def messages(
         )
     ).scalars().all()
     return [{"role": m.role, "content": m.content, "at": m.created_at} for m in rows]
+
+
+@router.get("/{profile_id}/eligibility")
+async def eligibility(
+    profile_id: uuid.UUID,
+    principal: Principal = Depends(require_scope("profiles:read")),
+    session: AsyncSession = Depends(get_session),
+):
+    """What is still missing for a public listing, by fixed rules (services/eligibility.py). Informational: it approves nobody."""
+    await _owned(session, profile_id, principal)
+    claims = (await session.execute(select(Claim).where(Claim.profile_id == profile_id))).scalars().all()
+    return eligibility_svc.assess(claims)
 
 
 # ----- "Is this you?" -----

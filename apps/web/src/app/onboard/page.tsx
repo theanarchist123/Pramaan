@@ -3,15 +3,20 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Bot, FileText, UserRound } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatPanel, type ChatMessage } from "@/components/onboarding/chat-panel";
 import { ConsentStep, type ConsentChoice } from "@/components/onboarding/consent-step";
 import { DiscoveryCard } from "@/components/onboarding/discovery-card";
 import { DocumentDrop } from "@/components/onboarding/document-drop";
 import { ProfilePanel } from "@/components/onboarding/profile-panel";
-import { StatusStepper } from "@/components/onboarding/status-stepper";
+import { Eligibility } from "@/components/onboarding/eligibility";
+import { Journey } from "@/components/onboarding/journey";
+import { PhotoUpload } from "@/components/onboarding/photo-upload";
+import { SaveProgress } from "@/components/onboarding/save-progress";
+import { NextStep } from "@/components/onboarding/next-step";
+import { SaathiMascot, type SaathiState } from "@/components/onboarding/saathi-mascot";
+import { celebrate } from "@/lib/celebrate";
+import { useMotionPreference } from "@/lib/motion-preference";
 import { VerifyPanel } from "@/components/onboarding/verify-panel";
 import { useAgentStream } from "@/hooks/use-agent-stream";
 import { api, ApiError } from "@/lib/api";
@@ -19,7 +24,7 @@ import { useAuth } from "@/lib/auth";
 import type { DiscoveryResult, Profile, TurnOut } from "@/lib/types";
 
 export default function OnboardPage() {
-  const { user, ready } = useAuth();
+  const { user, ready, startGuest } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,7 +34,10 @@ export default function OnboardPage() {
   const [discovery, setDiscovery] = useState<DiscoveryResult | null>(null);
   const [applying, setApplying] = useState(false);
   const [verifyRun, setVerifyRun] = useState<string | null>(null);
-  const [tab, setTab] = useState("profile");
+  const [delighted, setDelighted] = useState(false);
+  const [listening, setListening] = useState(false);
+  const { reduced } = useMotionPreference();
+  const focusSection = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
   const [certCode, setCertCode] = useState<string | null>(null);
   const [issuing, setIssuing] = useState(false);
 
@@ -50,6 +58,7 @@ export default function OnboardPage() {
       const cert = await api<{ code: string }>(`/v1/profiles/${profile.id}/certificate`, { method: "POST" });
       setCertCode(cert.code);
       toast.success("Certificate signed and added to the public log");
+      void celebrate(reduced); // the server has confirmed it: this is a real event
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Couldn't issue the certificate");
     } finally {
@@ -68,7 +77,8 @@ export default function OnboardPage() {
   useEffect(() => {
     if (!ready) return;
     if (!user) {
-      router.replace("/auth?next=/onboard");
+      // A visitor sees the start screen first and chooses their consent; an account is asked for only when they continue.
+      setLoading(false);
       return;
     }
     (async () => {
@@ -98,13 +108,22 @@ export default function OnboardPage() {
       refresh().then((p) => {
         if (p?.status === "approved") {
           toast.success("Verified! Your profile passed every check.");
-          setTab("agents");
+          focusSection("sec-verify");
         }
         else toast.info("A human reviewer will take it from here — see the reasons in the Verify tab.");      });
     }
   }, [events, verifyRun, refresh]);
 
   async function start(c: ConsentChoice) {
+    if (!user) {
+      // No account yet: carry on as a guest. The draft is kept when they create an account.
+      try {
+        await startGuest();
+      } catch (err) {
+        toast.error(err instanceof ApiError ? err.message : "Couldn't start. Please try again.");
+        return;
+      }
+    }
     setStarting(true);
     try {
       const r = await api<{ profile: Profile; greeting: string }>("/v1/onboarding/start", {
@@ -144,7 +163,11 @@ export default function OnboardPage() {
         return [...next, { role: "assistant", content: turn.reply }];
       });
       setProfile(turn.profile);
-      if (turn.new_claims.length) toast.success(`Added ${turn.new_claims.length} achievement(s) to your profile`);
+      if (turn.new_claims.length) {
+        toast.success(`Added ${turn.new_claims.length} achievement(s) to your profile`);
+        setDelighted(true); // the server recorded something new
+        window.setTimeout(() => setDelighted(false), 1800);
+      }
     } catch (err) {
       setMessages((m) => [
         ...m,
@@ -181,7 +204,7 @@ export default function OnboardPage() {
     try {
       const r = await api<{ run_id: string }>(`/v1/onboarding/${profile.id}/verify`, { method: "POST" });
       setVerifyRun(r.run_id);
-      setTab("agents");
+      focusSection("sec-verify");
       setProfile({ ...profile, status: "pending_review" });
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Couldn't start verification");
@@ -205,13 +228,26 @@ export default function OnboardPage() {
     (e) => e.profile_id === profile.id && e.workflow !== "onboarding_turn",
   );
 
+  // Saathi's mood comes from real state only: the microphone, a pending reply, or something the server just recorded.
+  const mood: SaathiState = listening ? "listening" : thinking ? "thinking" : delighted ? "delighted" : "idle";
+  const moodLine = { idle: "Tell me about your work. Speak or type.", listening: "I'm listening…", thinking: "Thinking…", delighted: "Got it. I've added that to your profile." }[mood];
+
   return (
-    <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:py-6">
-      <div className="flex h-[70dvh] min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card lg:h-auto">
+    <div className="mx-auto grid w-full gap-5 px-4 pb-4 sm:px-6 lg:h-[calc(100dvh-4.25rem)] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden">
+      {/* The conversation: Saathi on a dark band, the chat below. */}
+      <div className="pop relative flex h-[78dvh] min-h-0 flex-col overflow-hidden rounded-[2rem] bg-card lg:h-auto">
+        <div className="flex items-center gap-4 bg-[#14152B] px-5 py-4 text-white">
+          <div className="shrink-0 rounded-full bg-white/5 p-1"><SaathiMascot state={mood} size={88} /></div>
+          <div className="min-w-0">
+            <h1 className="text-3xl leading-none">Saathi</h1>
+            <p className="mt-1.5 text-sm text-white/75" aria-live="polite">{moodLine}</p>
+          </div>
+        </div>
         <ChatPanel
           messages={messages}
           thinking={thinking}
           onSend={send}
+          onListeningChange={setListening}
           disabled={!editable}
           disabledReason={
             profile.status === "suspended"
@@ -223,8 +259,8 @@ export default function OnboardPage() {
                   ? "Your profile passed automated checks."
                   : "Your profile is approved."
               : verifyRun
-                ? "Your profile is being verified — chat is paused so the evidence stays consistent."
-                : "Your profile is with a reviewer. You can still add documents in the Documents tab."
+                ? "Your profile is being verified, so chat is paused to keep the evidence consistent."
+                : "Your profile is with a reviewer. You can still add documents on the right."
           }
           header={
             discovery?.draft ? (
@@ -234,46 +270,58 @@ export default function OnboardPage() {
         />
       </div>
 
-      <div className="h-[80dvh] min-h-0 overflow-hidden rounded-2xl border border-border bg-card lg:h-auto">
-        <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className="flex h-full flex-col">
-          <div className="border-b border-border px-4 pt-3 pb-2">
-            <div className="mb-3"><StatusStepper profile={profile} /></div>
-            <TabsList>
-              <TabsTrigger value="profile"><UserRound /> Profile</TabsTrigger>
-              <TabsTrigger value="documents"><FileText /> Documents</TabsTrigger>
-              <TabsTrigger value="agents">
-                <Bot /> Verify
-                {verifyRun && <span className="size-1.5 animate-pulse rounded-full bg-primary" />}
-              </TabsTrigger>
-            </TabsList>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto p-5">
-            <TabsContent value="profile">
-              <ProfilePanel profile={profile} />
-            </TabsContent>
-            <TabsContent value="documents">
-              <h2 className="text-xl font-semibold">Back it up with a document</h2>
-              <p className="mb-4 mt-1 text-sm text-muted-foreground">
-                Lipik reads it and checks that the name and the issuer match. A claim shows as{" "}
-                <em>document verified</em> only when they do.
-              </p>
-              <DocumentDrop profileId={profile.id} onDone={refresh} />
-            </TabsContent>
-            <TabsContent value="agents">
-              <VerifyPanel
-                profile={profile}
-                events={profileEvents}
-                running={Boolean(verifyRun)}
-                certificateCode={certCode}
-                issuing={issuing}
-                onVerify={verify}
-                onIssue={issue}
-                onProfileChange={() => void refresh()}
-              />
-            </TabsContent>
-          </div>
-        </Tabs>
+      {/* Your progress: what to do next, then the pieces, each with its own colour. */}
+      <div className="relative h-[80dvh] min-h-0 space-y-4 overflow-y-auto pr-1 lg:h-auto">
+        {user?.is_guest && <SaveProgress />}
+        <div className="sticky top-0 z-10 bg-background pb-1 pt-1">
+          <NextStep
+            profile={profile}
+            certCode={certCode}
+            running={Boolean(verifyRun)}
+            issuing={issuing}
+            onVerify={verify}
+            onIssue={issue}
+            onTalk={() => document.getElementById("chat-input")?.focus()}
+            onDocs={() => focusSection("sec-documents")}
+          />
+        </div>
+        <Journey profile={profile} certCode={certCode} />
+        <Section id="sec-profile" n={1} title="Your profile, live">
+          <PhotoUpload profile={profile} onDone={() => void refresh()} />
+          <ProfilePanel profile={profile} />
+        </Section>
+        <Eligibility profile={profile} />
+        <Section id="sec-documents" n={2} title="Back it up with a document">
+          <p className="-mt-2 mb-4 text-sm text-muted-foreground">
+            We read it and check that the name and the issuer match. A claim shows as <em>document verified</em> only when they do.
+          </p>
+          <DocumentDrop profileId={profile.id} onDone={refresh} />
+        </Section>
+        <Section id="sec-verify" n={3} title="Check and certificate">
+          <VerifyPanel
+            profile={profile}
+            events={profileEvents}
+            running={Boolean(verifyRun)}
+            certificateCode={certCode}
+            issuing={issuing}
+            onVerify={verify}
+            onIssue={issue}
+            onProfileChange={() => void refresh()}
+          />
+        </Section>
       </div>
     </div>
+  );
+}
+
+function Section({ id, n, title, children }: { id: string; n: number; title: string; children: React.ReactNode }) {
+  return (
+    <section id={id} aria-labelledby={`${id}-h`} className="rounded-[1.8rem] border border-border bg-card p-5">
+      <h2 id={`${id}-h`} className="mb-4 flex items-center gap-3 text-2xl">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl font-display text-lg font-extrabold" style={{ background: `var(--tile${n})`, color: `var(--tile${n}i)` }}>{n}</span>
+        {title}
+      </h2>
+      {children}
+    </section>
   );
 }

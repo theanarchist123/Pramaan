@@ -48,6 +48,8 @@ export interface User {
   name: string;
   role: "person" | "delegate" | "admin";
   email_verified?: boolean;
+  /** A visitor who has not created an account yet. */
+  is_guest?: boolean;
 }
 
 export interface TurnOut {

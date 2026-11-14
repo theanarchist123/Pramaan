@@ -60,12 +60,27 @@ export default function Developers() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="text-4xl font-semibold md:text-5xl">Build on Pramaan</h1>
-      <p className="mt-2 max-w-2xl text-muted-foreground">
-        Everything this app does is available through a versioned public API, two SDKs, an MCP server for AI agents and signed
-        webhooks. Verification needs no key at all.
-      </p>
+    <div className="-mt-28 md:-mt-16">
+      <section className="bg-[var(--tile5)] text-[var(--tile5i)]">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-14 pt-36 md:pt-28 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div>
+            <h1 className="text-balance text-5xl leading-[1.02] md:text-7xl">Build on Pramaan.</h1>
+            <p className="mt-4 max-w-xl text-lg">
+              Check a certificate from your own app with one request. No key needed to verify. Keys, webhooks and an MCP server are here when you need more.
+            </p>
+          </div>
+          <pre aria-label="Example request" className="pop overflow-x-auto rounded-3xl bg-[#14152B] p-5 text-sm leading-relaxed text-white"><code>{`$ curl ${API_URL}/v1/verify/PRM-XXXXXXXXXX
+
+{
+  "valid": true,
+  "signature_ok": true,
+  "chain_ok": true,
+  "revoked": false
+}`}</code></pre>
+        </div>
+      </section>
+      <div className="mx-auto max-w-6xl px-4 py-10">
+      <p className="sr-only">Everything this app does is available through a versioned public API and signed webhooks.</p>
       <div className="mt-4 flex flex-wrap gap-2">
         <Button variant="outline" size="sm" render={<a href={`${API_URL}/docs`} target="_blank" rel="noreferrer" />} nativeButton={false}>
           Interactive API reference <ExternalLink />
@@ -103,6 +118,7 @@ export default function Developers() {
         {section === "keys" && (ready && user ? <><ApiKeys /><AuthorizedApps /></> : <SignInPrompt what="API keys" />)}
         {section === "hooks" && (ready && user ? <Webhooks /> : <SignInPrompt what="webhooks" />)}
         {section === "badge" && <BadgeGenerator />}
+      </div>
       </div>
     </div>
   );

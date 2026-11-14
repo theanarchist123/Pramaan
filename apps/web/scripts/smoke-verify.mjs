@@ -58,7 +58,7 @@ const banner = () => page.getByRole("status").first();
 
 await step("entry page is never empty: what we check, recent checks, scanner/file options", async () => {
   await page.goto(`${WEB}/verify`);
-  await page.getByRole("heading", { name: "Verify a certificate" }).waitFor();
+  await page.getByRole("heading", { name: "Is this certificate real?" }).waitFor(); // v3 wording of the entry page heading
   await page.getByText("Content fingerprint").waitFor();
   await page.getByText("Revocation").first().waitFor();
   await page.getByText("Nothing yet.").waitFor();

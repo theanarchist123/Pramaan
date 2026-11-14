@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Circle } from "lucide-react";
+import { ArrowRight, FileUp, Keyboard, ScanLine, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CodeInput } from "@/components/verify/code-input";
 import { FileDrop } from "@/components/verify/file-drop";
@@ -45,23 +45,23 @@ export default function VerifyLookup() {
   const hint = suggestions(`PRM-${value}`);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
-      <h1 className="font-heading text-4xl font-semibold">Verify a certificate</h1>
-      <p className="mt-2 max-w-2xl text-muted-foreground">Check that a Pramaan certificate is genuine and unchanged. It takes a few seconds and needs no account.</p>
+    <div className="-mt-28 md:-mt-16">
+      <section className="bg-[var(--tile1)] text-[var(--tile1i)]">
+        <div className="mx-auto max-w-6xl px-4 pb-28 pt-36 md:pt-28">
+          <p className="inline-flex items-center gap-2 rounded-full border-2 border-current px-3 py-1 text-sm font-bold">
+            <ShieldCheck aria-hidden className="size-4" /> No account needed
+          </p>
+          <h1 className="mt-4 max-w-3xl text-balance text-5xl leading-[1.02] md:text-7xl">Is this certificate real?</h1>
+          <p className="mt-4 max-w-2xl text-lg">Check that a Pramaan certificate is genuine and unchanged. It takes a few seconds.</p>
+        </div>
+      </section>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        <section aria-label="Enter a certificate" className="min-w-0 space-y-5 rounded-2xl border border-border bg-card p-4 sm:p-5">
-          <div>
-            <h2 className="text-sm font-medium text-muted-foreground">Type or paste the code</h2>
-            <div className="mt-2">
-              <CodeInput
-                value={value}
-                bad={bad}
-                onChange={setValue}
-                onComplete={go}
-                onReject={setBad}
-              />
-            </div>
+      <div className="relative z-10 mx-auto -mt-20 max-w-6xl px-4">
+        <section aria-label="Check a certificate" className="pop grid gap-0 overflow-hidden rounded-[1.8rem] bg-card md:grid-cols-3">
+          <div className="min-w-0 p-5 md:p-6">
+            <h2 className="flex items-center gap-2 font-display text-xl font-bold"><Keyboard aria-hidden className="size-5" /> Type the code</h2>
+            <p className="mb-3 mt-1 text-sm text-muted-foreground">Printed under the QR code, starting PRM-.</p>
+            <CodeInput value={value} bad={bad} onChange={setValue} onComplete={go} onReject={setBad} />
             {hint.length > 0 && (
               <p className="mt-2 text-sm">
                 Did you mean{" "}
@@ -71,66 +71,59 @@ export default function VerifyLookup() {
                 ?
               </p>
             )}
-            <Button className="mt-3" disabled={value.length !== 10} onClick={() => go(`PRM-${value}`)}>
-              Verify
+            <Button className="mt-4" size="lg" disabled={value.length !== 10} onClick={() => go(`PRM-${value}`)}>
+              Check it <ArrowRight />
             </Button>
           </div>
-          <div className="border-t border-border pt-4">
-            <h2 className="mb-2 text-sm font-medium text-muted-foreground">Or scan the QR code</h2>
+          <div className="min-w-0 border-t border-border p-5 md:border-l md:border-t-0 md:p-6">
+            <h2 className="flex items-center gap-2 font-display text-xl font-bold"><ScanLine aria-hidden className="size-5" /> Scan the QR</h2>
+            <p className="mb-3 mt-1 text-sm text-muted-foreground">Point your camera at the code.</p>
             <Scanner onCode={go} />
           </div>
-          <div className="border-t border-border pt-4">
+          <div className="min-w-0 border-t border-border bg-[var(--stamp-tint)] p-5 md:border-l md:border-t-0 md:p-6">
+            <h2 className="flex items-center gap-2 font-display text-xl font-bold"><FileUp aria-hidden className="size-5" /> Drop a file</h2>
+            <p className="mb-3 mt-1 text-sm text-muted-foreground">Have the certificate file? Check it without the internet.</p>
             <FileDrop />
           </div>
         </section>
-
-        <aside className="min-w-0 space-y-5">
-          <section aria-label="What we check" className="rounded-2xl border border-border bg-card p-5">
-            <h2 className="text-lg font-semibold">What we check</h2>
-            <ul className="mt-3 space-y-3">
-              {CHECKS.map(([name, detail]) => (
-                <li key={name} className="flex gap-3">
-                  <Circle className="mt-1 size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-                  <div>
-                    <p className="text-sm font-medium">{name}</p>
-                    <p className="text-xs text-muted-foreground">{detail}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section aria-label="Recent checks" className="rounded-2xl border border-border bg-card p-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Recent checks on this device</h2>
-              {recent.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={() => { clearRecent(); setRecent([]); }}>Clear</Button>
-              )}
-            </div>
-            {recent.length === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">Nothing yet. Checks you make are listed here, kept only in this browser.</p>
-            ) : (
-              <ul className="mt-2 space-y-1">
-                {recent.map((r) => (
-                  <li key={r.code}>
-                    <Link href={`/verify/${r.code}`} className="flex justify-between gap-3 rounded-md px-2 py-1 text-sm hover:bg-muted">
-                      <span className="truncate">{r.name || r.code}</span>
-                      <span className="font-mono text-xs text-muted-foreground">{r.code}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {sample && (
-            <p className="text-sm text-muted-foreground">
-              Want to see a result first?{" "}
-              <Link className="text-primary underline" href={`/verify/${sample}`}>Try a real, recent certificate</Link>.
-            </p>
-          )}
-        </aside>
       </div>
+
+      <section aria-label="What we check" className="mx-auto max-w-6xl px-4 pt-14">
+        <h2 className="text-3xl md:text-4xl">Five checks, every time</h2>
+        <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {CHECKS.map(([name, detail], i) => (
+            <li key={name} className="rounded-[1.3rem] border border-border bg-card p-4">
+              <span className="mb-3 flex size-9 items-center justify-center rounded-xl font-display text-lg font-extrabold" style={{ background: `var(--tile${(i % 6) + 1})`, color: `var(--tile${(i % 6) + 1}i)` }}>{i + 1}</span>
+              <p className="font-semibold leading-snug">{name}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section aria-label="Recent checks" className="mx-auto max-w-6xl px-4 py-14">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-2xl md:text-3xl">Recent checks on this device</h2>
+          {recent.length > 0 && <Button variant="ghost" size="sm" onClick={() => { clearRecent(); setRecent([]); }}>Clear</Button>}
+        </div>
+        {recent.length === 0 ? (
+          <p className="mt-3 rounded-2xl border-2 border-dashed border-border p-6 text-muted-foreground">
+            Nothing yet. Checks you make are listed here, kept only in this browser.
+            {sample && <> Want to see a result first? <Link className="font-semibold text-foreground underline" href={`/verify/${sample}`}>Try a real, recent certificate</Link>.</>}
+          </p>
+        ) : (
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {recent.map((r) => (
+              <li key={r.code}>
+                <Link href={`/verify/${r.code}`} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 hover:-translate-y-0.5">
+                  <span className="truncate font-semibold">{r.name || r.code}</span>
+                  <span className="font-mono text-xs text-muted-foreground">{r.code}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

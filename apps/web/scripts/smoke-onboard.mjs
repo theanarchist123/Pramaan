@@ -37,7 +37,7 @@ await step("what you say becomes a fact on your profile, and the words it came f
   await page.getByText(/Sagar Samman award/).first().waitFor({ timeout: 30000 });
   // ... and the person's OWN words behind it are marked, with a screen-reader note
   const marks = page.locator("mark");
-  await marks.first().waitFor({ timeout: 15000 });
+  await marks.first().waitFor({ timeout: 60000 }); // the reply (and so the highlight) can take a while on a cold start
   const texts = await marks.allTextContents();
   assert.ok(texts.length >= 1, "at least one stretch is marked");
   for (const t of texts) {
@@ -47,8 +47,13 @@ await step("what you say becomes a fact on your profile, and the words it came f
   assert.match(texts.join(" "), /recorded on your profile/);
   await page.screenshot({ caret: "initial", path: "smoke-shots/onboard-fact-capture.png" });
 });
-await step("the stepper still says you are at 'Tell us about yourself' (nothing is submitted by chatting)", async () => {
-  await page.getByText("Tell us about yourself").first().waitFor();
+// v3: the stepper became the journey + "Next step" card. Same intent: chatting alone submits nothing; the next step is to back a claim with a document.
+await step("nothing is submitted by chatting: the next step is a document, and the journey is not at review", async () => {
+  await page.getByRole("heading", { name: /Back one achievement with a document/ }).waitFor({ timeout: 30000 });
+  assert.equal(await page.getByText(/With a reviewer|Checking your facts/).count(), 0, "chatting must not start a review");
+  const current = page.locator('[aria-current="step"]');
+  await current.first().waitFor();
+  assert.match(await current.first().innerText(), /Add a document/);
 });
 
 await browser.close();

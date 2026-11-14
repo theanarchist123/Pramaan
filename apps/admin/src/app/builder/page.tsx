@@ -38,7 +38,7 @@ export default function BuilderPage() {
 
   return (
     <main>
-      <div className="row"><Link href="/">Queue</Link><h1 className="grow">Views and migrations</h1></div>
+      <div className="row"><h1 className="grow">Views and migrations</h1></div>
       {error && <p className="err" role="alert">{error}</p>}
       {msg && <p className="panel" role="status">{msg}</p>}
 

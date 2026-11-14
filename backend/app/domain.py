@@ -53,11 +53,16 @@ SECTOR_PHOTOS: dict[str, list[str]] = {
 
 
 def pick_photo(sector: str, seed: str) -> str:
-    """Deterministic: the same certificate always gets the same photo."""
-    options = SECTOR_PHOTOS.get(sector) or SECTOR_PHOTOS["Other"]
+    """Deterministic: the same certificate always gets the same picture. APPROVED generated art (app/generated_art.json) is preferred when the
+    sector has any; otherwise the frozen stock photos, exactly as before."""
+    from app import generated_art
+
+    options = generated_art.ids_for_sector(sector) or SECTOR_PHOTOS.get(sector) or SECTOR_PHOTOS["Other"]
     return options[int(seed[:8], 16) % len(options)]
 
 
 def is_known_photo(photo_id: str) -> bool:
-    """Only photos from our own vetted list may be hot-linked (the id is pasted into a URL)."""
-    return any(photo_id in ids for ids in SECTOR_PHOTOS.values())
+    """Only pictures from our own vetted lists may be used (the id is pasted into a URL): the stock list or an approved generated asset."""
+    from app import generated_art
+
+    return any(photo_id in ids for ids in SECTOR_PHOTOS.values()) or photo_id in generated_art.approved()

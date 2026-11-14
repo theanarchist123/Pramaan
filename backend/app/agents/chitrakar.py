@@ -145,8 +145,11 @@ def photo_manifest() -> dict[str, str]:
 
 def art_block(brief: ArtBrief, photo_id: str, source: str) -> dict:
     """What goes into the signed payload: the brief, its hash, and which frozen photo (with that file's SHA-256) sits behind it."""
-    manifest = photo_manifest()
+    from app import generated_art
+
+    manifest = {**photo_manifest(), **generated_art.sha_map()}
+    generated = generated_art.approved().get(photo_id)
     return {
         "renderer": RENDERER, "brief": brief.model_dump(), "brief_sha256": hashlib.sha256(canonical(brief).encode()).hexdigest(), "brief_source": source,
-        "photo": {"id": photo_id, "sha256": manifest.get(photo_id, ""), "source": "Unsplash License"},
+        "photo": {"id": photo_id, "sha256": manifest.get(photo_id, ""), "source": (generated or {}).get("licence", "Unsplash License")},
     }

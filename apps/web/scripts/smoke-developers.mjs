@@ -32,7 +32,8 @@ const reg = await (await fetch(`${API}/v1/auth/register`, {
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1360, height: 900 } });
-await ctx.addInitScript((t) => localStorage.setItem("pramaan.token", t), reg.access_token);
+// the web app keeps its session in an httpOnly cookie (not localStorage): log in through the API so the browser context holds that cookie
+await ctx.request.post(`${API}/v1/auth/login`, { data: { email, password: "password123" } });
 const page = await ctx.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));

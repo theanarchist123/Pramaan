@@ -53,7 +53,14 @@ async def verify_batch(body: BatchIn, session: AsyncSession = Depends(get_sessio
 
 @router.get("/verify/{code}", response_model=VerifyOut)
 async def verify(code: str, session: AsyncSession = Depends(get_session)):
-    return await verify_certificate(session, code.strip().upper())
+    code = code.strip().upper()
+    result = await verify_certificate(session, code)
+    cert = await get_certificate(session, code)
+    if cert is not None and cert.profile_id is not None:
+        from app.services import insights as insights_svc
+
+        await insights_svc.record(cert.profile_id, "cert_checks")  # a count only
+    return result
 
 
 @router.post("/verify/check", response_model=VerifyOut)

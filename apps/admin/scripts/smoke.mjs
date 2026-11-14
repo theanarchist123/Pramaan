@@ -12,7 +12,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
 
-const ADMIN = process.argv[2] ?? "http://localhost:3001";
+const ADMIN = process.argv[2] ?? "http://localhost:3000/staff";
 const API = process.argv[3] ?? "http://localhost:8000";
 const OUT = "smoke-shots";
 mkdirSync(OUT, { recursive: true });
@@ -94,18 +94,20 @@ await step("staff sign-in lands on authenticator set-up (MFA is mandatory)", asy
   ({ page: adminPage } = await signInAndEnrol(adminCtx, adminEmail));
   await adminPage.screenshot({ path: `${OUT}/admin-1-security.png` });
 });
+// v3 Desk: no "Queue" link and no table. Navigation is the transparent Desk tabs; Review is a deck of case cards with the chosen case in focus.
+const goReview = async (pg) => { await pg.getByRole("navigation", { name: "Desk" }).getByRole("link", { name: "Review" }).click(); await pg.getByRole("heading", { level: 1, name: "Review" }).waitFor(); };
 await step("review queue shows the waiting case with its reason codes", async () => {
-  await adminPage.getByRole("link", { name: "← Review queue" }).click();
-  await adminPage.getByRole("heading", { name: "Review queue" }).waitFor();
-  const row = adminPage.getByRole("row", { name: new RegExp(`Smoke Person ${tag}`) });
-  await row.waitFor();
-  await row.getByText("USER_REQUESTED").waitFor();
+  await goReview(adminPage);
+  const card = adminPage.getByRole("button", { name: new RegExp(`Smoke Person ${tag}`) });
+  await card.waitFor();
+  await card.getByText("USER_REQUESTED").waitFor();
   await adminPage.screenshot({ path: `${OUT}/admin-2-queue.png` });
 });
 await step("the admin can take the case", async () => {
-  const row = adminPage.getByRole("row", { name: new RegExp(`Smoke Person ${tag}`) });
-  await row.getByRole("button", { name: "Take case" }).click();
-  await row.getByText("Being reviewed").waitFor();
+  await adminPage.getByRole("button", { name: new RegExp(`Smoke Person ${tag}`) }).click(); // put it in focus
+  const focus = adminPage.getByRole("complementary", { name: "Selected case" });
+  await focus.getByRole("button", { name: "Take it" }).click();
+  await focus.getByText("Being reviewed by someone").waitFor();
 });
 
 // --- 2. a Reviewer: also enrols, can read the queue, and is refused a forbidden action ---------------------------------
@@ -113,8 +115,7 @@ const reviewerCtx = await browser.newContext({ viewport: { width: 1280, height: 
 let reviewerPage;
 await step("a Reviewer signs in, enrols, and sees the queue", async () => {
   ({ page: reviewerPage } = await signInAndEnrol(reviewerCtx, reviewerEmail));
-  await reviewerPage.getByRole("link", { name: "← Review queue" }).click();
-  await reviewerPage.getByRole("heading", { name: "Review queue" }).waitFor();
+  await goReview(reviewerPage);
   await reviewerPage.getByText(/Your permissions: .*review\.read/).waitFor();
 });
 await step("a Reviewer gets 403 when revoking a certificate, changing a setting and revealing PII", async () => {

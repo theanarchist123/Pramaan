@@ -9,6 +9,10 @@ interface AuthState {
   ready: boolean;
   login: (email: string, password: string) => Promise<User>;
   register: (email: string, password: string, name: string) => Promise<User>;
+  /** Start talking without an account: a guest that can later become a full account. */
+  startGuest: () => Promise<User>;
+  /** Turn the current guest into a full account (the draft is kept). */
+  upgrade: (email: string, password: string, name: string) => Promise<User>;
   logout: () => void;
   /** Re-read the signed-in user (e.g. after verifying the email address). */
   refresh: () => Promise<void>;
@@ -46,6 +50,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const startGuest = useCallback(async () => finish(await api("/v1/auth/guest", { method: "POST" })), []);
+
+  const upgrade = useCallback(
+    async (email: string, password: string, name: string) =>
+      finish(await api("/v1/auth/upgrade", { method: "POST", json: { email, password, name } })),
+    [],
+  );
+
   const logout = useCallback(() => {
     setUser(null);
     // Revokes the session server-side (and clears the cookie), not just forgets it locally.
@@ -57,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, ready, login, register, logout, refresh }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, ready, login, register, startGuest, upgrade, logout, refresh }}>{children}</AuthContext.Provider>
   );
 }
 

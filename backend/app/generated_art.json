@@ -1,0 +1,766 @@
+{
+  "assets": {
+    "gen-agriculture-01": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:40:39+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "seed_dots",
+        "furrow_lines",
+        "grain_sprays"
+      ],
+      "prompt": "abstract seed dots, furrow lines, grain sprays, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Agriculture",
+      "sha256": "587de676bbe44751e66192132c40e23184824b109203a66721be95efef250ed5"
+    },
+    "gen-agriculture-02": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:40:43+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "grain_sprays",
+        "terrace_contours",
+        "rain_arcs"
+      ],
+      "prompt": "abstract grain sprays, terrace contours, rain arcs, medium density, 6-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Agriculture",
+      "sha256": "9fbc314522a01c47434c2fd094038190874efcf23b4dc7afe5b5215f5594fa51"
+    },
+    "gen-agriculture-03": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:40:47+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "furrow_lines"
+      ],
+      "prompt": "abstract furrow lines, high density, 8-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Agriculture",
+      "sha256": "2dffb963fc357d62a0c20e4e8968beffb9aa64bac5c7f3bdf27797f19f3699dd"
+    },
+    "gen-agriculture-04": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:40:52+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "furrow_lines"
+      ],
+      "prompt": "abstract furrow lines, low density, 8-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Agriculture",
+      "sha256": "633109c952067d14cdf0f92ca09019a42338cf57dac8394554dfc1a5b61c5452"
+    },
+    "gen-arts-culture-01": {
+      "approved_at": "2026-11-14T07:34:15+00:00",
+      "generated_at": "2026-11-14T07:27:52+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "mosaic_tiles",
+        "woven_threads",
+        "brush_arcs"
+      ],
+      "prompt": "abstract mosaic tiles, woven threads, brush arcs, low density, 8-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Arts & Culture",
+      "sha256": "859e6d919f25bc52fc343ed4ca2b32f2d09f0ab74dab83289506811c3e5355a0"
+    },
+    "gen-arts-culture-02": {
+      "approved_at": "2026-11-14T07:34:15+00:00",
+      "generated_at": "2026-11-14T07:27:56+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "brush_arcs"
+      ],
+      "prompt": "abstract brush arcs, medium density, 8-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Arts & Culture",
+      "sha256": "618a18f22f12402dc20d53959db1e82891e0f326708b5f5c47bf142679af77ac"
+    },
+    "gen-arts-culture-03": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:28:03+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "paisley_curves"
+      ],
+      "prompt": "abstract paisley curves, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Arts & Culture",
+      "sha256": "4b607fa593c558290e43e873431a6a406dcd47728494bfed4330b3870009a418"
+    },
+    "gen-arts-culture-04": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:28:06+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "woven_threads",
+        "brush_arcs",
+        "rangoli_dots"
+      ],
+      "prompt": "abstract woven threads, brush arcs, rangoli dots, low density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Arts & Culture",
+      "sha256": "48a7685b9f848045b92f6e47300db0b05526217164f8c51b5937571fb573f8a5"
+    },
+    "gen-business-01": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:28:49+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "ledger_grid",
+        "growth_steps"
+      ],
+      "prompt": "abstract ledger grid, growth steps, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Business",
+      "sha256": "a284f8ab3c33a5c95247f285e6630fb0581bdd563be04c0a1f72f4ff01bb2693"
+    },
+    "gen-business-02": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:28:52+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "stacked_bars",
+        "ledger_grid",
+        "growth_steps"
+      ],
+      "prompt": "abstract stacked bars, ledger grid, growth steps, low density, 6-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Business",
+      "sha256": "d78a4f2a50cd0916f890b2b8529b537bd884ce136fed520a54728c2423360094"
+    },
+    "gen-business-03": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:28:56+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "ledger_grid"
+      ],
+      "prompt": "abstract ledger grid, low density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Business",
+      "sha256": "04803658e7c2aace07e1ac69290c1c9f4ad5c958eb5ca40a044588ba68a78891"
+    },
+    "gen-business-04": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:28:59+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "balance_arcs",
+        "stacked_bars"
+      ],
+      "prompt": "abstract balance arcs, stacked bars, medium density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Business",
+      "sha256": "407baa41bb3268092059ef957d2ed4659dccdad08754b676ed401655e5fba89c"
+    },
+    "gen-education-01": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:27:34+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "open_book_arcs",
+        "ladder_steps",
+        "growth_rings"
+      ],
+      "prompt": "abstract open book arcs, ladder steps, growth rings, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Education",
+      "sha256": "b719e2484562ddb597a8dbd240ee48ac9acfa582b6a24749de473e9809a8d099"
+    },
+    "gen-education-02": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:27:40+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "open_book_arcs"
+      ],
+      "prompt": "abstract open book arcs, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Education",
+      "sha256": "2ed796c142effbc117eef4dfd764bc6b9ba4f426bc5ce61be6cc80daa525d258"
+    },
+    "gen-education-03": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:27:45+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "stacked_arches"
+      ],
+      "prompt": "abstract stacked arches, medium density, 12-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Education",
+      "sha256": "291e4327c59415d0cf1b8af17597192aacc02fb45dd41dade03cf15324663f8d"
+    },
+    "gen-education-04": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:27:49+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "stacked_arches"
+      ],
+      "prompt": "abstract stacked arches, medium density, 6-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Education",
+      "sha256": "5d102f8c8cfa00114460e075bdcfdd2a5d5e5d758b61059d980dd387343eea48"
+    },
+    "gen-energy-01": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:40:58+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "flow_arcs",
+        "spark_rays",
+        "turbine_blades"
+      ],
+      "prompt": "abstract flow arcs, spark rays, turbine blades, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Energy",
+      "sha256": "ab1539d7f5bd8c9f0de3a58932df3c1b7e216da47bae3420480b80d221527ffc"
+    },
+    "gen-energy-02": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:41:03+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "turbine_blades"
+      ],
+      "prompt": "abstract turbine blades, medium density, 8-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Energy",
+      "sha256": "5869c79a9dd62414c9befb6549b96f3d23e48336d79ab8ec665a55165cdfb5ee"
+    },
+    "gen-energy-03": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:41:07+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "grid_lines",
+        "flow_arcs"
+      ],
+      "prompt": "abstract grid lines, flow arcs, medium density, 6-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Energy",
+      "sha256": "5dcc3379c9ee824f5c1ed94192eabe014384d2289ea51906bd93924387044460"
+    },
+    "gen-energy-04": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:41:12+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "spark_rays",
+        "turbine_blades"
+      ],
+      "prompt": "abstract spark rays, turbine blades, low density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Energy",
+      "sha256": "c4062596ed3d6279328ef45894ff6046aa4b9aa4a56e7d4e28fae6e3970c1c9f"
+    },
+    "gen-healthcare-01": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:27:16+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "section_rings",
+        "rod_lines",
+        "heartbeat_wave"
+      ],
+      "prompt": "abstract section rings, rod lines, heartbeat wave, medium density, 8-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Healthcare",
+      "sha256": "c292bb6633cbf18beba456c408c083e4c0e8d01b85719ffc8b0f6befc31888b5"
+    },
+    "gen-healthcare-02": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:27:21+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "pulse_line",
+        "cell_rings",
+        "section_rings"
+      ],
+      "prompt": "abstract pulse line, cell rings, section rings, low density, 8-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Healthcare",
+      "sha256": "2050ff97ee3c6edc15ddae37bc863d115896d87bd3058404236c494a889c97e2"
+    },
+    "gen-healthcare-03": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:27:24+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "rod_lines",
+        "heartbeat_wave"
+      ],
+      "prompt": "abstract rod lines, heartbeat wave, medium density, 6-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Healthcare",
+      "sha256": "a75475afbdf084069f61b8142e19e3d7f4927d4cccbc711abc579dd6e5f81241"
+    },
+    "gen-healthcare-04": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:27:27+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "rod_lines",
+        "heartbeat_wave",
+        "pulse_line"
+      ],
+      "prompt": "abstract rod lines, heartbeat wave, pulse line, medium density, 12-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Healthcare",
+      "sha256": "8b60f682c5be1e6884f8c92b384f96b065cae556932b8eadef1e4f647280c11c"
+    },
+    "gen-law-01": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:29:16+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "ledger_rules",
+        "interlocked_rings"
+      ],
+      "prompt": "abstract ledger rules, interlocked rings, low density, 12-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Law",
+      "sha256": "cf2b2f3ff822be4a4b606b5ea0ef6f8f2632aca62476f941c56639d45e93e147"
+    },
+    "gen-law-02": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:29:22+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "ledger_rules"
+      ],
+      "prompt": "abstract ledger rules, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Law",
+      "sha256": "c2e93dda5af83b7030fdb6553bdeba01be6f166e16cbbcdc5a69194f80645eb0"
+    },
+    "gen-law-03": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:29:26+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "column_lines",
+        "ledger_rules",
+        "interlocked_rings"
+      ],
+      "prompt": "abstract column lines, ledger rules, interlocked rings, low density, 12-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Law",
+      "sha256": "fd6db1ae8cec5013dc1c41a69e7338c5f03302c6a1b210f5bb695e2695d347dd"
+    },
+    "gen-law-04": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:29:30+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "level_lines",
+        "balance_beams",
+        "column_lines"
+      ],
+      "prompt": "abstract level lines, balance beams, column lines, high density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Law",
+      "sha256": "c947b3fdbbcdec54556e9057f06a59a3e2c6cc33d2aafdbacfcceb43234af873"
+    },
+    "gen-literature-01": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:28:12+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "verse_lines",
+        "quill_strokes",
+        "page_folds"
+      ],
+      "prompt": "abstract verse lines, quill strokes, page folds, medium density, 12-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Literature",
+      "sha256": "c324eb102870caf5dc7845a6fa80a06bee824c47313ed64234af065c9412a75e"
+    },
+    "gen-literature-02": {
+      "approved_at": "2026-11-14T07:34:16+00:00",
+      "generated_at": "2026-11-14T07:28:16+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "verse_lines"
+      ],
+      "prompt": "abstract verse lines, low density, 8-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Literature",
+      "sha256": "45421bbb6f9e5eeacb3a3c356faf7bd612fa9c3e8f792d973d663edc393fab76"
+    },
+    "gen-literature-03": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:28:23+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "quill_strokes",
+        "page_folds"
+      ],
+      "prompt": "abstract quill strokes, page folds, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Literature",
+      "sha256": "ea9faf8beb9dc868dae17a67b537f78bdca8a02eb839ae21245415e91309d769"
+    },
+    "gen-literature-04": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:28:28+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "ink_ripples",
+        "scroll_curls"
+      ],
+      "prompt": "abstract ink ripples, scroll curls, low density, 12-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Literature",
+      "sha256": "87dd42fae6f4bddc2982c5887e8b47661906c48565dba6bbed22edd5f32d9235"
+    },
+    "gen-media-01": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:29:36+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "lens_rings"
+      ],
+      "prompt": "abstract lens rings, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Media",
+      "sha256": "f920acde9670acbd5bc3036c3d74368d5a7bd76c3bc7739ae179a40fdc2e2171"
+    },
+    "gen-media-02": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:29:39+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "signal_waves"
+      ],
+      "prompt": "abstract signal waves, medium density, 6-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Media",
+      "sha256": "c6c6edd6059eb0b0946e1b6ed5fe88defc7aca205d74b4261e72cc8bce63b633"
+    },
+    "gen-media-03": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:40:10+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "lens_rings"
+      ],
+      "prompt": "abstract lens rings, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Media",
+      "sha256": "b489e5bbebbf3bffc98cefaf06501badecfcfc3b264e522c264313337f379201"
+    },
+    "gen-media-04": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:40:16+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "broadcast_arcs",
+        "frame_grids"
+      ],
+      "prompt": "abstract broadcast arcs, frame grids, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Media",
+      "sha256": "0babcbd35b8018534f1c89da18385f1a2ec3d1889490c9b45f19303f2f6fbccf"
+    },
+    "gen-other-01": {
+      "approved_at": "2026-11-14T07:41:39+00:00",
+      "generated_at": "2026-11-14T07:41:15+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "radial_rays"
+      ],
+      "prompt": "abstract radial rays, low density, 8-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Other",
+      "sha256": "60fc06198064d334dc766c97d0c20e1c9b98eff86a98f81e9d805ce0ca420118"
+    },
+    "gen-other-02": {
+      "approved_at": "2026-11-14T07:41:40+00:00",
+      "generated_at": "2026-11-14T07:41:20+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "wave_lines"
+      ],
+      "prompt": "abstract wave lines, high density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Other",
+      "sha256": "ab8b9300d04cdf07d6c6c78529d369b755738a564da5b1c6d7748ed41bde6adb"
+    },
+    "gen-other-03": {
+      "approved_at": "2026-11-14T07:41:40+00:00",
+      "generated_at": "2026-11-14T07:41:27+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "radial_rays"
+      ],
+      "prompt": "abstract radial rays, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Other",
+      "sha256": "b96532c880cedae2b031b4f44bded7fce4a5cf4bf58dfb1d73fa6473c71b1c00"
+    },
+    "gen-public-service-01": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:29:02+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "scale_lines"
+      ],
+      "prompt": "abstract scale lines, high density, 6-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Public Service",
+      "sha256": "50d54fab99f43a792509cbeec30b06a6661e279074679b8a3082a2b77139b6ca"
+    },
+    "gen-public-service-02": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:29:05+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "bridge_spans"
+      ],
+      "prompt": "abstract bridge spans, high density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Public Service",
+      "sha256": "b3e70bfca955330c88e62cdddbb0a73c992a8d0dbd7a467e2e9c43180ddee06b"
+    },
+    "gen-public-service-03": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:29:08+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "chain_links",
+        "compass_rays"
+      ],
+      "prompt": "abstract chain links, compass rays, high density, 6-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Public Service",
+      "sha256": "8d8ccdbb40f4493364a7b6d63254444271e518365f9dcb780cc702e2f750ad02"
+    },
+    "gen-public-service-04": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:29:13+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "scale_lines",
+        "pillar_arches"
+      ],
+      "prompt": "abstract scale lines, pillar arches, low density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Public Service",
+      "sha256": "0d81ece1a2ca6a1e7d32520c21efb17fa45fa6abc14c373f7a9a37ee28a2711d"
+    },
+    "gen-science-01": {
+      "approved_at": "2026-11-14T07:26:46+00:00",
+      "generated_at": "2026-11-14T07:25:30+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "wave_interference"
+      ],
+      "prompt": "abstract wave interference, high density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Science",
+      "sha256": "f97152b63af35f19d9d65f8e922d03f53c71026e9ef94f171795c83b1123670a"
+    },
+    "gen-science-02": {
+      "approved_at": "2026-11-14T07:41:40+00:00",
+      "generated_at": "2026-11-14T07:25:36+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "helix_strands",
+        "spectral_bands"
+      ],
+      "prompt": "abstract helix strands, spectral bands, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Science",
+      "sha256": "e970f0a4d9746f90a3d6c5ea029263ea375e31061804c268b32adfb12351f61d"
+    },
+    "gen-science-03": {
+      "approved_at": "2026-11-14T07:26:46+00:00",
+      "generated_at": "2026-11-14T07:25:41+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "helix_strands",
+        "spectral_bands"
+      ],
+      "prompt": "abstract helix strands, spectral bands, low density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Science",
+      "sha256": "20330229ce9b1def8489bd5f14ca3dc57d598172997cd32d6739aa8f83cd4b9a"
+    },
+    "gen-science-04": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:26:49+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "spectral_bands",
+        "orbit_rings"
+      ],
+      "prompt": "abstract spectral bands, orbit rings, medium density, 6-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Science",
+      "sha256": "c07970c044a978482dc3df75638cef2e0f070fd1d9164e7b195073d165dcfefb"
+    },
+    "gen-social-work-01": {
+      "approved_at": "2026-11-14T07:41:40+00:00",
+      "generated_at": "2026-11-14T07:40:20+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "linked_hands_lines",
+        "shelter_arches"
+      ],
+      "prompt": "abstract linked hands lines, shelter arches, medium density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Social Work",
+      "sha256": "ae66df14b26cef4043e2708bdffa91310cac782c4bcd724f94b67eaae51a3c0f"
+    },
+    "gen-social-work-02": {
+      "approved_at": "2026-11-14T07:41:40+00:00",
+      "generated_at": "2026-11-14T07:40:23+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "linked_hands_lines",
+        "shelter_arches",
+        "ripple_rings"
+      ],
+      "prompt": "abstract linked hands lines, shelter arches, ripple rings, low density, 12-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Social Work",
+      "sha256": "bc0da32aaabd72892c2af0e96e5d28b439f90cd0e5aab8de3363e4ef62cec829"
+    },
+    "gen-social-work-03": {
+      "approved_at": "2026-11-14T07:41:40+00:00",
+      "generated_at": "2026-11-14T07:40:28+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "seed_dots",
+        "bridge_curves",
+        "linked_hands_lines"
+      ],
+      "prompt": "abstract seed dots, bridge curves, linked hands lines, medium density, 12-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Social Work",
+      "sha256": "03653ce728078b22110e5b7bc8c389599f6951295709b850acb244f2ca179fae"
+    },
+    "gen-social-work-04": {
+      "approved_at": "2026-11-14T07:41:40+00:00",
+      "generated_at": "2026-11-14T07:40:32+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "shelter_arches",
+        "ripple_rings"
+      ],
+      "prompt": "abstract shelter arches, ripple rings, low density, 12-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Social Work",
+      "sha256": "a04b2ee0e8f47444e18ac26fd6c86028c3f408aca494f657c7e20d8ddda16307"
+    },
+    "gen-sports-01": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:28:34+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "finish_lines"
+      ],
+      "prompt": "abstract finish lines, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Sports",
+      "sha256": "5977f36b76c49c83dd23e963d0b94579c2384001584412b8b9d9ad73bee9ea0b"
+    },
+    "gen-sports-02": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:28:37+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "finish_lines",
+        "speed_arcs"
+      ],
+      "prompt": "abstract finish lines, speed arcs, low density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Sports",
+      "sha256": "bd358ef6861aa4d09764ad03ca4c5935ed718cd2723379b7a15582cde2a46802"
+    },
+    "gen-sports-03": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:28:40+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "court_lines",
+        "track_lanes"
+      ],
+      "prompt": "abstract court lines, track lanes, high density, 8-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Sports",
+      "sha256": "3b4193a2aa74b5b247eb6fa0014305e4fbc2aa3ee63d19f0ba6641855291bb8d"
+    },
+    "gen-sports-04": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:28:43+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "track_lanes",
+        "motion_chevrons",
+        "finish_lines"
+      ],
+      "prompt": "abstract track lanes, motion chevrons, finish lines, low density, mirror symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Sports",
+      "sha256": "db22e3665f15ad0e9c7d1174cbd2ac05218b349f6c2db1fdfbcb92995fc4e652"
+    },
+    "gen-technology-01": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:26:59+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "hex_mesh"
+      ],
+      "prompt": "abstract hex mesh pattern, gold and indigo",
+      "sector": "Technology",
+      "sha256": "f790ef6bd3b5dddbb71eb0e7b189f8acee6b287544a3e8572826e03b08e55f15"
+    },
+    "gen-technology-02": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:27:05+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "hex_mesh",
+        "circuit_traces",
+        "node_graph"
+      ],
+      "prompt": "abstract hex mesh, circuit traces, node graph, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Technology",
+      "sha256": "29c5d59bdfecb81fee71960e889bff94e89db3c821b0dfa68e2f524d7a36657b"
+    },
+    "gen-technology-03": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:27:09+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "hex_mesh",
+        "circuit_traces",
+        "node_graph"
+      ],
+      "prompt": "abstract hex mesh, circuit traces, node graph, low density, 12-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Technology",
+      "sha256": "0d86cf0ad04a5b4bbe3676f3ec7c7aa757cb2ec8dd8d788f0b4b0c276121a556"
+    },
+    "gen-technology-04": {
+      "approved_at": "2026-11-14T07:34:17+00:00",
+      "generated_at": "2026-11-14T07:27:13+00:00",
+      "licence": "FLUX.1 [schnell], Apache-2.0 (generated with Cloudflare Workers AI)",
+      "model": "@cf/black-forest-labs/flux-1-schnell",
+      "motifs": [
+        "signal_arcs"
+      ],
+      "prompt": "abstract signal arcs, low density, 6-fold radial symmetry, ornamental guilloche engraving, fine concentric linework, perfectly symmetrical, elegant, warm marigold gold and deep indigo colour palette, high detail, the pattern fills the entire frame edge to edge, no empty background, flat print texture",
+      "sector": "Technology",
+      "sha256": "31eec46796051c73568f7540aec4688261aba7dcfc25e4e35e0d2820a14fd79d"
+    }
+  }
+}

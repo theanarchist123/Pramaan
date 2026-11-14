@@ -59,9 +59,30 @@ async def run_sandbox_jobs() -> int:
     return n
 
 
+_last_guest_purge = 0.0
+
+
+async def purge_guests_if_due(every_seconds: float = 6 * 3600) -> None:
+    """Delete guests (and their drafts) older than 14 days, at most every few hours."""
+    import time
+
+    global _last_guest_purge
+    if time.monotonic() - _last_guest_purge < every_seconds and _last_guest_purge:
+        return
+    _last_guest_purge = time.monotonic()
+    from app.services.guests import purge_stale_guests
+
+    async with get_sessionmaker()() as session:
+        n = await purge_stale_guests(session, days=14)
+        await session.commit()
+    if n:
+        log.info("purged %d stale guest account(s)", n)
+
+
 async def tick(*, sandbox: bool = True) -> None:
     from app.services import outreach, webhooks
 
+    await purge_guests_if_due()
     await webhooks.process_due()
     if get_settings().outreach_scheduler:
         await outreach.send_due()

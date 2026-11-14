@@ -35,8 +35,9 @@ The full plan is `PRAMAAN_V2_OVERHAUL_SPEC.md`. Work one phase at a time; stop a
 
 - Use tokens from `packages/ui` only; no hard-coded colours. Sentence case; no tracked all-caps labels; no emoji in
   status lines.
-- Animations come from the motion catalogue (M-01..M-28) with a reduced-motion variant; transform/opacity only; motion
-  reflects real events.
+- Animations come from the v3 motion catalogue (`docs/design/v3/motion.md`, V-01..V-15; supersedes M-01..M-28, approved by the owner
+  2026-11-13) with a reduced-motion variant; transform/opacity only; motion reflects real events. Visual direction: `docs/design/v3/`
+  (marigold + ink, Bricolage Grotesque, floating transparent navigation; supersedes Seal & Ink).
 - Unsplash API images are hotlinked with attribution and never self-hosted. Certificates use only frozen local images.
   Never use stock photos of people.
 - Status is always icon + text + colour. Hindi copy is written natively and reviewed.

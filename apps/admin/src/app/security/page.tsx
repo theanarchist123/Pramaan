@@ -36,7 +36,6 @@ export default function SecurityPage() {
   return (
     <main style={{ maxWidth: 560 }}>
       <h1>Security</h1>
-      <p><Link href="/">← Review queue</Link></p>
       {recovery && (
         <div className="panel" role="alert">
           <strong>Save these recovery codes now.</strong>

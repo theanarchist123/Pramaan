@@ -1,5 +1,6 @@
 "use client";
 
+import { Avatar } from "@/components/profile/avatar";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { MapPin, Sparkles } from "lucide-react";
@@ -34,11 +35,12 @@ export function ResultCard({ hit, index = 0, className }: { hit: SearchHit | (Su
     >
       <Link
         href={`/p/${hit.slug}`}
-        className="group block h-full rounded-2xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+        className="group block h-full rounded-[1.4rem] border border-border bg-card p-4 shadow-[var(--lift-1)] transition-transform hover:-translate-y-1"
       >
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="font-display text-lg font-semibold leading-tight group-hover:text-primary">{hit.full_name}</p>
+          <Avatar name={hit.full_name} className="size-12 text-lg" />
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-lg font-bold leading-tight">{hit.full_name}</p>
             <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{hit.headline || hit.sector}</p>
           </div>
           {score != null && (

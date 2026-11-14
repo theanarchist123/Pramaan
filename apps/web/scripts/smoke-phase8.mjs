@@ -18,34 +18,40 @@ const step = async (name, fn) => {
 };
 const watch = (page) => {
   page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
-  page.on("console", (m) => m.type() === "error" && !/404|Failed to load resource|ERR_/.test(m.text()) && errors.push(`console: ${m.text()}`));
+  page.on("console", (m) => m.type() === "error" && !/404|Failed to load resource|ERR_|Failed to fetch RSC payload/.test(m.text()) /* the last one: Next noting a page could not be fetched while the test has switched the network off on purpose */ && errors.push(`console: ${m.text()}`));
 };
 
+// v3: there is no header language button any more; the language is in the account menu ("हिन्दी" / "English"). The Hindi copy itself is paused (owner decision), so
+// these steps only prove the switch works, is remembered, and reaches other pages.
+const switchLanguage = async (pg, accountName, itemName) => {
+  await pg.getByRole("button", { name: accountName }).click();
+  await pg.getByRole("menuitem", { name: itemName }).click();
+};
 const ctx = await browser.newContext({ viewport: { width: 1360, height: 900 }, serviceWorkers: "allow" });
 const page = await ctx.newPage();
 watch(page);
 
 await step("home renders in English, then switches to Hindi and remembers it", async () => {
   await page.goto(BASE);
-  await page.getByRole("link", { name: "Directory" }).first().waitFor({ timeout: 20000 });
+  await page.getByRole("link", { name: "Find people" }).first().waitFor({ timeout: 20000 });
   assertLang(await page.evaluate(() => document.documentElement.lang), "en");
-  await page.getByRole("button", { name: "Switch language" }).click();
-  await page.getByRole("link", { name: "निर्देशिका" }).first().waitFor();
+  await switchLanguage(page, "Account and settings", "हिन्दी");
+  await page.getByRole("link", { name: "लोगों को खोजें" }).first().waitFor();
   assertLang(await page.evaluate(() => document.documentElement.lang), "hi");
   await page.screenshot({ path: `${OUT}/20-home-hindi.png` });
   await page.reload();
-  await page.getByRole("link", { name: "निर्देशिका" }).first().waitFor();
-  await page.getByRole("button", { name: "भाषा बदलें" }).click(); // back to English for the rest
-  await page.getByRole("link", { name: "Directory" }).first().waitFor();
+  await page.getByRole("link", { name: "लोगों को खोजें" }).first().waitFor();
+  await switchLanguage(page, "खाता और सेटिंग", "English"); // back to English for the rest
+  await page.getByRole("link", { name: "Find people" }).first().waitFor();
 });
 
 await step("Hindi carries through to the verify page", async () => {
-  await page.getByRole("button", { name: "Switch language" }).click();
+  await switchLanguage(page, "Account and settings", "हिन्दी");
   await page.goto(`${BASE}/verify`);
-  await page.getByRole("link", { name: "निर्देशिका" }).first().waitFor({ timeout: 20000 });
+  await page.getByRole("link", { name: "लोगों को खोजें" }).first().waitFor({ timeout: 20000 });
   const body = await page.textContent("body");
-  if (!/[ऀ-ॿ]{4,}/.test(body ?? "")) throw new Error("no Devanagari text on /verify");
-  await page.getByRole("button", { name: "भाषा बदलें" }).click();
+  if (!/[\u0900-\u097F]{4,}/.test(body ?? "")) throw new Error("no Devanagari text on /verify");
+  await switchLanguage(page, "खाता और सेटिंग", "English");
 });
 
 await step("PWA manifest is valid and icons resolve", async () => {
@@ -92,7 +98,7 @@ await step("custom 404 page is friendly and links home", async () => {
 
 await step("going offline shows the connection banner; coming back clears it", async () => {
   await page.goto(BASE);
-  await page.getByRole("link", { name: "Directory" }).first().waitFor();
+  await page.getByRole("link", { name: "Find people" }).first().waitFor();
   await ctx.setOffline(true);
   await page.getByRole("alert").or(page.getByRole("status")).filter({ hasText: /offline|connection|reach/i }).first().waitFor({ timeout: 15000 });
   await page.screenshot({ path: `${OUT}/22-offline-banner.png` });
@@ -111,7 +117,7 @@ await step("offline navigation falls back to the bilingual offline page", async 
 });
 
 // ------------------------------------------------------------------------------------------ accessibility
-const AUDIT = ["/", "/verify", "/directory", "/developers", "/onboard", "/transparency", "/mission-control", "/auth"];
+const AUDIT = ["/", "/verify", "/directory", "/developers", "/onboard", "/transparency", "/mission-control", "/auth", "/how-we-check", "/this-page-does-not-exist"];
 // Data-driven pages: find a real public profile (and its certificate) through the API, if there is one.
 try {
   const API = process.env.API_URL ?? "http://localhost:8000";
@@ -132,12 +138,13 @@ try {
   const r = await fetch(`${API}/v1/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: "admin@pramaan.demo", password: "pramaan-demo-1" }) });
   if (r.ok) adminToken = (await r.json()).access_token;
 } catch { /* no API */ }
-if (adminToken) AUDIT.push("/me", "/admin", "/admin/builder", "/admin/outreach");
+if (adminToken) AUDIT.push("/me"); // the web app's own /admin pages were retired (the staff Desk is audited by apps/admin)
 else console.log("(skipping signed-in pages: demo admin unavailable)");
 const violations = [];
 for (const scheme of ["light", "dark"]) {
   const c = await browser.newContext({ viewport: { width: 1360, height: 900 }, colorScheme: scheme, serviceWorkers: "block" });
-  if (adminToken) await c.addInitScript((t) => { try { localStorage.setItem("pramaan.token", t); } catch {} }, adminToken);
+  // the web app keeps its session in an httpOnly cookie: log in through the API so this context holds it
+  if (adminToken) await c.request.post(`${process.env.API_URL ?? "http://localhost:8000"}/v1/auth/login`, { data: { email: "admin@pramaan.demo", password: "pramaan-demo-1" } });
   const p = await c.newPage();
   watch(p);
   for (const path of AUDIT) {

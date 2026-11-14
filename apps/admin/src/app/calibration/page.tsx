@@ -32,7 +32,7 @@ export default function CalibrationPage() {
   const pct = (x: number) => `${Math.round(x * 100)}%`;
   return (
     <main>
-      <div className="row"><Link href="/">Queue</Link><h1 className="grow">Calibration</h1></div>
+      <div className="row"><h1 className="grow">Calibration</h1></div>
       {error && <p className="err" role="alert">{error}</p>}
       {!r && !error && <p className="muted">Loading...</p>}
       {r && (

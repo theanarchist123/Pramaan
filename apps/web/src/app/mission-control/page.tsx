@@ -28,10 +28,10 @@ export default function MissionControl() {
   const counts = events.reduce<Record<string, number>>((acc, e) => ({ ...acc, [e.agent]: (acc[e.agent] ?? 0) + 1 }), {});
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
+    <div className="mx-auto max-w-7xl px-4 pb-10 pt-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-semibold">Mission Control</h1>
+          <h1 className="text-5xl md:text-7xl">Mission Control</h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
             Every agent, every decision, as it happens. Nothing here is hidden: if an agent drops a citation it
             couldn&apos;t prove, you&apos;ll see that too.

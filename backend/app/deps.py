@@ -197,7 +197,11 @@ async def require_verified_email(principal: Principal) -> None:
     """Public listing needs proof the applicant controls the email on the account (admins are exempt).
     The rule is a GOVERNED setting: switched only by a second person's approval, with history."""
     from app.services import governed
+    from app.services.guests import is_guest_email
 
+    if is_guest_email(principal.user.email):
+        # A guest has no real address to verify, so it can never be listed, verified or certified (invariant I-5): create the account first.
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Create your account first to continue")
     if await governed.get("require_email_verification") and not principal.is_admin and principal.user.email_verified_at is None:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Verify your email address first")
 

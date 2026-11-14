@@ -77,6 +77,7 @@ export function DocumentDrop({ profileId, onDone }: { profileId: string; onDone:
       <input
         ref={input}
         type="file"
+        aria-label="Choose a document to upload"
         accept={ACCEPT}
         className="sr-only"
         onChange={(e) => {

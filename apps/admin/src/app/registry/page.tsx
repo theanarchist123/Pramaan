@@ -40,7 +40,7 @@ export default function RegistryPage() {
 
   return (
     <main>
-      <div className="row"><Link href="/">Queue</Link><h1 className="grow">Registry and compliance</h1></div>
+      <div className="row"><h1 className="grow">Registry and compliance</h1></div>
       {error && <p className="err" role="alert">{error}</p>}
       {msg && <p className="panel" role="status">{msg}</p>}
       <section className="panel" aria-label="Find a profile">

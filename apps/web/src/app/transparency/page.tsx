@@ -52,12 +52,25 @@ export default function Transparency() {
   const shownCount = Math.min(total, Math.max(visible, bad !== null ? total - bad + 2 : 0));
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
-      <h1 className="font-heading text-4xl font-semibold">Transparency log</h1>
-      <p className="mt-2 max-w-2xl text-muted-foreground">
-        Every certificate ever issued is appended here with the hash of the entry before it. Rewrite or delete history and every later entry
-        stops matching. It stores only fingerprints, never personal data.
-      </p>
+    <div className="-mt-28 md:-mt-16">
+      <section data-nav-tone="on-dark" className="relative overflow-hidden bg-[#14152B] text-white">
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 flex gap-2 overflow-hidden px-4 opacity-25">
+          {Array.from({ length: 14 }, (_, i) => (
+            <span key={i} className="mb-6 flex h-14 w-32 shrink-0 items-center justify-center rounded-xl border-2 border-[var(--brand)] font-mono text-xs text-[var(--brand)]" />
+          ))}
+        </div>
+        <div className="relative mx-auto max-w-5xl px-4 pb-32 pt-36 md:pt-28">
+          <p className="inline-flex items-center gap-2 rounded-full bg-[var(--brand)] px-3 py-1 text-sm font-bold text-[#14152B]"><Link2 aria-hidden className="size-4" /> Public log</p>
+          <h1 className="mt-4 text-balance text-5xl leading-[1.02] md:text-7xl">Nothing here can be quietly changed.</h1>
+          <p className="mt-4 max-w-2xl text-lg text-white/75">
+            Every certificate ever issued is added here with the fingerprint of the entry before it. Rewrite or delete history and every later entry
+            stops matching. It stores only fingerprints, never personal data.
+          </p>
+          <p className="mt-6 font-display text-6xl font-extrabold tabular-nums text-[var(--brand)]">{total}<span className="ml-3 text-xl font-bold text-white/70">entries and counting</span></p>
+        </div>
+      </section>
+      <div className="mx-auto max-w-5xl px-4 py-10">
+
 
       <section aria-label="Check the chain" className="mt-6 rounded-[var(--radius-panel)] border border-border bg-card p-4">
         <div className="flex flex-wrap items-center gap-3">
@@ -153,6 +166,7 @@ export default function Transparency() {
           <p className="text-sm text-muted-foreground tabular-nums">Showing the newest {shownCount} of {total}. The check above covers all {total}.</p>
         </div>
       )}
+      </div>
     </div>
   );
 }

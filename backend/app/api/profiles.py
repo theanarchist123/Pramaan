@@ -4,7 +4,8 @@ import re
 import secrets
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +14,7 @@ from app.deps import Principal, get_optional_principal, require_scope, require_v
 from app.config import get_settings
 from app.domain import is_known_photo, pick_photo
 from app.services import fields as fields_svc
+from app.services import insights as insights_svc
 from app.services import webhooks
 from app.models import Claim, Consent, Evidence, Profile, ReviewItem
 from app.schemas import (
@@ -127,7 +129,30 @@ async def get_profile(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Profile not found")
     if profile.status != "approved" and not (principal and can_edit(principal, profile)):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Profile not found")
+    if profile.status == "approved" and not (principal and principal.user.id == profile.owner_id):
+        await insights_svc.record(profile.id, "views")  # a count only: no visitor data; the owner's own visits are not counted
     return profile
+
+
+@router.get("/{profile_id}/insights")
+async def insights(
+    profile_id: uuid.UUID,
+    principal: Principal = Depends(require_scope("profiles:read")),
+    session: AsyncSession = Depends(get_session),
+):
+    """Owner-only: page views and certificate checks (counts per day, no visitor data), plus waiting introduction requests."""
+    from sqlalchemy import func
+
+    from app.models import IntroRequest
+
+    profile = await _load(session, profile_id)
+    if not can_edit(principal, profile):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Profile not found")
+    out = await insights_svc.summary(session, profile_id)
+    out["intros_pending"] = int(
+        (await session.execute(select(func.count()).select_from(IntroRequest).where(IntroRequest.profile_id == profile_id, IntroRequest.status == "pending"))).scalar_one()
+    )
+    return out
 
 
 _PUBLIC_FIELDS = ("headline", "sector", "state", "city", "bio", "languages", "institutions", "photo_url", "custom")
@@ -164,6 +189,66 @@ async def patch_profile(
     await session.commit()
     await session.refresh(profile)
     return profile
+
+
+_PHOTO_TYPES = {"image/png", "image/jpeg", "image/webp"}
+_PHOTO_MAX = 6 * 1024 * 1024
+
+
+@router.post("/{profile_id}/photo", response_model=ProfileOut)
+async def upload_photo(
+    profile_id: uuid.UUID,
+    file: UploadFile = File(...),
+    principal: Principal = Depends(require_scope("profiles:write")),
+    session: AsyncSession = Depends(get_session),
+):
+    """The person's own photo. It is decoded and re-encoded (so nothing hidden in the file survives), shrunk, and stored under a server-chosen name.
+    On an approved profile it counts as a public edit: the profile goes back for review before the new photo is shown to anyone."""
+    import io
+
+    from PIL import Image, UnidentifiedImageError
+
+    profile = await _load_editable(session, profile_id, principal)
+    if (file.content_type or "").lower() not in _PHOTO_TYPES:
+        raise HTTPException(415, "Upload a PNG, JPG or WebP photo")
+    data = await file.read(_PHOTO_MAX + 1)
+    if len(data) > _PHOTO_MAX:
+        raise HTTPException(413, "The photo is larger than 6 MB")
+    try:
+        img = Image.open(io.BytesIO(data))
+        img.load()
+    except (UnidentifiedImageError, OSError) as exc:
+        raise HTTPException(422, "That file isn't a readable image") from exc
+    img = img.convert("RGB")
+    img.thumbnail((640, 640))
+    folder = get_settings().data_dir / "photos"
+    folder.mkdir(parents=True, exist_ok=True)
+    img.save(folder / f"{profile.id}.jpg", "JPEG", quality=86, optimize=True)  # re-encoded: metadata and any embedded payload are dropped
+    url = f"{get_settings().api_base_url.rstrip('/')}/v1/profiles/{profile.slug}/photo"
+    if profile.photo_url != url:
+        profile.photo_url = url
+        if profile.status == "approved":
+            profile.status = "pending_review"
+            profile.decision_basis = ""
+            session.add(ReviewItem(profile_id=profile.id, reason="New profile photo: a person should look at it", confidence=0.0))
+    await session.commit()
+    await session.refresh(profile)
+    return profile
+
+
+@router.get("/{slug}/photo")
+async def get_photo(
+    slug: str,
+    principal: Principal | None = Depends(get_optional_principal),
+    session: AsyncSession = Depends(get_session),
+):
+    profile = (await session.execute(select(Profile).where(Profile.slug == slug))).scalar_one_or_none()
+    if profile is None or (profile.status != "approved" and not (principal and can_edit(principal, profile))):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Photo not found")
+    path = get_settings().data_dir / "photos" / f"{profile.id}.jpg"
+    if not path.exists():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Photo not found")
+    return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=300"})
 
 
 @router.post("/{profile_id}/claims", response_model=ClaimOut, status_code=status.HTTP_201_CREATED)

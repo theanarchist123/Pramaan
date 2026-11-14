@@ -25,7 +25,7 @@ ADMIN = "postgresql://pramaan:pramaan@localhost:5432/{db}"
 # Everything the post-0003 revisions add (so a database built by the baseline's create_all can be put back in the
 # production-like state before the rehearsal).
 ADDED_TABLES = ["llm_calls", "image_assets", "user_roles", "admin_audit_log", "approval_requests", "review_decisions",
-                "governed_setting_changes", "governed_settings", "mfa_recovery_codes", "identity_bindings", "email_suppressions", "setu_edges", "api_key_usage", "oauth_tokens", "oauth_codes", "oauth_clients", "incidents", "view_specs"]
+                "governed_setting_changes", "governed_settings", "mfa_recovery_codes", "identity_bindings", "email_suppressions", "setu_edges", "api_key_usage", "oauth_tokens", "oauth_codes", "oauth_clients", "incidents", "view_specs", "profile_day_stats", "intro_requests"]
 ADDED_COLUMNS = {"profiles": ["decision_basis", "wikidata_qid"], "review_queue": ["assigned_to", "locked_until", "sla_due_at"],
                  "users": ["totp_secret_enc", "mfa_enrolled_at", "stepup_until"], "certificates": ["status_index"], "agent_runs": ["idempotency_key", "versions"]}
 

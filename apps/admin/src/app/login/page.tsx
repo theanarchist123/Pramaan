@@ -33,9 +33,14 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ maxWidth: 420 }}>
-      <h1>Pramaan staff console</h1>
-      <form className="panel" onSubmit={submit}>
+    <main style={{ maxWidth: 1000, display: "grid", gap: 40, gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", alignItems: "center", minHeight: "100dvh" }}>
+      <section>
+        <h1>The Desk.</h1>
+        <p style={{ fontSize: 18 }} className="muted">Where people check what the machines couldn&apos;t. Review cases, find people, approve follow-ups.</p>
+        <p className="muted">Staff accounts only. Sessions last 30 minutes. This is a separate sign-in from the public site.</p>
+      </section>
+      <form className="panel pop" onSubmit={submit}>
+        <h2>Sign in</h2>
         <label htmlFor="email">Email</label>
         <input id="email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <label htmlFor="pw">Password</label>
@@ -48,8 +53,7 @@ export default function LoginPage() {
           </>
         )}
         {error && <p className="err" role="alert">{error}</p>}
-        <p><button disabled={busy}>Sign in</button></p>
-        <p className="muted">Staff accounts only. Sessions last 30 minutes. This is a separate sign-in from the public site.</p>
+        <p><button disabled={busy} style={{ width: "100%", height: 48 }}>{busy ? "Please wait…" : "Sign in"}</button></p>
       </form>
     </main>
   );

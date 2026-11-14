@@ -87,6 +87,25 @@ async def suggest(
     return created
 
 
+def invite_message(name: str, note: str, base_url: str) -> tuple[str, str]:
+    """The text of an invitation. Fixed wording plus the staff member's own note; the link is made here from OUR address, and any link,
+    e-mail address or phone number in the note is removed (the same rule as every other outreach text, invariant I-7)."""
+    from app.agents.doot import one_line, sanitize
+
+    who = one_line(sanitize(name, 80)).strip(" ,.") or "there"  # the full name as written: honorifics ("Dr.", "Prof.") are never cut off
+    personal = sanitize(note, 600)
+    parts = [f"Hello {who},"]
+    if personal:
+        parts.append(personal)
+    parts.append(
+        "Pramaan is a registry of notable people in India where every achievement is backed by evidence. Getting listed is free, "
+        "takes about three minutes, and you decide what becomes public."
+    )
+    parts.append(f"Start here: {base_url.rstrip('/')}/onboard")
+    parts.append("If this isn't for you, there's nothing to do.")
+    return "An invitation to be listed on Pramaan", "\n\n".join(parts)
+
+
 def _smtp_send(to: str, subject: str, body: str) -> None:
     s = get_settings()
     msg = EmailMessage()

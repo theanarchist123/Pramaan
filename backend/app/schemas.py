@@ -30,13 +30,14 @@ class UserOut(ORM):
     name: str
     role: str
     email_verified: bool = False
+    is_guest: bool = False  # a visitor with no account yet (address ends @guest.invalid)
 
     @model_validator(mode="before")
     @classmethod
     def _from_user(cls, v):
         if hasattr(v, "email_verified_at"):  # an ORM User
             return {"id": v.id, "email": v.email, "name": v.name, "role": v.role,
-                    "email_verified": v.email_verified_at is not None}
+                    "email_verified": v.email_verified_at is not None, "is_guest": v.email.lower().endswith("@guest.invalid")}
         return v
 
 

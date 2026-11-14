@@ -36,7 +36,7 @@ export default function IncidentsPage() {
 
   return (
     <main>
-      <div className="row"><Link href="/">Queue</Link><h1 className="grow">Incidents</h1>
+      <div className="row"><h1 className="grow">Incidents</h1>
         <button className="secondary" onClick={() => run("scan", "/v1/admin/incidents/scan")} disabled={busy !== ""}>Scan now</button></div>
       {error && <p className="err" role="alert">{error}</p>}
       {msg && <p className="panel" role="status">{msg}</p>}

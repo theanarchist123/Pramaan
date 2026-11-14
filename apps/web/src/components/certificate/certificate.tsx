@@ -125,6 +125,16 @@ export function Certificate({ data, forceTamper = false, state }: { data: Certif
         <Rosette seed={data.digest} sector={data.sector} size={134} />
       </div>
 
+      {/* watermark: this certificate's own code, tiled as faint micro-text, so a cropped or re-typeset copy still carries its identity (blueprint: asset watermarking) */}
+      <svg aria-hidden="true" width="100%" height="100%" style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.07 }}>
+        <defs>
+          <pattern id={`wm-${data.code}`} width="190" height="46" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)">
+            <text x="0" y="20" fontSize="9" fontFamily="ui-monospace, monospace" fill={palette.ink} letterSpacing="1.2">PRAMAAN · {data.code}</text>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill={`url(#wm-${data.code})`} />
+      </svg>
+
       {/* content */}
       <div style={{ position: "absolute", left: 84, top: 66, width: 600 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

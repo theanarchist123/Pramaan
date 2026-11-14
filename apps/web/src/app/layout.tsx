@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
 // Fonts are self-hosted from npm (no network at build time, unlike next/font/google).
-import "@fontsource-variable/fraunces/wght.css";
+import "@fontsource-variable/bricolage-grotesque/wght.css";
 import "@fontsource-variable/inter/wght.css";
 import "@fontsource-variable/noto-sans-devanagari/wght.css";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { SiteHeader } from "@/components/site-header";
+import { FloatingNav } from "@/components/nav/floating-nav";
 import { SkipLink } from "@/components/skip-link";
 import { ConnectionBanner } from "@/components/connection-banner";
 import { PwaRegister } from "@/components/pwa-register";
@@ -21,8 +21,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8f4ec" },
-    { media: "(prefers-color-scheme: dark)", color: "#1c1814" },
+    { media: "(prefers-color-scheme: light)", color: "#FFB81C" },
+    { media: "(prefers-color-scheme: dark)", color: "#0F1020" },
   ],
 };
 
@@ -32,10 +32,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh">
         <Providers>
           <SkipLink />
-          <SiteHeader />
+          <FloatingNav />
           <ConnectionBanner />
           <PwaRegister />
-          <main id="main" className="pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
+          <main id="main" className="pt-28 pb-[env(safe-area-inset-bottom)] md:pt-16">{children}</main>
         </Providers>
       </body>
     </html>

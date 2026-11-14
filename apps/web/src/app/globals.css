@@ -6,7 +6,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --font-fraunces: "Fraunces Variable";
+  --font-display: "Bricolage Grotesque Variable";
   --font-inter: "Inter Variable";
   --font-deva: "Noto Sans Devanagari Variable";
 }
@@ -16,7 +16,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter), var(--font-deva), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-heading: var(--font-fraunces), Georgia, serif;
+  --font-heading: var(--font-display), var(--font-deva), ui-sans-serif, system-ui, sans-serif;
   --color-indigo: var(--indigo);
   --color-indigo-soft: var(--indigo-soft);
   --color-verified: var(--verified);
@@ -61,7 +61,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Seal & Ink (packages/ui/tokens.css). The component library speaks shadcn's semantic names; they all resolve to the design tokens
+/* Marigold & Ink (packages/ui/tokens.css, docs/design/v3). The component library speaks shadcn's semantic names; they all resolve to the design tokens
    below, so light and dark come from the tokens' own .dark overrides and the contrast gate (packages/ui/scripts/contrast.mjs) covers
    the colour pairs used here. No colour is hard-coded in this file. */
 :root {
@@ -78,7 +78,7 @@
   --muted: color-mix(in srgb, var(--ink) 5%, var(--bond));
   --muted-foreground: var(--ink-muted);
   --accent: var(--stamp-tint);
-  --accent-foreground: var(--stamp);
+  --accent-foreground: var(--ink);
   --destructive: var(--seal);
   --border: var(--rule);
   --input: var(--rule);
@@ -116,7 +116,9 @@
   }
   h1, h2, h3, .font-display {
     font-family: var(--font-heading);
-    letter-spacing: -0.015em;
+    letter-spacing: -0.025em;
+    font-weight: 800;
+    text-wrap: balance;
   }
   /* Large-text accessibility mode, toggled from the header */
   html[data-large-text="true"] {
@@ -124,12 +126,16 @@
   }
 }
 
-/* Soft ink-and-foil wash behind hero sections: a stamp-coloured glow top right, a foil-gold one top left. */
+/* Marigold wash behind hero sections (v3). */
 .paper-glow {
   background:
-    radial-gradient(60rem 30rem at 85% -10%, color-mix(in oklch, var(--stamp) 13%, transparent), transparent 70%),
-    radial-gradient(50rem 30rem at -10% 10%, color-mix(in oklch, var(--foil) 10%, transparent), transparent 70%);
+    radial-gradient(60rem 30rem at 85% -10%, color-mix(in oklch, var(--brand) 38%, transparent), transparent 70%),
+    radial-gradient(50rem 30rem at -10% 10%, color-mix(in oklch, var(--brand) 18%, transparent), transparent 70%);
 }
+
+/* Hero objects get the chunky offset shadow. */
+.pop { border: 2px solid var(--ink); box-shadow: var(--pop); }
+.dark .pop { border-color: var(--brand); box-shadow: 6px 6px 0 var(--brand); }
 
 /* A paper object (certificate, proof table, evidence slip): a document lying on the desk. It stays light in BOTH themes, so everything
    inside it switches to the fixed paper inks; utilities such as text-muted-foreground then resolve to the right colour. */
@@ -150,6 +156,7 @@
 
 /* The certificate print route is a bare canvas for the PDF/PNG renderer: no site chrome. */
 body:has([data-print-route]) header,
+body:has([data-print-route]) [data-floating-nav],
 body:has([data-print-route]) a[href="#main"] {
   display: none;
 }
@@ -176,4 +183,21 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, ht
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
+}
+
+/* Scrollbars (v3): thin, rounded, tinted from the theme's own ink colour, marigold when you are using them. Firefox and current Chrome/Edge/Safari
+   use the standard properties; the -webkit rules cover older Chromium and Safari. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--ink) 26%, transparent) transparent;
+}
+*:hover {
+  scrollbar-color: color-mix(in oklch, var(--brand) 85%, var(--ink)) transparent;
+}
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { border-radius: 999px; background: color-mix(in oklch, var(--ink) 26%, transparent); border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--brand); background-clip: content-box; }
+  ::-webkit-scrollbar-corner { background: transparent; }
 }

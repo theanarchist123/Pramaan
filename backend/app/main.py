@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import jobs
-from app.api import admin, admin_auth, agents, apikeys, auth, badges, builder, directory, fields, images, onboarding, outreach, identity, mcp, oauth, profiles, registry, review, staff, vc, verify, webhooks
+from app.api import admin, admin_auth, agents, apikeys, auth, badges, builder, directory, fields, images, intros, onboarding, outreach, identity, mcp, oauth, profiles, registry, review, staff, vc, verify, webhooks
 from app.agents.events import relay_from_redis
 from app.config import get_settings
 from app.core import redis as rd
@@ -183,7 +183,7 @@ telemetry.setup(app)  # OTLP export only if OTEL_EXPORTER_OTLP_ENDPOINT is set
 
 for r in (
     auth.router, profiles.router, onboarding.router, agents.router, directory.router,
-    admin_auth.router, review.router, staff.router, images.public, images.admin, verify.router, apikeys.router, webhooks.router, badges.router, fields.router, builder.router, builder.views_public, builder.views_admin, outreach.router, admin.router, registry.router, vc.router, identity.router, outreach.public, mcp.router, oauth.router, oauth.meta,
+    admin_auth.router, review.router, staff.router, images.public, images.admin, verify.router, apikeys.router, webhooks.router, badges.router, fields.router, builder.router, builder.views_public, builder.views_admin, outreach.router, admin.router, registry.router, vc.router, identity.router, outreach.public, mcp.router, oauth.router, oauth.meta, intros.router,
 ):
     app.include_router(r)
 

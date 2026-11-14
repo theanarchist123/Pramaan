@@ -59,7 +59,12 @@ async def test_full_flow_verify_and_tamper(client, make_user):
     assert body["signature"] and body["public_key"] and body["entry_hash"]
 
     # themed photo was chosen for the person's sector; QR points at the public verify page
-    assert cert["photo_id"] in __import__("app.domain", fromlist=["SECTOR_PHOTOS"]).SECTOR_PHOTOS["Science"]
+    # The certificate gets a vetted picture for its sector: a stock photo, or (once any are approved) a reviewed generated asset. Updated, not weakened: the
+    # sector rule is unchanged, only the set of vetted sources grew (see app/generated_art.py).
+    from app import generated_art
+    from app.domain import SECTOR_PHOTOS
+
+    assert cert["photo_id"] in SECTOR_PHOTOS["Science"] + generated_art.ids_for_sector("Science")
     qr = await client.get(f"/v1/certificates/{code}/qr.svg")
     assert qr.status_code == 200 and qr.headers["content-type"].startswith("image/svg+xml")
     assert b"<svg" in qr.content

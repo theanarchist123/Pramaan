@@ -37,18 +37,27 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, "../../"),
   // Lets a production build live beside a running `next dev` without clobbering its .next folder.
   distDir: process.env.NEXT_DIST_DIR || ".next",
-  // Staff work lives in the separate admin console (its own sign-in and cookie). The old /admin pages in this app signed in as a member, which the API now refuses (401),
-  // so they send people to the console instead. Set NEXT_PUBLIC_ADMIN_URL to the console's address.
-  async redirects() {
-    const admin = (process.env.NEXT_PUBLIC_ADMIN_URL || "http://localhost:3001").replace(/\/$/, "");
+  // Staff work lives in the separate admin console (its own sign-in, cookie and CSP), but it is served from THIS site's address under /staff:
+  // the browser never leaves this origin or port. Next proxies /staff to the console's server (ADMIN_INTERNAL_URL, default http://localhost:3001).
+  // The old /admin pages in this app signed in as a member, which the API refuses (401), so they send people to /staff instead.
+  async rewrites() {
+    const internal = (process.env.ADMIN_INTERNAL_URL || "http://localhost:3001").replace(/\/$/, "");
     return [
-      { source: "/admin", destination: `${admin}/`, permanent: false },
-      { source: "/admin/builder", destination: `${admin}/builder`, permanent: false },
-      { source: "/admin/:path*", destination: `${admin}/`, permanent: false },
+      { source: "/staff", destination: `${internal}/staff` },
+      { source: "/staff/:path*", destination: `${internal}/staff/:path*` },
+    ];
+  },
+  async redirects() {
+    return [
+      { source: "/admin", destination: "/staff", permanent: false },
+      { source: "/admin/builder", destination: "/staff/builder", permanent: false },
+      { source: "/admin/outreach", destination: "/staff/followups", permanent: false },
+      { source: "/admin/:path*", destination: "/staff", permanent: false },
     ];
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    // /staff gets the console's own (stricter) headers, so the public site's policy is not stacked on top of them.
+    return [{ source: "/((?!staff).*)", headers: securityHeaders }];
   },
 };
 

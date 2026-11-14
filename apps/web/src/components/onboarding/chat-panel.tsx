@@ -3,9 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Mic, MicOff, SendHorizontal, Volume2, VolumeX } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { AgentAvatar } from "@/components/agent-feed";
+import { SaathiMascot } from "@/components/onboarding/saathi-mascot";
 import { VOICE_LANGS, appendSpoken, speak, stopSpeaking, useSpeechInput } from "@/hooks/use-speech";
 import { speechLocale, useI18n } from "@/lib/i18n";
 import { markCaptured } from "@/lib/fact-capture";
@@ -25,6 +23,7 @@ export function ChatPanel({
   disabledReason,
   onSend,
   header,
+  onListeningChange,
 }: {
   messages: ChatMessage[];
   thinking: boolean;
@@ -32,6 +31,8 @@ export function ChatPanel({
   disabledReason?: string;
   onSend: (text: string) => void;
   header?: React.ReactNode;
+  /** Lets the page show Saathi listening while the microphone is on. */
+  onListeningChange?: (listening: boolean) => void;
 }) {
   const [text, setText] = useState("");
   const { t, lang: uiLang } = useI18n();
@@ -43,12 +44,17 @@ export function ChatPanel({
   }, [uiLang, langChosen]);
   const [voiceOut, setVoiceOut] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLTextAreaElement>(null);
   const lastSpoken = useRef(0);
 
   const { supported, listening, interim, start, stop } = useSpeechInput(lang, (spoken) => {
     // What you say lands in the box for you to read and send: speech recognition mishears names, and a misheard fact must not be recorded.
     setText((prev) => appendSpoken(prev, spoken));
   });
+
+  useEffect(() => {
+    onListeningChange?.(listening);
+  }, [listening, onListeningChange]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -64,6 +70,16 @@ export function ChatPanel({
     }
   }, [messages, voiceOut, lang]);
 
+  // Grow the box to fit the text (up to about six lines); a scrollbar appears only beyond that.
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const h = Math.min(el.scrollHeight, 150);
+    el.style.height = `${h}px`;
+    el.style.overflowY = el.scrollHeight > 150 ? "auto" : "hidden";
+  }, [text]);
+
   function submit() {
     const t = text.trim();
     if (!t || disabled || thinking) return;
@@ -73,12 +89,7 @@ export function ChatPanel({
 
   return (
     <section className="flex h-full min-h-0 flex-col" aria-label="Conversation with Saathi">
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <AgentAvatar name="Saathi" className="size-9 text-sm" />
-        <div className="min-w-0 flex-1">
-          <p className="font-medium">Saathi</p>
-          <p className="text-xs text-muted-foreground">{t("chat.subtitle")}</p>
-        </div>
+      <div className="flex items-center justify-end gap-1 px-4 pt-3">
         <label className="sr-only" htmlFor="voice-lang">Voice language</label>
         <select
           id="voice-lang"
@@ -87,44 +98,44 @@ export function ChatPanel({
             setLangChosen(true);
             setLang(e.target.value);
           }}
-          className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+          className="h-8 rounded-full border border-input bg-background px-3 text-sm"
         >
           {VOICE_LANGS.map((l) => (
             <option key={l.code} value={l.code}>{l.label}</option>
           ))}
         </select>
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
+          type="button"
           aria-pressed={voiceOut}
           aria-label={voiceOut ? "Stop reading replies aloud" : "Read replies aloud"}
+          className="inline-flex size-8 items-center justify-center rounded-full hover:bg-muted"
           onClick={() => {
             if (voiceOut) stopSpeaking();
             setVoiceOut(!voiceOut);
           }}
         >
-          {voiceOut ? <Volume2 /> : <VolumeX />}
-        </Button>
+          {voiceOut ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+        </button>
       </div>
 
       {header}
 
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
         <AnimatePresence initial={false}>
           {messages.map((m, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={cn("flex gap-2", m.role === "user" && "justify-end")}
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              className={cn("flex items-end gap-2.5", m.role === "user" && "justify-end")}
             >
-              {m.role === "assistant" && <AgentAvatar name="Saathi" />}
+              {m.role === "assistant" && <SaathiMascot size={34} still className="shrink-0" />}
               <p
                 className={cn(
-                  "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[15px] leading-relaxed",
+                  "max-w-[85%] whitespace-pre-wrap rounded-[1.4rem] px-4 py-3 text-base leading-relaxed",
                   m.role === "assistant"
-                    ? "rounded-tl-sm bg-muted"
-                    : "rounded-tr-sm bg-primary text-primary-foreground",
+                    ? "rounded-bl-md bg-muted"
+                    : "rounded-br-md bg-primary font-medium text-primary-foreground",
                 )}
               >
                 {m.role === "user" && m.captured?.length
@@ -147,20 +158,20 @@ export function ChatPanel({
           ))}
         </AnimatePresence>
         {(thinking || interim) && (
-          <div className={cn("flex gap-2", interim && "justify-end")}>
+          <div className={cn("flex items-end gap-2.5", interim && "justify-end")}>
             {interim ? (
-              <p className="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary/40 px-3.5 py-2.5 text-[15px] italic">
+              <p className="max-w-[85%] rounded-[1.4rem] rounded-br-md bg-primary/40 px-4 py-3 text-base italic">
                 {interim}…
               </p>
             ) : (
               <>
-                <AgentAvatar name="Saathi" />
-                <span className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-muted px-4 py-3" aria-label="Saathi is typing">
+                <SaathiMascot size={34} still state="thinking" className="shrink-0" />
+                <span className="flex items-center gap-1.5 rounded-[1.4rem] rounded-bl-md bg-muted px-4 py-4" aria-label="Saathi is typing">
                   {[0, 1, 2].map((d) => (
                     <motion.span
                       key={d}
-                      className="size-1.5 rounded-full bg-muted-foreground"
-                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      className="size-2 rounded-full bg-muted-foreground"
+                      animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
                       transition={{ duration: 1, repeat: Infinity, delay: d * 0.15 }}
                     />
                   ))}
@@ -172,24 +183,28 @@ export function ChatPanel({
         <div ref={endRef} />
       </div>
 
-      <div className="border-t border-border p-3">
+      <div className="p-3">
         {disabled ? (
-          <p className="py-2 text-center text-sm text-muted-foreground">{disabledReason}</p>
+          <p className="rounded-2xl bg-muted px-4 py-3 text-center text-sm text-muted-foreground">{disabledReason}</p>
         ) : (
-          <div className="flex items-end gap-2">
+          <div className="flex items-end gap-2 rounded-[1.7rem] border-2 border-foreground/80 bg-background p-2 focus-within:border-[var(--brand)]">
             {supported && (
-              <Button
+              <button
                 type="button"
-                size="icon-lg"
-                variant={listening ? "default" : "outline"}
-                className={cn("size-11 rounded-full", listening && "animate-pulse")}
+                className={cn(
+                  "inline-flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-foreground/80 transition-colors",
+                  listening ? "animate-pulse bg-[var(--brand)] text-[var(--on-brand)]" : "hover:bg-muted",
+                )}
                 aria-label={listening ? t("chat.stop") : t("chat.speak")}
+                aria-pressed={listening}
                 onClick={listening ? stop : () => start()}
               >
                 {listening ? <MicOff /> : <Mic />}
-              </Button>
+              </button>
             )}
-            <Textarea
+            <textarea
+              id="chat-input"
+              ref={box}
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
@@ -200,22 +215,21 @@ export function ChatPanel({
               }}
               placeholder={listening ? t("chat.listening") : t("chat.placeholder")}
               rows={1}
-              className="max-h-40 min-h-11 resize-none text-[15px]"
+              className="min-h-11 flex-1 resize-none overflow-hidden bg-transparent px-2 py-2.5 text-base leading-6 outline-none placeholder:text-muted-foreground"
               aria-label={t("chat.message")}
             />
-            <Button
+            <button
               type="button"
-              size="icon-lg"
-              className="size-11 rounded-full"
+              className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-40"
               disabled={!text.trim() || thinking}
               aria-label={t("chat.send")}
               onClick={submit}
             >
               <SendHorizontal />
-            </Button>
+            </button>
           </div>
         )}
-        {supported && !disabled && <p className="mt-1.5 text-xs text-muted-foreground">{t("chat.voice_note")}</p>}
+        {supported && !disabled && <p className="mt-1.5 px-2 text-xs text-muted-foreground">{t("chat.voice_note")}</p>}
       </div>
     </section>
   );

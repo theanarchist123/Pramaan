@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 // Each agent gets a stable colour so people learn who's who.
 const AGENT_COLORS: Record<string, string> = {
   Saathi: "bg-primary text-primary-foreground",
-  "Khoji-Pehle": "bg-[var(--sector-business)] text-white",
+  "Khoji-Pehle": "bg-[var(--sector-business)] text-white dark:text-[#14152B]",
   Lipik: "bg-[oklch(0.5_0.12_200)] text-white",
   Pariksha: "bg-[oklch(0.5_0.13_300)] text-white",
   Prahari: "bg-verified text-background",

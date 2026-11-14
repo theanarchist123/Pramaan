@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     environment: str = "auto"
     llm_provider: str = "gemini"  # "gemini" | "claude"
     gemini_api_key: str = ""
+    # Offline certificate-art generator only (scripts/cert_art.py); nothing at request time uses these.
+    cloudflare_account_id: str = ""
+    cloudflare_api_token: str = ""
     anthropic_api_key: str = ""
     llm_mode: str = "mock"  # "live" | "mock"
     # Comma-separated chains: tried in order when a model is overloaded (503), rate-limited (429)

@@ -247,6 +247,31 @@ class Document(Base):
 # --------------------------------------------------------------------------- #
 # Certificates + transparency
 # --------------------------------------------------------------------------- #
+class ProfileDayStat(Base):
+    """Privacy-safe counters: how often a public page was opened / a certificate checked, per day. No visitor data is stored."""
+
+    __tablename__ = "profile_day_stats"
+
+    profile_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), primary_key=True)
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    views: Mapped[int] = mapped_column(Integer, default=0)
+    cert_checks: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class IntroRequest(Base):
+    """One member asking another to be introduced. The message is cleaned by code; contact details are never part of it."""
+
+    __tablename__ = "intro_requests"
+
+    id: Mapped[uuid.UUID] = pk()
+    profile_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    requester_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    message: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(12), default="pending")  # pending | accepted | declined
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class Certificate(Base):
     __tablename__ = "certificates"
 

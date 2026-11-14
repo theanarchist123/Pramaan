@@ -43,6 +43,11 @@ export default function Directory() {
     try {
       const wanted = new URLSearchParams(window.location.search).get("sector");
       if (wanted && SECTORS.includes(wanted)) setSector(wanted);
+      const asked = new URLSearchParams(window.location.search).get("q");
+      if (asked?.trim()) {
+        setQuery(asked);
+        run(asked, wanted && SECTORS.includes(wanted) ? wanted : null, null);
+      }
     } catch {
       /* no query string available: show everyone */
     }
@@ -97,92 +102,112 @@ export default function Directory() {
         ).sort((a, b) => b[1].length - a[1].length);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="text-4xl font-semibold md:text-5xl">{t("dir.title")}</h1>
-      <p className="mt-2 max-w-2xl text-muted-foreground">
-        {t("dir.sub")}
-      </p>
+    <div className="-mt-28 md:-mt-16">
+      <section data-nav-tone="on-dark" className="relative overflow-hidden bg-[#14152B] text-white">
+        <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-[var(--brand)] opacity-20 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-32 left-10 size-80 rounded-full bg-[#2447C9] opacity-25 blur-3xl" />
+        <div className="relative mx-auto max-w-7xl px-4 pb-10 pt-36 md:pt-28">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-3xl">
+              <h1 className="text-balance text-5xl leading-[1.02] md:text-7xl">{t("dir.title")}</h1>
+              <p className="mt-4 max-w-2xl text-lg text-white/75">{t("dir.sub")}</p>
+            </div>
+            <dl className="flex gap-3 text-[#14152B]">
+              {[
+                [everyone?.length ?? 0, "people"],
+                [Object.keys(stats?.by_sector ?? {}).length, "fields"],
+                [states.length, "states"],
+              ].map(([n, label]) => (
+                <div key={String(label)} className="min-w-24 rounded-2xl bg-[var(--brand)] px-4 py-3">
+                  <dd className="font-display text-3xl font-extrabold tabular-nums leading-none">{n}</dd>
+                  <dt className="mt-1 text-xs font-semibold">{label}</dt>
+                </div>
+              ))}
+            </dl>
+          </div>
 
-      <form
-        className="mt-6 flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          run(query, sector, state);
-          setView("people");
-        }}
-      >
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              if (!e.target.value.trim()) setResponse(null);
+          <form
+            className="mt-8 flex max-w-4xl gap-2 rounded-full border-2 border-white bg-white p-1.5 shadow-[0_6px_0_var(--brand)]"
+            onSubmit={(e) => {
+              e.preventDefault();
+              run(query, sector, state);
+              setView("people");
             }}
-            placeholder={t("dir.placeholder")}
-            className="h-13 rounded-2xl pl-12 text-base"
-            aria-label={t("dir.search")}
-          />
-        </div>
-        <Button type="submit" className="h-13 rounded-2xl px-6 text-base" disabled={searching || !query.trim()}>
-          {searching ? <Loader2 className="animate-spin" /> : t("dir.searchBtn")}
-        </Button>
-      </form>
-
-      {!hasQuery && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {EXAMPLE_QUERIES.map((q) => (
-            <button
-              key={q}
-              type="button"
-              onClick={() => {
-                setQuery(q);
-                run(q, sector, state);
-                setView("people");
-              }}
-              className="rounded-full border border-border bg-card px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
-            >
-              {q}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        {SECTORS.filter((s) => (stats?.by_sector?.[s] ?? 0) > 0).map((s) => (
-          <button
-            key={s}
-            type="button"
-            aria-pressed={sector === s}
-            onClick={() => setSector(sector === s ? null : s)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors",
-              sector === s ? "border-foreground bg-foreground text-background" : "border-border bg-card hover:border-primary/50",
-            )}
           >
-            <span className="size-2 rounded-full" style={{ background: paletteFor(s).primary }} /> {s}
-            <span className="tabular-nums opacity-60">{stats?.by_sector?.[s]}</span>
-          </button>
-        ))}
-        <label className="sr-only" htmlFor="state-filter">State</label>
-        <select
-          id="state-filter"
-          value={state ?? ""}
-          onChange={(e) => setState(e.target.value || null)}
-          className="h-8 rounded-full border border-border bg-card px-3 text-xs"
-        >
-          <option value="">{t("dir.allStates")}</option>
-          {states.map((s) => (
-            <option key={s} value={s}>{s} ({stats?.by_state[s]})</option>
-          ))}
-        </select>
-        {(sector || state) && (
-          <button type="button" onClick={() => { setSector(null); setState(null); }} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-            <X className="size-3" /> {t("dir.clear")}
-          </button>
-        )}
-      </div>
+            <Search aria-hidden className="ml-4 hidden size-5 shrink-0 self-center text-[#4B4E68] sm:block" />
+            <input
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                if (!e.target.value.trim()) setResponse(null);
+              }}
+              placeholder={t("dir.placeholder")}
+              className="min-w-0 flex-1 bg-transparent px-3 py-3 text-base text-[#14152B] placeholder:text-[#5E6280] focus:outline-none"
+              aria-label={t("dir.search")}
+            />
+            <button type="submit" disabled={searching || !query.trim()} className="inline-flex min-w-28 items-center justify-center rounded-full bg-[#14152B] px-6 text-base font-semibold text-white disabled:opacity-50">
+              {searching ? <Loader2 className="animate-spin" /> : t("dir.searchBtn")}
+            </button>
+          </form>
 
+          {!hasQuery && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {EXAMPLE_QUERIES.map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => {
+                    setQuery(q);
+                    run(q, sector, state);
+                    setView("people");
+                  }}
+                  className="rounded-full border border-white/30 px-3.5 py-1.5 text-left text-sm text-white/85 transition-colors hover:bg-white/10"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-8 flex flex-wrap items-center gap-2" role="group" aria-label="Fields">
+            {SECTORS.filter((sx) => (stats?.by_sector?.[sx] ?? 0) > 0).map((sx, i) => {
+              const k = (i % 6) + 1;
+              const on = sector === sx;
+              return (
+                <button
+                  key={sx}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setSector(on ? null : sx)}
+                  className={cn("inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition-transform hover:-translate-y-0.5", on && "ring-2 ring-white ring-offset-2 ring-offset-[#14152B]")}
+                  style={{ background: `var(--tile${k})`, color: `var(--tile${k}i)` }}
+                >
+                  {sx} <span className="tabular-nums">{stats?.by_sector?.[sx]}</span>
+                </button>
+              );
+            })}
+            <label className="sr-only" htmlFor="state-filter">State</label>
+            <select
+              id="state-filter"
+              value={state ?? ""}
+              onChange={(e) => setState(e.target.value || null)}
+              className="h-9 rounded-full border border-white/30 bg-transparent px-3 text-sm text-white"
+            >
+              <option value="" className="text-black">{t("dir.allStates")}</option>
+              {states.map((st) => (
+                <option key={st} value={st} className="text-black">{st} ({stats?.by_state[st]})</option>
+              ))}
+            </select>
+            {(sector || state) && (
+              <button type="button" onClick={() => { setSector(null); setState(null); }} className="inline-flex items-center gap-1 text-sm text-white/80 hover:text-white">
+                <X className="size-4" /> {t("dir.clear")}
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-7xl px-4 pb-10 pt-6">
       <div className="mt-6 flex items-center justify-between gap-3 border-b border-border">
         <div role="tablist" aria-label="Views" className="flex">
           {([
@@ -338,6 +363,7 @@ export default function Directory() {
             </aside>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

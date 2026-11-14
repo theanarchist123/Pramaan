@@ -108,7 +108,7 @@ export default function CasePage() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  if (error && !d) return <main><p className="err" role="alert">{error}</p><Link href="/">Back to the queue</Link></main>;
+  if (error && !d) return <main><p className="err" role="alert">{error}</p><Link href="/">Back to Review</Link></main>;
   if (!d) return <main><p className="muted">Loading...</p></main>;
   const p = d.profile;
   const closed = d.item.status !== "open";
@@ -116,7 +116,6 @@ export default function CasePage() {
   return (
     <main>
       <div className="row">
-        <Link href="/">Queue</Link>
         <h1 className="grow">{p?.full_name ?? "(profile removed)"}</h1>
         {!d.permissions.holds_lock && !closed && !d.permissions.own_profile && <button onClick={take}>Take case</button>}
         {d.permissions.holds_lock && <span className="chip">You hold this case</span>}

@@ -13,7 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.agents.events import start_run
 from app.db import get_session
 from app.deps import Principal, require_admin
-from app.models import OutboxMessage
+from app.config import get_settings
+from app.models import OutboxMessage, User
 from app.services import outreach as svc
 
 router = APIRouter(prefix="/v1/admin", tags=["outreach"])
@@ -65,6 +66,29 @@ async def suggest(
     await session.commit()
     await ctx.finish("done", f"{len(created)} draft(s)")
     return created
+
+
+class InviteIn(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    email: str = Field(min_length=3, max_length=255, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    note: str = Field(default="", max_length=1500)
+
+
+@router.post("/outreach/invite", response_model=MessageOut)
+async def invite(body: InviteIn, _: Principal = Depends(require_admin), session: AsyncSession = Depends(get_session)):
+    """Invite a specific person to get listed. Creates a DRAFT in the outbox; a person sends it (and the send cap, the opt-out list and the
+    unsubscribe link apply). People who already have an account, or who opted out, are refused."""
+    email = body.email.strip().lower()
+    if (await session.execute(select(User).where(User.email == email))).scalar_one_or_none():
+        raise HTTPException(409, "This person already has an account")
+    if await svc.is_suppressed(session, email):
+        raise HTTPException(409, "This address has opted out of email from Pramaan")
+    subject, text = svc.invite_message(body.name, body.note, get_settings().public_base_url)
+    msg = OutboxMessage(profile_id=None, kind="invite", to_email=email, subject=subject, body=text, status="draft")
+    session.add(msg)
+    await session.commit()
+    await session.refresh(msg)
+    return msg
 
 
 @router.get("/outbox", response_model=list[MessageOut])

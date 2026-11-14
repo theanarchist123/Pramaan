@@ -80,7 +80,7 @@ export default function ImagesPage() {
 
   return (
     <main>
-      <div className="row"><Link href="/">Queue</Link><h1 className="grow">Photographs</h1></div>
+      <div className="row"><h1 className="grow">Photographs</h1></div>
       <p className="muted">Search Unsplash, look at each photo, and approve the ones that suit a field. Landscapes, objects, textures, buildings: never a photograph of a person.</p>
 
       <form className="panel" onSubmit={search}>

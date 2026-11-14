@@ -16,6 +16,7 @@ from app.db import get_session
 from app.deps import SESSION_COOKIE, Principal, get_principal
 from app.models import EmailOtp, User
 from app.schemas import LoginIn, RegisterIn, TokenOut, UserOut
+from app.services.guests import is_guest_email, new_guest_email
 
 log = logging.getLogger("pramaan.auth")
 router = APIRouter(prefix="/v1/auth", tags=["auth"])
@@ -54,6 +55,46 @@ async def register(body: RegisterIn, response: Response, session: AsyncSession =
         email=email, name=body.name, role=body.role, password_hash=hash_password(body.password)
     )
     session.add(user)
+    await session.commit()
+    return _token_out(user, response)
+
+
+@router.post("/guest", response_model=TokenOut, status_code=status.HTTP_201_CREATED,
+             dependencies=[Depends(ip_limit("guest", 6))])
+async def start_guest(response: Response, session: AsyncSession = Depends(get_session)):
+    """A visitor starts talking to Saathi without an account. The guest has no password and can never be listed, verified or certified:
+    those steps need a verified e-mail address. `/v1/auth/upgrade` turns the same user into a normal account and keeps the draft."""
+    from app.core.ratelimit import check_rate_limit
+
+    ok, _ = await check_rate_limit("guest:all", 60)  # a ceiling on guests created per minute, whoever asks
+    if not ok:
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Lots of people are starting right now. Try again in a minute.")
+    user = User(email=new_guest_email(), name="", role="person", password_hash=None)
+    session.add(user)
+    await session.commit()
+    return _token_out(user, response)
+
+
+@router.post("/upgrade", response_model=TokenOut)
+async def upgrade_guest(
+    body: RegisterIn,
+    response: Response,
+    principal: Principal = Depends(get_principal),
+    session: AsyncSession = Depends(get_session),
+):
+    """Create an account from a guest. The user, and everything they started, stays; only the address, name and password are set."""
+    user = await session.get(User, principal.user.id)
+    if user is None or not is_guest_email(user.email):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This is already a full account")
+    email = body.email.lower().strip()
+    if is_guest_email(email):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Use your own email address")
+    if (await session.execute(select(User).where(User.email == email))).scalar_one_or_none():
+        raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email already exists. Sign in instead.")
+    user.email = email
+    user.name = body.name or user.name
+    user.password_hash = hash_password(body.password)
+    user.email_verified_at = None
     await session.commit()
     return _token_out(user, response)
 

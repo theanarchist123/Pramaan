@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
-  BadgeCheck, Bot, Code2, LogIn, Moon, Search, Sparkles, Sun, Type, UserRound,
+  BadgeCheck, LogIn, Moon, Search, Sparkles, Sun, Type, UserRound,
 } from "lucide-react";
 import {
   Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
-import { toggleLargeText } from "@/components/site-header";
+import { toggleLargeText } from "@/lib/large-text";
+import { useI18n } from "@/lib/i18n";
 
 export function CommandPalette({
   open,
@@ -20,6 +21,7 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const { resolvedTheme, setTheme } = useTheme();
   const [code, setCode] = useState("");
 
@@ -42,49 +44,43 @@ export function CommandPalette({
   const looksLikeCode = /^PRM-[A-Z0-9]{6,}$/i.test(code.trim());
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange} title="Command palette">
+    <CommandDialog open={open} onOpenChange={onOpenChange} title={t("pal.title")}>
       <Command>
-        <CommandInput placeholder="Go anywhere, or paste a certificate code…" value={code} onValueChange={setCode} />
+        <CommandInput placeholder={t("pal.placeholder")} value={code} onValueChange={setCode} />
         <CommandList>
-          <CommandEmpty>No matches.</CommandEmpty>
+          <CommandEmpty>{t("pal.none")}</CommandEmpty>
           {looksLikeCode && (
-            <CommandGroup heading="Verify">
+            <CommandGroup heading={t("pal.verifyHeading")}>
               <CommandItem onSelect={() => go(`/verify/${code.trim().toUpperCase()}`)}>
-                <BadgeCheck /> Verify certificate {code.trim().toUpperCase()}
+                <BadgeCheck /> {t("pal.verifyCode")} {code.trim().toUpperCase()}
               </CommandItem>
             </CommandGroup>
           )}
-          <CommandGroup heading="Go to">
+          <CommandGroup heading={t("pal.goTo")}>
             <CommandItem onSelect={() => go("/onboard")}>
-              <Sparkles /> Create my verified profile
+              <Sparkles /> {t("pal.getListed")}
             </CommandItem>
             <CommandItem onSelect={() => go("/verify")}>
-              <BadgeCheck /> Verify a certificate
-            </CommandItem>
-            <CommandItem onSelect={() => go("/mission-control")}>
-              <Bot /> Mission Control (live agents)
+              <BadgeCheck /> {t("pal.checkCert")}
             </CommandItem>
             <CommandItem onSelect={() => go("/directory")}>
-              <Search /> Search the registry
-            </CommandItem>
-            <CommandItem onSelect={() => go("/developers")}>
-              <Code2 /> Developers & API
+              <Search /> {t("pal.find")}
             </CommandItem>
             <CommandItem onSelect={() => go("/auth?mode=login")}>
-              <LogIn /> Sign in
+              <LogIn /> {t("pal.signin")}
             </CommandItem>
             <CommandItem onSelect={() => go("/me")}>
-              <UserRound /> My profiles
+              <UserRound /> {t("pal.myPage")}
             </CommandItem>
           </CommandGroup>
-          <CommandGroup heading="Preferences">
+          <CommandGroup heading={t("pal.prefs")}>
             <CommandItem
               onSelect={() => {
                 setTheme(resolvedTheme === "dark" ? "light" : "dark");
                 onOpenChange(false);
               }}
             >
-              {resolvedTheme === "dark" ? <Sun /> : <Moon />} Toggle dark mode
+              {resolvedTheme === "dark" ? <Sun /> : <Moon />} {t("pal.dark")}
             </CommandItem>
             <CommandItem
               onSelect={() => {
@@ -92,7 +88,7 @@ export function CommandPalette({
                 onOpenChange(false);
               }}
             >
-              <Type /> Toggle large text
+              <Type /> {t("pal.large")}
               <CommandShortcut>A+</CommandShortcut>
             </CommandItem>
           </CommandGroup>

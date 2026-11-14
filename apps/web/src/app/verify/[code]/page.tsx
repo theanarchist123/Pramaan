@@ -1,5 +1,6 @@
 "use client";
 
+import { ShareRow } from "@/components/share-row";
 import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, Copy, Download, FileImage, FlaskConical, RotateCcw, Share2, ShieldAlert, ShieldQuestion, Layers } from "lucide-react";
@@ -45,34 +46,44 @@ export default function VerifyCode({ params }: { params: Promise<{ code: string 
   return <Result code={code} detail={detail} verify={verify} />;
 }
 
+const BAND: Record<"verified" | "caution" | "seal" | "neutral", string> = {
+  verified: "bg-[var(--verified)] text-[var(--bond)]",
+  caution: "bg-[var(--brand)] text-[var(--on-brand)]",
+  seal: "bg-[var(--seal)] text-[var(--bond)]",
+  neutral: "bg-[var(--ink)] text-[var(--bond)]",
+};
+
 function Banner({ verdict, verify }: { verdict: Verdict; verify?: VerifyResult | null }) {
   const copy = VERDICT_COPY[verdict];
-  const tone = TONE[copy.tone];
   const Icon = ICON[verdict];
   return (
-    <div className={cn("sticky top-14 z-30 flex items-center gap-4 rounded-2xl p-5 shadow-sm", tone.bg)} role="status">
-      <SealLanding ring={verdict === "valid"}>
-        <Icon className={cn("size-12", tone.fg)} aria-hidden />
-      </SealLanding>
-      <div>
-        <h1 className="text-3xl font-semibold">{copy.title}</h1>
-        <p className="text-muted-foreground">{copy.sentence(verify)}</p>
-        {verdict === "replaced" && verify?.superseded_by && (
-          <Link className="text-sm text-primary underline" href={`/verify/${verify.superseded_by}`}>
-            View the newer certificate
-          </Link>
-        )}
+    <section className={cn("-mt-28 md:-mt-16", BAND[copy.tone])} role="status" data-nav-tone={copy.tone === "caution" ? "on-light" : "inverse"}>
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-6 px-4 pb-10 pt-36 md:pt-28">
+        <SealLanding ring={verdict === "valid"}>
+          <Icon className="size-20 md:size-24" aria-hidden />
+        </SealLanding>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-balance text-4xl leading-[1.05] md:text-6xl">{copy.title}</h1>
+          <p className="mt-2 max-w-2xl text-lg opacity-90">{copy.sentence(verify)}</p>
+          {verdict === "replaced" && verify?.superseded_by && (
+            <Link className="mt-2 inline-block font-semibold underline" href={`/verify/${verify.superseded_by}`}>
+              View the newer certificate
+            </Link>
+          )}
+        </div>
+        <Link href="/verify" className="inline-flex h-11 items-center rounded-full border-2 border-current px-5 text-sm font-bold">Check another</Link>
       </div>
-    </div>
+    </section>
   );
 }
 
 function NotFound({ code, reason }: { code: string; reason?: string }) {
   const fixes = suggestions(code);
   return (
-    <div className="mx-auto max-w-xl px-4 py-16">
+    <div>
       <Banner verdict="not_found" />
-      <p className="mt-4 text-muted-foreground">{reason ?? `We have no certificate with the code ${code}.`}</p>
+      <div className="mx-auto max-w-xl px-4 py-10">
+      <p className="text-muted-foreground">{reason ?? `We have no certificate with the code ${code}.`}</p>
       {[...code.replace(/^PRM-/, "")].some((c) => !isCodeChar(c)) && (
         <p className="mt-3 text-sm">
           Codes never contain 0, 1, I, L, O or U, so this one has a character that was misread or mistyped. Check it against the document.
@@ -88,6 +99,7 @@ function NotFound({ code, reason }: { code: string; reason?: string }) {
         </p>
       )}
       <Button className="mt-6" variant="outline" render={<Link href="/verify" />} nativeButton={false}>Try another code</Button>
+      </div>
     </div>
   );
 }
@@ -139,11 +151,12 @@ function Result({ code, detail, verify }: { code: string; detail: CertificateDet
   const cracked = Boolean(changed && forged && !forged.valid && !busy);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div>
       <Banner verdict={verdict} verify={verify} />
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-        <div className="min-w-0">
+      <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className="min-w-0 rounded-[1.8rem] bg-[var(--stamp-tint)] p-3 sm:p-5">
           {preview ? (
             <div className="relative">
               <ScaledTilt tilt={!forging}>
@@ -202,8 +215,8 @@ function Result({ code, detail, verify }: { code: string; detail: CertificateDet
         </div>
 
         <div className="min-w-0 space-y-5">
-          <section aria-label="How we checked" className="rounded-2xl border border-border bg-card p-5">
-            <h2 className="text-lg font-semibold">How we checked</h2>
+          <section aria-label="How we checked" className="pop rounded-3xl bg-card p-5">
+            <h2 className="text-2xl">How we checked</h2>
             <div className="mt-3"><CheckCascade key={live ? "live" : "base"} steps={steps} label="How we checked" /></div>
           </section>
           {preview && verdict !== "revoked" && verdict !== "altered" && <Actions code={code} detail={detail} />}
@@ -216,6 +229,7 @@ function Result({ code, detail, verify }: { code: string; detail: CertificateDet
       </div>
 
       <YourselfSection verify={verify} />
+      </div>
     </div>
   );
 }
@@ -245,7 +259,7 @@ function Actions({ code, detail }: { code: string; detail: CertificateDetail }) 
         <Button variant="outline" render={<a href={`${API_URL}/v1/certificates/${code}/pdf`} download />} nativeButton={false}><Download /> PDF</Button>
         <Button variant="outline" render={<a href={`${API_URL}/v1/certificates/${code}/image.png`} download />} nativeButton={false}><FileImage /> Image</Button>
         <Button variant="outline" onClick={downloadJson} title="The signed certificate as JSON. The desktop app, or the drop box on the Verify page, can check it with no internet."><Download /> JSON (offline check)</Button>
-        <Button variant="outline" onClick={() => navigator.clipboard.writeText(url).then(() => toast.success("Verification link copied"))}><Copy /> Copy link</Button>
+        <ShareRow className="col-span-2" url={url} text="Check this Pramaan certificate:" />
         <Button variant="outline" className="col-span-2" render={<a href={linkedin} target="_blank" rel="noreferrer" />} nativeButton={false}><Share2 /> Add to LinkedIn</Button>
       </div>
     </section>

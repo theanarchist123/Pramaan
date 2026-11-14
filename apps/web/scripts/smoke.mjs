@@ -1,5 +1,7 @@
-// End-to-end smoke test of the onboarding flow against a running API + web app.
-// Usage: node scripts/smoke.mjs [baseUrl] [outDir]
+// End-to-end smoke test of the whole journey against a running API (LLM_MODE=mock) + web app: register, talk, check, document, approval, certificate, forgery, log.
+// Needs the API started with REQUIRE_EMAIL_VERIFICATION=false (it registers fresh users and does not verify their e-mail) and, to reach the auto-approve path,
+// HUMAN_APPROVAL_FIRST_LISTING=false AWARD_CLAIMS_NEED_HUMAN=false (by default a first listing and any award claim go to a person, by design).
+// Usage: node scripts/smoke.mjs [baseUrl] [outDir]   (updated for the v3 UI: no tabs; one journey with sections; the account menu holds sign-out)
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
@@ -13,7 +15,7 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
 page.on("console", (m) => {
   // The deliberately fake certificate code legitimately produces a 404 in the console.
-  if (m.type() === "error" && !m.text().includes("404")) errors.push(`console: ${m.text()}`);
+  if (m.type() === "error" && !m.text().includes("404") && !m.text().includes("401")) errors.push(`console: ${m.text()}`);
 });
 
 const step = async (name, fn) => {
@@ -24,8 +26,8 @@ const step = async (name, fn) => {
 
 await step("landing renders", async () => {
   await page.goto(BASE);
-  await page.getByRole("heading", { name: /Prove it/ }).waitFor();
-  await page.getByText("Meet the team doing the paperwork").waitFor();
+  await page.getByRole("heading", { level: 1, name: /achievers/i }).waitFor();
+  await page.getByRole("heading", { name: /Meet people who/ }).waitFor();
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${OUT}/01-landing.png`, fullPage: true });
 });
@@ -40,7 +42,7 @@ await step("register", async () => {
 });
 
 await step("consent step", async () => {
-  await page.getByRole("heading", { name: /build your verified profile/ }).waitFor();
+  await page.getByRole("heading", { level: 1, name: /build your/i }).waitFor();
   await page.screenshot({ path: `${OUT}/02-consent.png` });
   await page.getByText("List my verified profile publicly.").click();
   await page.getByRole("button", { name: "Start talking to Saathi" }).click();
@@ -55,20 +57,22 @@ await step("chat builds the profile live", async () => {
   await box.fill("I am a marine scientist working in Kerala. I received the Sagar Samman award in 2024.");
   await box.press("Enter");
   await page.getByText("Self-claimed").first().waitFor();
+  await page.getByRole("heading", { name: /Back one achievement with a document/ }).waitFor({ timeout: 30000 }); // the "next step" card follows the profile
   await page.waitForTimeout(900);
   await page.screenshot({ path: `${OUT}/03-onboarding.png` });
 });
 
-await step("verify tab streams agents", async () => {
-  await page.getByRole("tab", { name: /Verify/ }).click();
-  await page.getByRole("button", { name: "Verify my profile" }).click();
-  await page.getByText("With a human reviewer").waitFor({ timeout: 30000 });
+await step("verify streams agents", async () => {
+  await page.getByRole("button", { name: "Verify my profile" }).click(); // v3: one page, no tabs; the check section is on the right
+  await page.getByText("With a reviewer").first().waitFor({ timeout: 30000 }); // wording per the "never say verified unless the server says so" rule
   await page.getByText(/Identity not confirmed|no supporting evidence/).first().waitFor();
   await page.screenshot({ path: `${OUT}/04-verify.png` });
 });
 
 await step("second person: matching document → auto-approved", async () => {
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.getByRole("button", { name: "Account and settings" }).click(); // v3: sign-out lives in the account menu
+  await page.getByRole("menuitem", { name: /Sign out/ }).click();
+  await page.waitForTimeout(600);
   await page.goto(`${BASE}/auth?next=/onboard`);
   await page.getByLabel("Your name").fill("Doc Tester");
   await page.getByLabel("Email").fill(`smoke-doc-${Date.now()}@example.com`);
@@ -85,18 +89,18 @@ await step("second person: matching document → auto-approved", async () => {
   await box.press("Enter");
   await page.getByText("Self-claimed").first().waitFor();
 
-  await page.getByRole("tab", { name: /Documents/ }).click();
-  await page.locator('input[type="file"]').setInputFiles({
+  await page.locator('input[type="file"]').last().setInputFiles({ // the first file input is the photo; the document drop is the last
     name: "award.txt",
     mimeType: "text/plain",
-    buffer: Buffer.from("Type: award letter\nName: Arjun Rao\nTitle: Karnataka Innovation Award\nIssuer: Government of Karnataka\nYear: 2023\n"),
+    buffer: Buffer.from(`Type: award letter\nName: Arjun Rao\nTitle: Karnataka Innovation Award\nIssuer: Government of Karnataka\nYear: 2023
+Reference: ${Date.now()}
+`), // unique per run: an identical document is (correctly) flagged as a duplicate
   });
   await page.getByText(/holder: Arjun Rao/).waitFor({ timeout: 20000 });
   await page.screenshot({ path: `${OUT}/04b-document.png` });
 
-  await page.getByRole("tab", { name: /Verify/ }).click();
   await page.getByRole("button", { name: "Verify my profile" }).click();
-  await page.getByText("Your profile passed automated verification").waitFor({ timeout: 30000 });
+  await page.getByText("Passed automated checks").first().waitFor({ timeout: 30000 });
   await page.screenshot({ path: `${OUT}/04c-approved.png` });
 });
 
@@ -112,7 +116,7 @@ await step("issue a signed certificate", async () => {
 
 await step("verification page shows every check", async () => {
   await page.goto(`${BASE}/verify/${certCode}`);
-  await page.getByText("Authentic certificate").waitFor();
+  await page.getByRole("heading", { name: "Authentic" }).waitFor();
   await page.getByText(/Found at position #\d+ of \d+/).waitFor();
   await page.getByText("Confirmed it has not been revoked").waitFor();
   await page.waitForTimeout(2200);
@@ -134,6 +138,7 @@ await step("PDF + PNG render via headless Chromium", async () => {
 
 await step("try to forge: edit an award → forgery detected", async () => {
   await page.goto(`${BASE}/verify/${certCode}`);
+  await page.getByRole("button", { name: "Edit as a forger" }).click(); // the editing form opens on request
   await page.getByLabel("Achievement 1").fill("Padma Vibhushan 2025");
   await page.getByText("Forgery detected").waitFor({ timeout: 10000 });
   await page.getByText(/pinpointed what you changed/).waitFor();
@@ -147,7 +152,7 @@ await step("try to forge: edit an award → forgery detected", async () => {
 
 await step("a made-up code is rejected; transparency log is intact", async () => {
   await page.goto(`${BASE}/verify/PRM-FAKEFAKE12`);
-  await page.getByText("No such certificate").waitFor();
+  await page.getByRole("heading", { name: "Not found" }).waitFor();
   await page.goto(`${BASE}/transparency`);
   await page.getByRole("button", { name: "Verify the whole chain in your browser" }).click(); // checks only when asked
   await page.getByText(/Chain intact/).waitFor();

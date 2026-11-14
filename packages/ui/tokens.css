@@ -1,20 +1,27 @@
-/* Pramaan design tokens - "Seal & Ink" (spec section 4, Appendix A).
+/* Pramaan design tokens - v3 "Marigold & Ink" (docs/design/v3/tokens.md; supersedes Seal & Ink).
    Every colour pair used for text is checked by scripts/contrast.mjs (run in CI). Edit a colour here and the gate
    re-computes the contrast ratios from THIS file, so the spec's numbers cannot drift from the code. */
 
 :root {
   /* light "Bond" */
-  --bond: #F4F6FA;  --surface: #FFFFFF;  --paper: #FBF8F1;
-  --ink: #1A1B3A;   --ink-muted: #5A5F7A;  --rule: #D9DDE8;
-  --stamp: #4A2C8F; --stamp-tint: #E9E4F7;  --on-stamp: #FFFFFF;  /* text on a filled stamp-coloured button */
-  --verified: #0B7A5E; --verified-tint: #DDF3EA;
+  --bond: #FFFFFF;  --surface: #FFFFFF;  --paper: #FBF8F1;
+  --ink: #14152B;   --ink-muted: #4B4E68;  --rule: #E3E5EF;
+  --stamp: #14152B; --stamp-tint: #FFF4D6;  --on-stamp: #FFFFFF;  /* the primary action colour is ink; text on a filled primary button */
+  --brand: #FFB81C; --on-brand: #14152B;     /* marigold: hero blocks, highlights, progress */
+  --public: #2447C9; --public-tint: #E2E9FF; /* claim backed by a public record */
+  --self: #5E6280;   --self-tint: #ECEDF4;   /* self-declared claim */
+  --verified: #0B7A5E; --verified-tint: #D9F5E8;
   --seal: #B8321B;  --seal-tint: #FBE5E0;
   --caution: #8A5A00; --caution-tint: #FFF1D6;
   --foil: #A87B1E;   /* certificate and seal ring only: decorative, never text */
   /* Text ON a paper object. Paper stays light in both themes (a document lying on the desk), so the ink on it must
      stay dark in both themes too: --ink flips to light in dark mode and would be invisible on --paper. */
-  --paper-ink: #1A1B3A; --paper-ink-muted: #5A5F7A;
-  --paper-verified: #0B7A5E; --paper-seal: #B8321B; --paper-stamp: #4A2C8F;  /* the same hues, fixed, for use ON paper in either theme */
+  --paper-ink: #14152B; --paper-ink-muted: #4B4E68;
+  --paper-verified: #0B7A5E; --paper-seal: #B8321B; --paper-stamp: #14152B;  /* the same hues, fixed, for use ON paper in either theme */
+
+  /* v3 tile pairs (field tiles, avatars): background / ink, each pair contrast-checked */
+  --tile1: #E8F0FF; --tile1i: #2447C9;  --tile2: #FFE3DC; --tile2i: #B7351A;  --tile3: #DDF5E6; --tile3i: #086A49;
+  --tile4: #F1E4FF; --tile4i: #7B35C4;  --tile5: #FFF0C2; --tile5i: #8A5A00;  --tile6: #DAF3F6; --tile6i: #0A7585;
 
   /* sector palette: spines, dots, monogram rings, duotone ends, chart series. Each sector also has an icon. */
   --sector-energy: #877500;      --sector-agriculture: #578429; --sector-healthcare: #148A53;
@@ -24,8 +31,8 @@
   --sector-law: #9F6700;         --sector-public-service: #65768C;
 
   /* shape, depth, density */
-  --radius-data: 2px; --radius-control: 6px; --radius-panel: 12px; --radius-sheet: 16px;
-  --lift-1: 0 1px 2px rgb(26 27 58 / .08), 0 4px 12px rgb(26 27 58 / .06);   /* paper objects */
+  --radius-data: 2px; --radius-control: 12px; --radius-panel: 20px; --radius-sheet: 26px;
+  --lift-1: 0 1px 2px rgb(20 21 43 / .06), 0 8px 24px rgb(20 21 43 / .08); --pop: 6px 6px 0 #14152B;  /* hero objects: chunky offset shadow */   /* paper objects */
   --lift-2: 0 8px 24px rgb(26 27 58 / .16);                                  /* floating layers */
   --row-h: 44px; --pad: 16px;
 
@@ -39,10 +46,11 @@
 [data-density="compact"] { --row-h: 32px; --pad: 8px; }
 
 .dark {
-  --bond: #12142B;  --surface: #1A1D3A;  /* --paper stays light on purpose: documents lie on the desk */
-  --ink: #ECEEF8;   --ink-muted: #A3A8C4;  --rule: rgb(255 255 255 / .12);
-  --stamp: #B6A8FF; --stamp-tint: #2A2559;  --on-stamp: #12142B;
-  --verified: #4FD1A5; --verified-tint: #123B31;
+  --bond: #0F1020;  --surface: #1A1B34;  /* --paper stays light on purpose: documents lie on the desk */
+  --ink: #F1F2FB;   --ink-muted: #A9ADC9;  --rule: rgb(255 255 255 / .12);
+  --stamp: #FFB81C; --stamp-tint: #26220F;  --on-stamp: #14152B;
+  --public: #8FA8FF; --public-tint: #1B2552; --self: #B3B6D0; --self-tint: #272947;
+  --verified: #4FD1A0; --verified-tint: #10382B;
   --seal: #FF7A63;  --seal-tint: #4A1F19;
   --caution: #F2C46D; --caution-tint: #3D2F0F;
   --foil: #D9B25C;
@@ -51,6 +59,8 @@
   --sector-business: #89B7FF;    --sector-education: #B6A8FF;   --sector-literature: #DE9BE9;
   --sector-social-work: #F693C0; --sector-arts-culture: #FF9492; --sector-sports: #FA9D6B;
   --sector-law: #E7AA5B;         --sector-public-service: #A2BAD8;
+  --tile1: #1B2552; --tile1i: #9DB3FF;  --tile2: #4A2119; --tile2i: #FF9C86;  --tile3: #123B2D; --tile3i: #5FDDAE;
+  --tile4: #331F52; --tile4i: #CBA0FF;  --tile5: #3D2F0F; --tile5i: #F2C46D;  --tile6: #0F3840; --tile6i: #5CD3E6;
   --lift-1: 0 1px 2px rgb(0 0 0 / .4), 0 6px 18px rgb(0 0 0 / .35);
   --lift-2: 0 12px 32px rgb(0 0 0 / .5);
 }

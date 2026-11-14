@@ -49,27 +49,32 @@ sql(`update profiles set is_demo = true where id='${demoStart.profile.id}'`);
 await post(`/v1/onboarding/${demoStart.profile.id}/verify`, demoTok);
 
 
-await step("HOME: hero proof table checks a real certificate (or says there is none), ledger strip, no mock screenshot", async () => {
+// v3: the home page is people-first (search, a labelled sample, people cards, field tiles). The v2 proof table and the "forge a letter" desk
+// certificate moved off the home page; the forge-a-letter behaviour is still covered by smoke-verify.mjs.
+await step("HOME: search-first hero, people cards, field tiles that open the filtered directory, no agent roster", async () => {
   await page.goto(`${WEB}/`);
-  await page.getByText("Checked just now").waitFor();
-  await page.getByText(/Confirmed it has not been revoked|has been revoked|There is no certificate to check yet/).waitFor({ timeout: 8000 });
-  assert.equal(await page.getByText("Example profile · sample data").count(), 0);
-  // the desk certificate: change a letter and the REGISTRY says the signature no longer holds
-  const box = page.getByLabel(/Try to forge it/);
-  await box.waitFor({ timeout: 20000 });
-  await page.getByText("Signature valid: this is the real name").waitFor();
-  const original = await box.inputValue();
-  await box.fill(original.slice(0, -1) + (original.endsWith("x") ? "y" : "x"));
-  await page.getByText("Signature broken: the registry refuses it").waitFor({ timeout: 10000 });
-  await page.getByText("NOT VALID").waitFor();
-  await box.fill(original);
-  await page.getByText("Signature valid: this is the real name").waitFor({ timeout: 10000 });
-  // browse by field: 14 tiles, each linking to the filtered directory
-  const tiles = page.getByRole("link", { name: /: \d+ (person|people)$/ });
-  assert.equal(await tiles.count(), 14, "one tile per field");
-  await tiles.first().click();
+  await page.getByRole("heading", { level: 1, name: /achievers/i }).waitFor({ timeout: 30000 });
+  await page.getByRole("link", { name: /Get listed, free/ }).first().waitFor();
+  assert.equal(await page.getByText("Meet the team doing the paperwork").count(), 0, "the agent roster is not on the home page");
+  assert.equal(await page.getByText("Checked just now").count(), 0, "the proof table moved off the home page");
+  await page.getByText(/fictional sample/i).waitFor();
+  // the sample on the page says it is a sample
+  // people come first: real cards that link to profiles
+  await page.getByRole("heading", { name: /Meet people who/ }).waitFor();
+  await page.waitForFunction(() => document.querySelectorAll('a[href^="/p/"]').length > 0, null, { timeout: 20000 });
+  // the search sends the question to the directory, which runs it
+  const box = page.getByRole("searchbox", { name: /search people/i });
+  await box.fill("marine scientist in Kerala");
+  await box.press("Enter");
+  await page.waitForURL(/\/directory\?q=/);
+  await page.getByRole("list", { name: "Results, best match first" }).waitFor({ timeout: 25000 });
+  // a field tile opens the directory filtered to that field
+  await page.goto(`${WEB}/`);
+  const tile = page.locator('a[href^="/directory?sector="]').first();
+  await tile.waitFor({ timeout: 20000 });
+  await tile.click();
   await page.waitForURL(/\/directory\?sector=/);
-  await page.getByRole("button", { name: /^(Science|Technology|Energy|Healthcare)/, pressed: true }).first().waitFor({ timeout: 15000 });
+  await page.getByRole("button", { pressed: true }).first().waitFor({ timeout: 15000 });
   await page.goto(`${WEB}/`);
   await shot("home");
 });
@@ -80,7 +85,7 @@ await step("UNSPLASH SLOTS: an approved photo is hotlinked (never self-hosted), 
     attribution: { photographer: "Test Photographer", photographer_url: "https://unsplash.com/@test?utm_source=pramaan&utm_medium=referral", photo_url: "https://unsplash.com/photos/test?utm_source=pramaan&utm_medium=referral", unsplash_url: "https://unsplash.com/?utm_source=pramaan&utm_medium=referral" } }];
   await page.route("**/v1/images/sector/**", (r) => r.fulfill({ json: fake }));
   await page.route("https://images.unsplash.com/**", (r) => { requested.push(r.request().url()); return r.fulfill({ body: png, contentType: "image/png" }); });
-  await page.goto(`${WEB}/`);
+  await page.goto(`${WEB}/directory`); // v3: the field photographs are on the directory shelves; the home page uses colour tiles
   const credit = page.getByText("Test Photographer").first();
   await credit.waitFor({ timeout: 20000 });
   const hrefs = await page.locator("figcaption a").evaluateAll((a) => a.map((x) => x.getAttribute("href")));
@@ -123,8 +128,8 @@ await step("DIRECTORY: shelves per field when unfiltered, a filter switches to o
 if (slug) {
   await step("PROFILE: claim counts say 'confirmed', never count a public-source claim as verified; evidence slip opens", async () => {
     await page.goto(`${WEB}/p/${slug}`);
-    await page.getByText(/of \d+ claims confirmed/).waitFor();
-    assert.equal(await page.getByText(/claims verified/).count(), 0);
+    await page.locator("#main").getByText(/of \d+ claims confirmed/).waitFor(); // scoped: the dev server briefly streams a hidden copy
+    assert.equal(await page.locator("#main").getByText(/claims verified/).count(), 0);
     const btn = page.getByRole("button", { name: "Show the evidence" }).first();
     if (await btn.count()) { await btn.click(); await page.getByRole("button", { name: "Hide the evidence" }).first().waitFor(); }
     await shot("profile");
@@ -199,7 +204,7 @@ await step("AGENT FLOOR: pipeline lists the five agents in order, each with a te
   await shot("agent-floor");
 });
 await step("RESPONSIVE: no page scrolls sideways at 360, 390, 768, 1024 or 1280 px", async () => {
-  const paths = ["/", "/directory", slug ? `/p/${slug}` : "/directory", "/transparency", "/developers", "/mission-control", "/verify"];
+  const paths = ["/", "/directory", slug ? `/p/${slug}` : "/directory", "/transparency", "/developers", "/mission-control", "/verify", "/how-we-check", "/auth"];
   const bad = [];
   for (const w of [360, 390, 768, 1024, 1280]) {
     await page.setViewportSize({ width: w, height: 800 });
@@ -213,9 +218,13 @@ await step("RESPONSIVE: no page scrolls sideways at 360, 390, 768, 1024 or 1280 
   await page.setViewportSize({ width: 1280, height: 900 });
   assert.deepEqual(bad, [], "pages that scroll sideways");
 });
-await step("ONBOARDING (signed out): sends the visitor to sign in rather than showing a broken page", async () => {
-  await page.goto(`${WEB}/onboard`, { timeout: 90000, waitUntil: "commit" });
-  await page.waitForURL(/\/auth/);
+await step("ONBOARDING (signed out): a visitor sees the start screen (guest first), not a sign-in wall, and the sign-in page has no navigation", async () => {
+  await page.goto(`${WEB}/onboard`, { timeout: 90000 });
+  await page.getByRole("heading", { level: 1, name: /build your/i }).waitFor({ timeout: 30000 });
+  assert.ok(!/\/auth/.test(page.url()), "no redirect to sign-in");
+  await page.goto(`${WEB}/auth`, { timeout: 90000 });
+  await page.getByRole("heading", { level: 1 }).waitFor();
+  assert.equal(await page.locator("[data-floating-nav]").count(), 0, "no navigation on the sign-in page");
 });
 
 await browser.close();
