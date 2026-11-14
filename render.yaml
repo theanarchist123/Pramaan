@@ -39,6 +39,10 @@ services:
         value: hash
       - key: WITH_EMBEDDINGS       # leaves the ML model out of the image if Render passes this to the build; harmless if it does not
         value: "false"
+      - key: DB_POOL_SIZE          # connections kept open to Supabase: small, because its session pooler allows only 15 in total across everything
+        value: "3"
+      - key: DB_MAX_OVERFLOW
+        value: "2"
       - key: WORKER_INLINE
         value: "true"
       - key: JOB_BACKEND

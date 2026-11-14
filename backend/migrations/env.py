@@ -6,6 +6,7 @@ import asyncio
 
 from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.pool import NullPool
 
 from app import models  # noqa: F401  (register tables on Base.metadata)
 from app.config import get_settings
@@ -28,7 +29,7 @@ def _do_run(connection) -> None:
 
 
 async def run_migrations_online() -> None:
-    engine = create_async_engine(get_settings().database_url)
+    engine = create_async_engine(get_settings().database_url, poolclass=NullPool)  # one short-lived connection, never kept
     async with engine.connect() as connection:
         await connection.run_sync(_do_run)
     await engine.dispose()

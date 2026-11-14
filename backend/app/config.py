@@ -93,6 +93,10 @@ class Settings(BaseSettings):
     embeddings: str = "auto"
 
     database_url: str = "postgresql+asyncpg://pramaan:pramaan@localhost:5432/pramaan"
+    # Connections this API keeps open to Postgres: at most pool_size + max_overflow. SQLAlchemy's own default (5 + 10 = 15) is exactly Supabase's
+    # session-pooler limit, so a second instance (a deploy overlapping the old one, a laptop pointed at the same database) ran it out. Keep it small.
+    db_pool_size: int = 3
+    db_max_overflow: int = 2
 
     @model_validator(mode="after")
     def _no_default_secret_in_public(self):

@@ -36,7 +36,7 @@ async def get_checkpointer():
 
             from app.jobs import psycopg_dsn
 
-            _pool = AsyncConnectionPool(psycopg_dsn(), min_size=1, max_size=5, open=False, kwargs={"autocommit": True, "prepare_threshold": 0})
+            _pool = AsyncConnectionPool(psycopg_dsn(), min_size=1, max_size=3, open=False, kwargs={"autocommit": True, "prepare_threshold": 0})
             await _pool.open()
             saver = AsyncPostgresSaver(_pool)
             await saver.setup()  # creates its tables if missing
