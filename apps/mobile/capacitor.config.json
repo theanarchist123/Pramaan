@@ -3,10 +3,10 @@
   "appName": "Pramaan",
   "webDir": "www",
   "server": {
-    "url": "https://pramaan.example.org",
+    "url": "https://pramaan-rose-chi.vercel.app",
     "cleartext": false,
     "allowNavigation": [
-      "pramaan.example.org"
+      "pramaan-rose-chi.vercel.app"
     ],
     "errorPath": "offline.html"
   },
