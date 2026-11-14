@@ -22,13 +22,14 @@ const login = async (email) => {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("password123");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.getByRole("heading", { name: "Review queue" }).waitFor({ timeout: 60000 });
+  await page.getByRole("heading", { level: 1, name: "Review" }).waitFor({ timeout: 60000 });
   return page;
 };
 const step = async (n, fn) => { process.stdout.write(`• ${n} … `); await fn(); console.log("ok"); };
 
 const a = await login(auditor);
 await step("an auditor opens Calibration and it says plainly that it applies nothing", async () => {
+  await a.locator("summary", { hasText: "System" }).click(); // the system pages live under the System menu
   await a.getByRole("link", { name: "Calibration" }).click();
   await a.getByRole("heading", { name: "Calibration" }).waitFor();
   await a.getByRole("note").getByText(/applies nothing/).waitFor();
@@ -38,6 +39,7 @@ await step("an auditor opens Calibration and it says plainly that it applies not
 });
 const r = await login(reviewer);
 await step("a reviewer is not offered the page, and the API refuses it", async () => {
+  await r.locator("summary", { hasText: "System" }).click();
   assert.equal(await r.getByRole("link", { name: "Calibration" }).count(), 0);
   await r.goto(`${ADMIN}/calibration`);
   await r.getByRole("alert").waitFor({ timeout: 30000 });

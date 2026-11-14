@@ -1,7 +1,11 @@
 import path from "node:path";
 import type { NextConfig } from "next";
 
+// Where the browser sends API calls. Locally that is the API itself (http://localhost:8000). On a free host (the console on *.vercel.app, the API on *.onrender.com)
+// the staff cookie is SameSite=Strict, which a browser withholds on calls to another site, so there it is a path on the console's OWN address
+// (NEXT_PUBLIC_API_URL=/staff/api) that the rewrites below forward to the API (API_INTERNAL_URL). The browser then only ever talks to one site.
 const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const apiTarget = (process.env.API_INTERNAL_URL || "").replace(/\/$/, "");
 const isDev = process.env.NODE_ENV !== "production";
 
 // The staff console loads nothing from third parties and cannot be framed. Its API calls go to the API origin only.
@@ -10,7 +14,7 @@ const csp = [
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
-  `connect-src 'self' ${api}${isDev ? " ws://localhost:*" : ""}`,
+  `connect-src 'self'${api.startsWith("http") ? ` ${api}` : ""}${isDev ? " ws://localhost:*" : ""}`,
   "frame-ancestors 'none'", "base-uri 'self'", "form-action 'self'", "object-src 'none'",
 ].join("; ");
 
@@ -21,6 +25,16 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, "../../"),
   transpilePackages: ["@pramaan/ui"],
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  // Only the paths the console actually uses are forwarded (least privilege): staff endpoints, authenticator set-up, public search and field photos.
+  async rewrites() {
+    if (!apiTarget) return [];
+    return [
+      { source: "/api/v1/admin/:path*", destination: `${apiTarget}/v1/admin/:path*` },
+      { source: "/api/v1/auth/mfa/:path*", destination: `${apiTarget}/v1/auth/mfa/:path*` },
+      { source: "/api/v1/search", destination: `${apiTarget}/v1/search` },
+      { source: "/api/v1/images/sector/:path*", destination: `${apiTarget}/v1/images/sector/:path*` },
+    ];
+  },
   async headers() {
     return [{
       source: "/:path*",

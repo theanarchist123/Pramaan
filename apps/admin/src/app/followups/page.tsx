@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
+import { Icon, PageHead, Pill } from "@/components/ui";
 
 interface Msg {
   id: string; kind: string; to_email: string; subject: string; body: string; status: string; error: string;
@@ -52,26 +53,32 @@ export default function FollowupsPage() {
 
   return (
     <main>
-      <div className="row"><h1 className="grow">Follow-ups</h1><button onClick={suggest} disabled={busy === "suggest"}>Draft nudges</button></div>
-      <p className="muted">The assistant finds people who need a nudge and drafts the message. You approve each one.</p>
-      {note && <p role="status">{note}</p>}
-      <div className="row" role="tablist">
-        {FILTERS.map((f) => <button key={f} role="tab" aria-selected={filter === f} className={filter === f ? "" : "secondary"} onClick={() => setFilter(f)}>{f} {count(f)}</button>)}
+      <PageHead
+        eyebrow="Messages"
+        title="Follow-ups"
+        lead="The assistant finds people who need a nudge and drafts the message. You approve each one."
+        actions={<button onClick={suggest} disabled={busy === "suggest"}>{busy === "suggest" ? "Drafting…" : "Draft nudges"}</button>}
+      />
+      {note && <p className="notice" role="status"><Icon name="mail" size={18} /><span>{note}</span></p>}
+      <div className="seg" role="tablist" aria-label="Message status" style={{ margin: "14px 0 18px" }}>
+        {FILTERS.map((f) => <button key={f} role="tab" aria-selected={filter === f} onClick={() => setFilter(f)}>{f} {count(f)}</button>)}
       </div>
-      <div style={{ height: 12 }} />
       {msgs === null && <p className="muted">Loading…</p>}
-      {msgs && shown.length === 0 && <p className="panel muted">No {filter} messages.</p>}
+      {msgs && shown.length === 0 && <div className="empty"><span className="art"><Icon name="inbox" size={28} /></span><h2>No {filter} messages.</h2><p>{filter === "draft" ? "Use “Draft nudges” to find people who could use a reminder." : "Nothing here yet."}</p></div>}
       {shown.map((m) => (
         <article key={m.id} className="panel">
-          <div className="muted"><span className="chip">{KIND[m.kind] ?? m.kind}</span> to {m.to_email}</div>
-          <p style={{ fontWeight: 600 }}>{m.subject}</p>
-          <pre style={{ whiteSpace: "pre-wrap", font: "inherit", margin: 0 }} className="muted">{m.body}</pre>
-          {m.error && <p className="warn">{m.error}</p>}
+          <div className="msg-head">
+            <Pill tone="info" icon="mail">{KIND[m.kind] ?? m.kind}</Pill>
+            <span className="muted">to {m.to_email}</span>
+          </div>
+          <p style={{ fontWeight: 700, fontSize: 16, margin: "0 0 8px" }}>{m.subject}</p>
+          <pre className="msg-body muted">{m.body}</pre>
+          {m.error && <p className="alert"><Icon name="alert" size={18} /><span>{m.error}</span></p>}
           {(m.status === "draft" || m.status === "scheduled") && (
-            <div className="row" style={{ marginTop: 10 }}>
+            <div className="row" style={{ marginTop: 14 }}>
               <button disabled={busy === m.id} onClick={() => act(m, "send")}>Send now</button>
               <button className="secondary" disabled={busy === m.id} onClick={() => act(m, "schedule")}>Schedule in 1 hour</button>
-              <button className="secondary" disabled={busy === m.id} onClick={() => act(m, "discard")}>Discard</button>
+              <button className="ghost" disabled={busy === m.id} onClick={() => act(m, "discard")}>Discard</button>
             </div>
           )}
         </article>

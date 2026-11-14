@@ -44,15 +44,15 @@ await step("reviewer signs in and finds the case in the queue", async () => {
   await page.getByLabel("Email").fill(reviewerEmail);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.getByRole("link", { name }).waitFor({ timeout: 30000 });
+  await page.getByRole("button", { name: new RegExp(name) }).first().waitFor({ timeout: 30000 }); // each waiting case is a card in the deck
   // command-centre tiles: real counts, and a reviewer sees only the sections their role allows
-  const tiles = page.getByRole("region", { name: "Overview" });
-  await tiles.getByText("Open cases").waitFor();
-  assert.ok(Number((await tiles.locator(".tile-n").first().innerText()).trim()) >= 1, "at least our case is open");
-  assert.equal(await tiles.getByText("Approvals waiting").count(), 0, "a reviewer does not see approvals");
+  const tiles = page.getByRole("status", { name: "Queue overview" });
+  await tiles.getByText("waiting for a person").waitFor();
+  assert.ok(Number((await tiles.locator("b").first().innerText()).trim()) >= 1, "at least our case is open");
+  assert.equal(await tiles.getByText("approvals waiting").count(), 0, "a reviewer does not see approvals");
 });
 await step("the case page shows the claim, documents, namesakes, and the form is closed until the case is taken", async () => {
-  await page.getByRole("link", { name }).click();
+  await page.getByRole("button", { name: new RegExp(name) }).first().dblclick(); // double-click a card to open the case
   await page.getByRole("heading", { name }).waitFor({ timeout: 30000 });
   await page.getByText("Studied marine biology at Cochin University").waitFor();
   await page.getByText("People with the same name on Wikidata").waitFor();
@@ -74,7 +74,7 @@ await step("approving with a note and evidence reference saves, returns to the q
   await page.getByLabel("Outcome").selectOption("approve");
   await page.getByLabel(/^Note/).fill("Evidence checked by hand against the register");
   await page.getByRole("button", { name: "Save decision" }).click();
-  await page.waitForURL(`${ADMIN}/`, { timeout: 20000 });
+  await page.waitForURL((u) => u.href.replace(/\/$/, "") === ADMIN, { timeout: 20000 }); // the console root, with or without the trailing slash
   assert.equal(sql(`select status from profiles where id='${prof.id}'`), "approved");
   assert.equal(sql(`select status from claims where id='${claim.id}'`), "human");
   assert.equal(sql(`select decision_basis from profiles where id='${prof.id}'`), "reviewer");

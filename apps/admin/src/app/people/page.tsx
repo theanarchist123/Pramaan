@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { api, API_URL } from "@/lib/api";
+import { Avatar, Icon, PageHead, Pill } from "@/components/ui";
+import { tileFor } from "@/lib/labels";
 
 const WEB = process.env.NEXT_PUBLIC_WEB_URL ?? ""; // same origin: the public site and /staff share one address
 
@@ -60,10 +62,37 @@ export default function PeoplePage() {
 
   return (
     <main>
-      <h1>People</h1>
-      <p className="muted">Ask in plain words. Each result says why it matched. API: {API_URL}</p>
-      <details className="panel">
-        <summary style={{ cursor: "pointer", fontWeight: 700 }}>Invite someone to get listed</summary>
+      <PageHead eyebrow="The registry" title="People" lead={<>Ask in plain words. Each result says why it matched. <span style={{ opacity: .7 }}>API: {API_URL}</span></>} />
+
+      <form className="searchbox" onSubmit={(e) => { e.preventDefault(); void run(q); }}>
+        <Icon name="search" size={20} />
+        <input className="grow" aria-label="Search people" placeholder="e.g. marine scientists in Kerala" value={q} onChange={(e) => setQ(e.target.value)} />
+        <button type="submit" disabled={busy}>{busy ? "Searching…" : "Search"}</button>
+      </form>
+      <p style={{ marginTop: 16 }}>{EXAMPLES.map((x) => <button key={x} className="secondary chip-btn" type="button" onClick={() => { setQ(x); void run(x); }}>{x}</button>)}</p>
+      {err && <p className="alert" role="alert"><Icon name="alert" size={18} /><span>{err}</span></p>}
+
+      {res && (
+        <div className="panel">
+          <p className="muted" style={{ marginTop: 0 }}>{res.results.length} result{res.results.length === 1 ? "" : "s"} in {res.took_ms} ms{res.relaxed ? " (filters were relaxed to find matches)" : ""}</p>
+          {res.results.length === 0 && <div className="empty"><h2>No one matches that yet.</h2><p>Try fewer words, or a place or a field.</p></div>}
+          {res.results.map((h) => (
+            <div key={h.id} className="hit">
+              <Avatar name={h.full_name} tile={tileFor(h.sector || h.full_name)} />
+              <div className="grow">
+                <a href={`${WEB}/p/${h.slug}`} target="_blank" rel="noreferrer"><b>{h.full_name}</b></a> {h.is_demo && <span className="chip">demo</span>}
+                <div className="muted">{[h.headline || h.sector, [h.city, h.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}</div>
+                <div style={{ marginTop: 6 }}>
+                  {h.reasons.length ? h.reasons.map((r) => <span className="chip" key={r}>{r}</span>) : <Pill tone="quiet" icon="search">score {Math.round(h.score * 100)}</Pill>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <details className="panel" style={{ marginTop: 24 }}>
+        <summary><Icon name="mail" /> Invite someone to get listed</summary>
         <p className="muted">For a specific notable person you know of. It creates a draft email with a link to start; you review and send it from <Link href="/followups">Follow-ups</Link>. People with an account or who opted out are refused.</p>
         <form onSubmit={invite}>
           <div className="row">
@@ -73,37 +102,10 @@ export default function PeoplePage() {
           <label htmlFor="inv-note">A personal note (optional; links and contact details are removed)</label>
           <textarea id="inv-note" rows={3} maxLength={1500} value={inv.note} onChange={(e) => setInv({ ...inv, note: e.target.value })} />
           <p><button disabled={invBusy}>{invBusy ? "Drafting…" : "Create the draft"}</button></p>
-          {invMsg && <p role="status">{invMsg}</p>}
-          {invErr && <p className="err" role="alert">{invErr}</p>}
+          {invMsg && <p className="notice" role="status"><Icon name="check" size={18} /><span>{invMsg}</span></p>}
+          {invErr && <p className="alert" role="alert"><Icon name="alert" size={18} /><span>{invErr}</span></p>}
         </form>
       </details>
-
-      <form className="row" onSubmit={(e) => { e.preventDefault(); void run(q); }}>
-        <input className="grow" aria-label="Search people" placeholder="e.g. marine scientists in Kerala" value={q} onChange={(e) => setQ(e.target.value)} />
-        <button type="submit" disabled={busy}>{busy ? "Searching…" : "Search"}</button>
-      </form>
-      <p>{EXAMPLES.map((x) => <button key={x} className="secondary chip-btn" type="button" onClick={() => { setQ(x); void run(x); }}>{x}</button>)}</p>
-      {err && <p className="err" role="alert">{err}</p>}
-      {res && (
-        <div className="panel">
-          <p className="muted">{res.results.length} result{res.results.length === 1 ? "" : "s"} in {res.took_ms} ms{res.relaxed ? " (filters were relaxed to find matches)" : ""}</p>
-          {res.results.length === 0 && <p>No one matches that yet.</p>}
-          <table>
-            <thead><tr><th>Person</th><th>Why they matched</th></tr></thead>
-            <tbody>
-              {res.results.map((h) => (
-                <tr key={h.id}>
-                  <td>
-                    <a href={`${WEB}/p/${h.slug}`} target="_blank" rel="noreferrer">{h.full_name}</a> {h.is_demo && <span className="chip">demo</span>}
-                    <div className="muted">{[h.headline || h.sector, [h.city, h.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}</div>
-                  </td>
-                  <td>{h.reasons.length ? <ul style={{ margin: 0, paddingLeft: 16 }}>{h.reasons.map((r) => <li key={r}>{r}</li>)}</ul> : <span className="muted">score {Math.round(h.score * 100)}</span>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </main>
   );
 }

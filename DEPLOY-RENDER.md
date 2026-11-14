@@ -23,6 +23,22 @@ Vercel runs short serverless functions. This API needs a long-lived server: a he
 7. Android app: `cd apps/mobile`, `pnpm set-url https://<your-vercel-url>`, `pnpm build:debug`.
 
 ## Things this guide does not cover
-- **Staff console (`/staff`)**: the web app forwards `/staff` to the separate admin app (`ADMIN_INTERNAL_URL`). That app needs its own Vercel project (Root Directory `apps/admin`) and the web project needs `ADMIN_INTERNAL_URL` pointing at it. Not tried in production.
+- **Staff console:** see the next section.
 - **AI-written plugin sandbox** needs Docker, which Render's web services do not give you; it stays off (`PLUGINS_ENABLED=false`).
 - Supabase free projects pause after about a week of inactivity.
+
+## Staff console (apps/admin) on Vercel, no domain needed
+**The catch.** Staff sign in with a cookie (`__Host-pramaan_admin`, SameSite=Strict). A browser sends a Strict cookie only when the page and the API are on the same site. `*.vercel.app` and `*.onrender.com` are different sites, so a console that called the API directly could open but never stay signed in. The fix needs no domain: the console forwards its API calls through **its own address** (Next.js rewrites in `apps/admin/next.config.ts`), so the browser only ever talks to one site. Only the paths the console uses are forwarded (`/v1/admin/*`, `/v1/auth/mfa/*`, `/v1/search`, `/v1/images/sector/*`); `scripts/test-proxy.mjs` guards that list.
+
+1. **Vercel -> Add New Project** -> same repo -> **Root Directory `apps/admin`**. Keep "Include source files outside of the Root Directory" ON (the console uses `packages/ui`). Framework: Next.js.
+2. Environment variables for that project (then deploy):
+   - `NEXT_PUBLIC_API_URL` = `/staff/api` (a path on the console itself, not the Render address)
+   - `API_INTERNAL_URL` = your Render URL, e.g. `https://pramaan-api-u4ag.onrender.com` (no trailing slash)
+3. Note the console's Vercel address, e.g. `https://pramaan-staff.vercel.app`. The console lives at `https://pramaan-staff.vercel.app/staff`.
+4. **Render (API)**: set `ADMIN_BASE_URL` = that console address (just the origin, `https://pramaan-staff.vercel.app`) and let it redeploy. The API only accepts staff state-changing requests whose Origin matches it. Leave `PUBLIC_BASE_URL` as your member site.
+5. **First staff account.** Register normally on the member site, then in Supabase -> SQL editor: `update users set role = 'admin' where email = 'you@example.com';`. Open `https://pramaan-staff.vercel.app/staff/login`, sign in, and set up the authenticator (see below). Change or delete the demo admin (`admin@pramaan.demo`) now.
+6. **Check:** wrong password shows an error; after a good sign-in the Review page loads and stays signed in after a refresh; `/staff/security` shows the QR code; sign out works.
+
+**Authenticator.** Any authenticator app works (Google Authenticator, Microsoft Authenticator, Authy, 1Password, Aegis). You do not sign in to Google or anyone else: the app just stores a key and shows 6 digits. Scan the QR code on the Security page, or type the key by hand. Save the recovery codes it shows once.
+
+**Not tried on a live host.** The proxy is covered by a config test, not yet by a real Vercel + Render run. If the Vercel build or the sign-in fails, send the build log or the exact error. A custom domain (console, API and site under one registrable domain) also works and avoids the proxy; then set `NEXT_PUBLIC_API_URL` to the API address and `COOKIE_SAMESITE=lax`.

@@ -83,3 +83,10 @@ Built the OFFLINE generate-once-and-freeze library with FLUX.1 [schnell] on Clou
 
 ## Clean-up before deploy (2026-11-14, owner approved)
 Deleted (disk only, regenerable): apps/desktop/dist, apps/web/smoke-shots, backend/data/cache (~324 MB). Removed from git (staged, not committed; restorable from history): 5 unused template SVGs, docs/design/before-after and docs/design/review (9 MB of screenshots), 8 one-off screenshot scripts in apps/web/scripts. Kept on purpose: certificate-photos (issued certificates reference them by signed hash), backend/data/signing.key and uploads, node_modules/.next (a running dev server uses them).
+
+## Staff console redesign, free-host proxy, QR set-up (2026-11-14)
+- Look: new Desk styles (dark default, light switch), pills with icon+words, stat tiles, human reason labels, due-state pills, new login (brand panel, two-step with authenticator or recovery code), Security page with QR (drawn in the browser with `qrcode`, MIT), People and Follow-ups restyled, case page header. Greeting is set after load (server cannot know the viewer's clock: fixed a hydration error).
+- Proxy: apps/admin/next.config.ts rewrites /staff/api/v1/{admin,auth/mfa,search,images/sector} to API_INTERNAL_URL so the SameSite=Strict staff cookie works with the console on *.vercel.app and the API on *.onrender.com. `scripts/test-proxy.mjs` (pnpm test) guards the allowed paths. Not tried on a live Vercel+Render deploy.
+- Nav: system pages are offered only to people holding the permission (registry: profile.suspend|consent.read; calibration: agent_run.read; incidents: audit.read). The API still enforces it.
+- Browser tests (local Docker DB, API on :8001): smoke (MFA on), smoke-case, smoke-calibration, smoke-images all pass. Stale selectors updated: heading, case cards are buttons, System menu, console root URL without trailing slash, reason shown in words. Case/calibration/images need STAFF_MFA_REQUIRED=false, smoke needs true.
+- Fixed: recovery codes need whitespace between them (a test and copy-paste rely on it).

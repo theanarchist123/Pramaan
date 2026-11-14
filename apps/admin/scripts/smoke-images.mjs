@@ -22,6 +22,7 @@ await step("sign in and open Photographs from the console", async () => {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("password123");
   await page.getByRole("button", { name: "Sign in" }).click();
+  await page.locator("summary", { hasText: "System" }).click();
   await page.getByRole("link", { name: "Photographs" }).click();
   await page.getByRole("heading", { name: "Photographs" }).waitFor();
 });

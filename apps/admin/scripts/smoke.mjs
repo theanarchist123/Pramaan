@@ -100,7 +100,7 @@ await step("review queue shows the waiting case with its reason codes", async ()
   await goReview(adminPage);
   const card = adminPage.getByRole("button", { name: new RegExp(`Smoke Person ${tag}`) });
   await card.waitFor();
-  await card.getByText("USER_REQUESTED").waitFor();
+  await card.getByText("User requested").waitFor(); // the card shows the reason in words; the raw code is in the focus panel and on the case page
   await adminPage.screenshot({ path: `${OUT}/admin-2-queue.png` });
 });
 await step("the admin can take the case", async () => {

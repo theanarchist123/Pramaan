@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
+import { Avatar, Icon, Pill } from "@/components/ui";
+import { dueState, reasonLabel, tileFor } from "@/lib/labels";
 
 interface Evidence { id: string; kind: string; url: string; quote: string }
 interface Claim { id: string; field: string; value: string; year: number | null; status: string; evidence: Evidence[] }
@@ -115,18 +117,23 @@ export default function CasePage() {
 
   return (
     <main>
-      <div className="row">
-        <h1 className="grow">{p?.full_name ?? "(profile removed)"}</h1>
+      <p style={{ margin: "0 0 14px" }}><Link href="/" className="muted" style={{ textDecorationThickness: 1 }}>&larr; Back to the queue</Link></p>
+      <div className="row" style={{ marginBottom: 6 }}>
+        <Avatar name={p?.full_name ?? "?"} tile={tileFor(p?.sector ?? p?.full_name ?? "?")} size={64} />
+        <div className="grow">
+          <h1 style={{ fontSize: "clamp(30px,4vw,44px)" }}>{p?.full_name ?? "(profile removed)"}</h1>
+          <p className="muted" style={{ margin: "4px 0 0" }}>{[p?.sector, p?.state].filter(Boolean).join(" · ")}{p?.headline ? ` · ${p.headline}` : ""}</p>
+        </div>
         {!d.permissions.holds_lock && !closed && !d.permissions.own_profile && <button onClick={take}>Take case</button>}
         {d.permissions.holds_lock && <span className="chip">You hold this case</span>}
+        {d.item.sla_due_at && !closed && <Pill tone={dueState(d.item.sla_due_at).tone}>{dueState(d.item.sla_due_at).text}</Pill>}
       </div>
-      <p className="muted">{[p?.sector, p?.state].filter(Boolean).join(" · ")}{p?.headline ? ` · ${p.headline}` : ""}</p>
       {d.permissions.own_profile && <p className="err" role="alert">This is your own profile. You cannot review it.</p>}
       {error && <p className="err" role="alert">{error}</p>}
 
       <div className="panel">
-        <strong>Why it is here</strong>
-        <div>{(d.item.details.reason_codes ?? []).map((c) => <span className="chip" key={c}>{c}</span>)}</div>
+        <strong className="panel-title"><Icon name="flag" /> Why it is here</strong>
+        <div>{(d.item.details.reason_codes ?? []).map((c) => <span className="chip" key={c} title={c}>{reasonLabel(c)}</span>)}</div>
         <p className="muted">{d.item.reason}</p>
       </div>
 
@@ -143,7 +150,7 @@ export default function CasePage() {
             <section key={c.id} className={`claim${i === focus ? " focused" : ""}`} onClick={() => setFocus(i)} aria-current={i === focus}>
               <div className="row">
                 <span className="grow"><strong>{c.field}</strong>{c.year ? ` (${c.year})` : ""}: {c.value}</span>
-                <span className="chip">{STATUS_TEXT[c.status] ?? c.status}</span>
+                <Pill tone={c.status === "self" ? "quiet" : c.status === "web" ? "info" : "ok"}>{STATUS_TEXT[c.status] ?? c.status}</Pill>
               </div>
               {c.evidence.filter((e) => e.kind !== "chat").map((e) => (
                 <blockquote key={e.id} className="muted">
