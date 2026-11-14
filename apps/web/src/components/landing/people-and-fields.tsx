@@ -17,17 +17,16 @@ const FIELD_ICONS: Record<string, typeof Zap> = {
 export function PeopleAndFields() {
   const { t } = useI18n();
   const [all, setAll] = useState<PersonSummary[] | null>(null);
+  const [bySector, setBySector] = useState<Record<string, number> | null>(null);
 
   useEffect(() => {
-    api<PersonSummary[]>("/v1/profiles?limit=100", { auth: false }).then(setAll).catch(() => setAll([]));
+    // Featured people: the newest few dozen are plenty. Field counts come from the server's own totals, so they count everyone, not just those fetched.
+    api<PersonSummary[]>("/v1/profiles?limit=48", { auth: false }).then(setAll).catch(() => setAll([]));
+    api<{ by_sector: Record<string, number> }>("/v1/stats/map", { auth: false }).then((s) => setBySector(s.by_sector)).catch(() => setBySector({}));
   }, []);
 
   const featured = useMemo(() => (all ?? []).filter((p) => p.headline.trim()).slice(0, 8), [all]);
-  const fields = useMemo(() => {
-    const counts: Record<string, number> = {};
-    (all ?? []).forEach((p) => (counts[p.sector] = (counts[p.sector] ?? 0) + 1));
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  }, [all]);
+  const fields = useMemo(() => Object.entries(bySector ?? {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]), [bySector]);
 
   return (
     <>

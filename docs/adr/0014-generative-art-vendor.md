@@ -1,6 +1,6 @@
 # ADR 0014: Generative certificate background (blueprint module 3)
 
-Status: **accepted 2026-11-14 for an OFFLINE, generate-once-and-freeze library using FLUX.1 [schnell] on Cloudflare Workers AI. Built and run once with real credentials; nothing is approved yet.** Live per-certificate generation is NOT built and not planned.
+Status: **accepted 2026-11-14 for an OFFLINE, generate-once-and-freeze library using FLUX.1 [schnell] on Cloudflare Workers AI. Built and run with real credentials; 59 pictures reviewed and approved across 15 sectors.** Live per-certificate generation is NOT built and not planned.
 
 The blueprint asks for a unique generative background per certificate (it names Midjourney or Flux). Our rule says certificates use only frozen local images
 (`AGENTS.md`). So pictures are generated once, a person reviews each, and the approved ones are frozen and used by certificates like the stock photos were.
@@ -27,8 +27,19 @@ The blueprint asks for a unique generative background per certificate (it names 
 - Cloudflare's **safety filter is fuzzy**: it refused an innocent prompt as "NSFW" while accepting near-identical wording. The tool treats that as retryable and tries up to two plainer wordings of the same motifs, recording the wording that worked.
 - Output with the first style line was a circle on white; the style now asks for the pattern to fill the frame edge to edge, which gave full-bleed gold-and-indigo ornamental patterns (no faces, text, flags or religious imagery in the 3 reviewed; one 4-lobed shape could be read as a cross and is left to the human reviewer).
 
+## Terms read 2026-11-14
+- **Black Forest Labs Terms of Service** (`bfl.ai/legal/terms-of-service`, section 1.2 "Input and Output"): "We claim no ownership rights in and to Your Content" (Output is part of
+  Your Content) and the user "may use Your Content in connection with the Services for your own purposes, subject to any restrictions set forth herein or under applicable law".
+  The user is solely responsible for their content and its later use. Output does not include model weights. Other users may get similar output (no exclusivity).
+  The terms bar exploiting the *Services* commercially, "except for your use of your Output", so use of Output is carved out. Caveat: these are BFL's own-service terms;
+  we call the model through Cloudflare, and the model is tagged Apache-2.0 (which covers the weights, not a promise about copyright in the output).
+- **Cloudflare:** the pages fetched (`cloudflare.com/website-terms/`, service-specific terms for application services) did not contain Workers AI output wording, and the
+  actual "Terms and License" target from the model page was not opened. **Still unverified: Cloudflare's own text on ownership/use of Workers AI output.**
+- Practical reading (not legal advice): we use abstract ornamental patterns as certificate backgrounds, no one else's content or likeness, with a human review of each.
+  Nothing read forbids that, and the licence string on each certificate stays honest. A lawyer should confirm before any paid or large-scale use.
+
 ## NOT verified (do before relying on it)
-- The **text** of the Cloudflare "Terms and License" page linked from the model page and of Cloudflare's service terms for use of generated output. Read them and record the outcome here.
+- The Cloudflare Workers AI terms/licence text on generated output (see above). Open the "Terms and License" link in the model page in a browser and record it here.
 - Free-allowance behaviour at the limit (the tool stops cleanly on HTTP 402/429 or a quota message, but a limit was not reached in testing). Do not add a payment card.
 
 ## Safeguards built in

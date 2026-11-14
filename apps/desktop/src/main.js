@@ -35,7 +35,7 @@ function readConfig() {
 function configuredUrl() {
   if (process.env.PRAMAAN_URL) return process.env.PRAMAAN_URL;
   const cfg = readConfig();
-  return typeof cfg.url === "string" ? cfg.url : "http://localhost:3100";
+  return typeof cfg.url === "string" ? cfg.url : "http://localhost:3000";
 }
 function configuredApiUrl() {
   if (process.env.PRAMAAN_API_URL) return process.env.PRAMAAN_API_URL;

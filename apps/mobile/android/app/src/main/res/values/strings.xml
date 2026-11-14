@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Pramaan</string>
+    <string name="title_activity_main">Pramaan</string>
+    <string name="package_name">in.pramaan.app</string>
+    <string name="custom_url_scheme">in.pramaan.app</string>
+</resources>

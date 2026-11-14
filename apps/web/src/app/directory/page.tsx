@@ -15,6 +15,7 @@ import { ResultRow } from "@/components/directory/result-row";
 import { Shelf } from "@/components/directory/shelf";
 import { api, ApiError } from "@/lib/api";
 import { paletteFor } from "@/lib/certificate-art";
+import { fetchAllProfiles } from "@/lib/profiles";
 import {
   EXAMPLE_QUERIES, SECTORS,
   type GraphLink, type GraphNode, type MapStats, type SearchHit, type SearchResponse, type Summary,
@@ -55,7 +56,9 @@ export default function Directory() {
 
   // Initial data: everyone, the relationship graph, and per-state counts.
   useEffect(() => {
-    api<Summary[]>("/v1/profiles?limit=100", { auth: false }).then(setEveryone).catch(() => setEveryone([]));
+    fetchAllProfiles<Summary>(setEveryone)
+      .then(setEveryone)
+      .catch(() => setEveryone((prev) => prev ?? []));
     api<{ nodes: GraphNode[]; links: GraphLink[] }>("/v1/graph", { auth: false }).then(setGraph).catch(() => {});
     api<MapStats>("/v1/stats/map", { auth: false }).then(setStats).catch(() => {});
   }, []);
@@ -114,7 +117,7 @@ export default function Directory() {
             </div>
             <dl className="flex gap-3 text-[#14152B]">
               {[
-                [everyone?.length ?? 0, "people"],
+                [Math.max(stats?.total ?? 0, everyone?.length ?? 0), "people"],
                 [Object.keys(stats?.by_sector ?? {}).length, "fields"],
                 [states.length, "states"],
               ].map(([n, label]) => (

@@ -72,3 +72,14 @@ Built the OFFLINE generate-once-and-freeze library with FLUX.1 [schnell] on Clou
 - Library now: Science 3, Technology 4, Healthcare 4, Education 4, Arts & Culture 4, Literature 4, Sports 4, Business 2, Public Service 4, Law 4, Media 1. No generated art yet for Social Work, Agriculture, Energy, Other (they keep using stock photos); run `generate --all --count 4` again after the daily allowance resets (finished pictures are skipped).
 - Verified: file hashes = `generated_art.json` = `photo_manifest.json` for all assets; `tests/test_art_library.py` includes a real end-to-end test (a Science certificate gets a generated picture, its SHA-256 is in the signed payload with the licence label, and the signature still verifies). 49 related tests pass. Looked at an actual certificate with two of the pictures in the arched window: reads well.
 - To commit (owner): `apps/web/public/certificate-photos/gen-*.jpg`, `backend/app/generated_art.json`, `backend/app/photo_manifest.json`. Existing certificates are unaffected (each carries its own signed picture hash).
+
+## Directory paging, PWA polish, Android shell, desktop defaults (2026-11-14)
+- Directory fetched only `/v1/profiles?limit=100`; now `lib/profiles.ts::fetchAllProfiles` pages with offset (cap 3000). Home field counts come from `/v1/stats/map` (server totals), featured people from the newest 48. Not tested against more than 100 real profiles.
+- PWA: icons regenerated (marigold tile + ink check), manifest colours, offline page, service worker v2, `viewport-fit=cover`.
+- Android: Capacitor 7 shell in `apps/mobile` (`cap add android`), plugins app/haptics/status-bar/splash/push, `set-url` script, `pnpm build:debug` built `app-debug.apk` (4.8 MB). First Gradle run hit a Windows cache file-lock error; a clean retry passed. NOT run on a device or emulator. `server.url` is still the placeholder `pramaan.example.org` until the site is hosted.
+- Desktop: default URLs now http://localhost:3000 and /staff; icons refreshed; test-verify 9 and test.mjs 16 checks pass (run with node directly: `pnpm test` tries an install that fails in this folder).
+- `lib/native.ts`: haptics only in the app, after the server-confirmed certificate (I-9 intact).
+- ADR 0015 records the decision. Not done: push server side, Firebase, builder smoke suite rewrite (still targets retired /admin pages), throttled mobile performance run, signed-in visual checks.
+
+## Clean-up before deploy (2026-11-14, owner approved)
+Deleted (disk only, regenerable): apps/desktop/dist, apps/web/smoke-shots, backend/data/cache (~324 MB). Removed from git (staged, not committed; restorable from history): 5 unused template SVGs, docs/design/before-after and docs/design/review (9 MB of screenshots), 8 one-off screenshot scripts in apps/web/scripts. Kept on purpose: certificate-photos (issued certificates reference them by signed hash), backend/data/signing.key and uploads, node_modules/.next (a running dev server uses them).

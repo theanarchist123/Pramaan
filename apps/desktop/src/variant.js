@@ -5,7 +5,7 @@
 // by an explicit switch: the environment (PRAMAAN_VARIANT=console), the --console flag, or `pramaanVariant` baked into a console build's package.json. An
 // unknown value always means the member app. The console has no pramaan:// links and no clipboard shortcut: it is a work tool, not a verifier.
 
-const CONSOLE_DEFAULT_URL = "http://localhost:3011";
+const CONSOLE_DEFAULT_URL = "http://localhost:3000/staff";
 const BASE_TITLE = "Pramaan staff console";
 
 function pickVariant(env, argv, pkg) {

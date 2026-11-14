@@ -6,7 +6,6 @@ tokens, and the contrast gate (`packages/ui/scripts/contrast.mjs`) now also chec
 
 - Page: bond (cool paper) in light, deep ink-navy in dark. Accent / actions: stamp purple (lilac in dark). Verified: green. Alert: seal red.
 - Hero wash: stamp glow + foil gold instead of saffron. Sector dots/charts use the sector palette.
-- Before/after screenshots: `docs/design/before-after/`.
 - **Not done:** typography changes (still Fraunces headings + Inter body), the certificate and agent avatar palette (their own colours), a distinct
   hero composition, icon style, density, the Hindi pass, and component-level redesign (header, cards). This is a colour-system change, not a redesign.
 
@@ -17,5 +16,4 @@ tokens, and the contrast gate (`packages/ui/scripts/contrast.mjs`) now also chec
 - Home headline larger and balanced; hero closed by a rule; step cards carry a 3px stamp rule and lift.
 - Header: the current section is marked by a stamp underline, not a grey pill.
 - Verify code boxes: found in the screenshot, they wrapped onto two rows (9 + 1). Now one flexible row that always fits, phone included.
-- Screenshots: `docs/design/before-after/after2-*.png`.
 - Still not done: typeface change, certificate palette, agent avatars, icon style, mobile review of every page, Hindi.

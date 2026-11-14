@@ -1,0 +1,63 @@
+# Render Blueprint for the Pramaan API (the website stays on Vercel, the database on Supabase).
+# Secrets are NOT in this file: every `sync: false` value is typed by you in the Render dashboard.
+# See DEPLOY-RENDER.md. Written from Render's documented Blueprint format; not yet run on a live Render account.
+services:
+  - type: web
+    name: pramaan-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free            # free instances sleep after 15 idle minutes and have no persistent disk: see DEPLOY-RENDER.md
+    healthCheckPath: /healthz
+    autoDeploy: false
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL          # Supabase SESSION pooler URI (port 5432), not the 6543 transaction pooler
+        sync: false
+      - key: PUBLIC_BASE_URL       # your Vercel production URL, e.g. https://pramaan.vercel.app
+        sync: false
+      - key: RENDER_BASE_URL       # same as PUBLIC_BASE_URL
+        sync: false
+      - key: API_BASE_URL          # this service's own URL once Render shows it, e.g. https://pramaan-api.onrender.com
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SIGNING_KEY_B64       # the certificate signing seed. Generate it yourself and KEEP A COPY: losing it breaks old certificates
+        sync: false
+      - key: SIGNING_RETIRED_PUBLIC_KEYS
+        value: ""
+      - key: LLM_MODE
+        value: live
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: WIKIMEDIA_CONTACT
+        sync: false
+      - key: EMBEDDINGS            # lite search (keywords), fits 512 MB
+        value: hash
+      - key: WITH_EMBEDDINGS       # leaves the ML model out of the image if Render passes this to the build; harmless if it does not
+        value: "false"
+      - key: WORKER_INLINE
+        value: "true"
+      - key: JOB_BACKEND
+        value: inline
+      - key: PLUGINS_ENABLED
+        value: "false"
+      - key: WEBHOOK_ALLOW_PRIVATE
+        value: "false"
+      - key: COOKIE_SAMESITE       # "none" while web and API are on different domains; "lax" once both share one registrable domain
+        value: none
+      - key: ADMIN_BASE_URL        # only if the staff console is deployed separately; the staff console now also works at <web>/staff
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false

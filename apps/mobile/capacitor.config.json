@@ -5,7 +5,9 @@
   "server": {
     "url": "https://pramaan.example.org",
     "cleartext": false,
-    "allowNavigation": ["pramaan.example.org"],
+    "allowNavigation": [
+      "pramaan.example.org"
+    ],
     "errorPath": "offline.html"
   },
   "android": {
@@ -14,7 +16,21 @@
     "captureInput": true
   },
   "plugins": {
-    "SplashScreen": { "launchShowDuration": 600, "backgroundColor": "#f8f4ec" },
-    "PushNotifications": { "presentationOptions": ["badge", "sound", "alert"] }
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "backgroundColor": "#FFB81C"
+    },
+    "PushNotifications": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#FFB81C",
+      "overlaysWebView": false
+    }
   }
 }

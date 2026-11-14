@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  viewportFit: "cover", // lets the page use the whole screen in the Android/iOS app; the nav and footer already pad for the safe areas
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#FFB81C" },
     { media: "(prefers-color-scheme: dark)", color: "#0F1020" },

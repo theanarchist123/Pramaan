@@ -4,7 +4,7 @@
  *  - API calls: NEVER cached or intercepted. A certificate verification must always be live — a cached
  *    "valid" answer for a revoked certificate would defeat the whole product.
  */
-const VERSION = "pramaan-v1";
+const VERSION = "pramaan-v2";
 const STATIC = `${VERSION}-static`;
 const PAGES = `${VERSION}-pages`;
 
