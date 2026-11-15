@@ -42,3 +42,7 @@ image-seed-cache.json
 # Gradle output (Kotlin SDK)
 packages/sdk/kotlin/.gradle/
 packages/sdk/kotlin/build/
+
+# phone screenshots from scripts/phone-audit.mjs
+apps/web/phone-shots/
+apps/web/smoke-shots/

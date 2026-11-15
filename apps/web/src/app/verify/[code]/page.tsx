@@ -57,8 +57,8 @@ function Banner({ verdict, verify }: { verdict: Verdict; verify?: VerifyResult |
   const copy = VERDICT_COPY[verdict];
   const Icon = ICON[verdict];
   return (
-    <section className={cn("-mt-28 md:-mt-16", BAND[copy.tone])} role="status" data-nav-tone={copy.tone === "caution" ? "on-light" : "inverse"}>
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-6 px-4 pb-10 pt-36 md:pt-28">
+    <section className={cn("md:-mt-16", BAND[copy.tone])} role="status" data-nav-tone={copy.tone === "caution" ? "on-light" : "inverse"}>
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-6 px-4 pb-10 pt-8 md:pt-28">
         <SealLanding ring={verdict === "valid"}>
           <Icon className="size-20 md:size-24" aria-hidden />
         </SealLanding>

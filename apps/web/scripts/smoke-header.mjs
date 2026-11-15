@@ -87,24 +87,71 @@ await step("scrolling down hides the pieces and scrolling up brings them back", 
 
 const m = await newPage(390, 800);
 await m.goto(`${WEB}/directory`);
-await step("phone: the tabs sit on a second row at the top, inside the screen, and nothing scrolls sideways", async () => {
-  const nav = m.getByRole("navigation", { name: "Primary" }).last();
+await step("phone: an app bar on top and a bottom navigation bar, both solid and inside the screen; the floating desktop nav is gone", async () => {
+  const bar = m.locator("[data-mobile-shell] header");
+  const nav = m.locator("[data-mobile-shell]").getByRole("navigation", { name: "Primary" });
   await nav.waitFor();
-  assert.equal(await nav.isVisible(), true);
-  assert.equal(await nav.getByRole("link").count(), 3);
-  const box = await nav.getByRole("link").last().boundingBox();
-  assert.ok(box.x >= 0 && box.x + box.width <= 390, "tabs must stay inside the screen");
-  assert.ok(box.y < 140, "tabs are at the top of the page, not the bottom");
+  assert.equal(await m.locator("[data-floating-nav]").isVisible(), false, "the floating desktop nav must not show on a phone");
+  const top = await bar.boundingBox();
+  assert.ok(top.y === 0 && top.height >= 56 && top.width === 390, `app bar is a full-width bar at the top (${JSON.stringify(top)})`);
+  assert.equal(await nav.getByRole("link").count(), 4);
+  assert.equal(await nav.getByRole("button", { name: "More" }).count(), 1);
+  const nb = await nav.boundingBox();
+  assert.ok(Math.abs(nb.y + nb.height - 800) <= 1 && nb.width === 390, `bottom bar sits at the bottom edge (${JSON.stringify(nb)})`);
+  assert.ok(nb.height >= 64, "tap targets are at least 48px (bar is 64px)");
+  for (const l of await nav.getByRole("link").all()) assert.ok((await l.boundingBox()).height >= 48);
   const w = await m.evaluate(() => ({ s: document.documentElement.scrollWidth, c: document.documentElement.clientWidth }));
   assert.ok(w.s <= w.c, `no horizontal scroll (${w.s} > ${w.c})`);
+  assert.equal(await nav.getByRole("link", { name: "Find" }).getAttribute("aria-current"), "page");
   await m.screenshot({ path: "smoke-shots/header-mobile.png" });
 });
 
-await step("phone: the account menu is reachable", async () => {
-  await m.evaluate(() => window.scrollTo(0, 0));
-  await m.getByRole("button", { name: "Account and settings" }).click();
-  await m.getByRole("menuitemcheckbox", { name: "Dark mode" }).waitFor();
+await step("phone: the content ends above the bottom bar", async () => {
+  let prev = -1;
+  for (let i = 0; i < 12; i++) {
+    const h = await m.evaluate(() => { window.scrollTo(0, document.documentElement.scrollHeight); return document.documentElement.scrollHeight; });
+    await m.waitForTimeout(500);
+    if (h === prev) break;
+    prev = h;
+  }
+  const bar = await m.locator("[data-mobile-shell]").getByRole("navigation", { name: "Primary" }).boundingBox();
+  const last = await m.locator("main > :last-child").boundingBox();
+  assert.ok(last.y + last.height <= bar.y + 1, `content must end above the bar (content bottom ${Math.round(last.y + last.height)}, bar top ${Math.round(bar.y)})`);
+});
+
+await step("phone: an inner screen shows a back arrow and its name; the bar of a root screen shows the mark", async () => {
+  await m.goto(`${WEB}/transparency`);
+  await m.getByRole("heading", { name: "Public log" }).first().waitFor();
+  await m.locator("[data-mobile-shell] header").getByRole("button", { name: "Back" }).waitFor();
+  await m.goto(`${WEB}/verify`);
+  assert.equal(await m.locator("[data-mobile-shell] header").getByRole("button", { name: "Back" }).count(), 0);
+  await m.locator("[data-mobile-shell] header").getByRole("link", { name: "Pramaan home" }).waitFor();
+});
+
+await step("phone: More opens a bottom sheet with the other pages and the settings, and each setting really changes the page", async () => {
+  await m.getByRole("button", { name: "More" }).click();
+  const sheet = m.getByRole("dialog");
+  await sheet.waitFor();
+  for (const t of ["How we check", "Transparency", "Developers"]) await sheet.getByRole("link", { name: t }).waitFor();
+  await sheet.getByRole("button", { name: "Larger text" }).click();
+  await m.waitForFunction(() => document.documentElement.dataset.largeText === "true");
+  await sheet.getByRole("button", { name: "Dark mode" }).click();
+  await m.waitForFunction(() => document.documentElement.classList.contains("dark"));
+  await sheet.getByRole("link", { name: /Sign in/ }).first().waitFor();
+  await m.screenshot({ path: "smoke-shots/header-mobile-sheet.png" });
+  await m.keyboard.press("Escape");
+});
+
+await step("phone: the search button opens the command palette", async () => {
+  await m.locator("[data-mobile-shell] header").getByRole("button", { name: "Search" }).click();
+  await m.getByPlaceholder(/Go anywhere/).waitFor();
+  await m.keyboard.press("Escape");
+});
+
+await step("phone: the bottom bar hides on sign-in (a focused flow) and while the keyboard is up", async () => {
+  await m.goto(`${WEB}/auth?mode=login`);
+  assert.equal(await m.locator("[data-mobile-shell]").count() === 0 || !(await m.locator("[data-mobile-shell] nav").count()), true);
 });
 
 await browser.close();
-console.log("\nHeader smoke test passed.");
+console.log("Header smoke test passed.");

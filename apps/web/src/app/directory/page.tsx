@@ -105,11 +105,11 @@ export default function Directory() {
         ).sort((a, b) => b[1].length - a[1].length);
 
   return (
-    <div className="-mt-28 md:-mt-16">
+    <div className="md:-mt-16">
       <section data-nav-tone="on-dark" className="relative overflow-hidden bg-[#14152B] text-white">
         <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-[var(--brand)] opacity-20 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -bottom-32 left-10 size-80 rounded-full bg-[#2447C9] opacity-25 blur-3xl" />
-        <div className="relative mx-auto max-w-7xl px-4 pb-10 pt-36 md:pt-28">
+        <div className="relative mx-auto max-w-7xl px-4 pb-10 pt-8 md:pt-28">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-3xl">
               <h1 className="text-balance text-5xl leading-[1.02] md:text-7xl">{t("dir.title")}</h1>

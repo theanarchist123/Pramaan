@@ -26,9 +26,9 @@ const HUMAN = [
 
 export default function HowWeCheck() {
   return (
-    <div className="-mt-28 md:-mt-16">
+    <div className="md:-mt-16">
       <section className="bg-[var(--tile3)] text-[var(--tile3i)]">
-        <div className="mx-auto max-w-5xl px-4 pb-16 pt-36 md:pt-28">
+        <div className="mx-auto max-w-5xl px-4 pb-16 pt-8 md:pt-28">
           <h1 className="text-balance text-5xl leading-[1.02] md:text-7xl">How we check what people tell us.</h1>
           <p className="mt-4 max-w-2xl text-lg">Plain words, no jargon. What a claim has to go through, and when a person decides instead of a machine.</p>
         </div>

@@ -8,7 +8,7 @@ import { HowAndDoors } from "@/components/landing/how-and-doors";
 // no longer on this page. The old landing components stay in components/landing/ (parked, not deleted).
 export default function Home() {
   return (
-    <div className="-mt-28 md:-mt-16">
+    <div className="md:-mt-16">
       <Hero />
       <PeopleAndFields />
       <HowAndDoors />

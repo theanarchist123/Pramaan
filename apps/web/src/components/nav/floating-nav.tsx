@@ -41,6 +41,9 @@ export function FloatingNav() {
   useEffect(() => {
     setMounted(true);
     setLarge(restoreLargeText());
+    // The phone shell (mobile-shell.tsx) has its own search button; it asks this palette to open.
+    const openSearch = () => setPaletteOpen(true);
+    window.addEventListener("pramaan:open-search", openSearch);
     // Hide while reading downwards; return on any upward scroll, near the top, or near the page end.
     const onScroll = () => {
       const y = window.scrollY;
@@ -50,7 +53,10 @@ export function FloatingNav() {
       lastY.current = y;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("pramaan:open-search", openSearch);
+    };
   }, []);
 
   const active = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -93,7 +99,7 @@ export function FloatingNav() {
   );
 
   return (
-    <header data-floating-nav>
+    <header data-floating-nav className="hidden md:block">
       {/* Top-left: the mark. */}
       <motion.div
         initial={false}
@@ -165,17 +171,6 @@ export function FloatingNav() {
           </DropdownMenuContent>
         </DropdownMenu>
       </motion.div>
-
-      {/* Phones: the same tabs on a second row under the mark (transparent, icons collapse to the current label). */}
-      <motion.nav
-        aria-label={t("nav.primary")}
-        initial={false}
-        animate={slide(-24)}
-        transition={slideTransition}
-        className={cn("pointer-events-none fixed inset-x-0 top-[calc(3.75rem+env(safe-area-inset-top))] z-40 flex justify-center px-4 md:hidden", toneClass(tones.dock))}
-      >
-        <div className="pointer-events-auto">{tabList(true)}</div>
-      </motion.nav>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </header>

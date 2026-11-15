@@ -6,6 +6,7 @@ import "@fontsource-variable/noto-sans-devanagari/wght.css";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { FloatingNav } from "@/components/nav/floating-nav";
+import { MobileShell } from "@/components/nav/mobile-shell";
 import { SkipLink } from "@/components/skip-link";
 import { ConnectionBanner } from "@/components/connection-banner";
 import { PwaRegister } from "@/components/pwa-register";
@@ -34,9 +35,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <SkipLink />
           <FloatingNav />
+          <MobileShell />
           <ConnectionBanner />
           <PwaRegister />
-          <main id="main" className="pt-28 pb-[env(safe-area-inset-bottom)] md:pt-16">{children}</main>
+          <main id="main" className="app-main pt-[calc(3.5rem+max(env(safe-area-inset-top),var(--safe-area-inset-top,0px)))] md:pt-16 md:pb-0">{children}</main>
         </Providers>
       </body>
     </html>

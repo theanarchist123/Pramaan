@@ -52,14 +52,14 @@ export default function Transparency() {
   const shownCount = Math.min(total, Math.max(visible, bad !== null ? total - bad + 2 : 0));
 
   return (
-    <div className="-mt-28 md:-mt-16">
+    <div className="md:-mt-16">
       <section data-nav-tone="on-dark" className="relative overflow-hidden bg-[#14152B] text-white">
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 flex gap-2 overflow-hidden px-4 opacity-25">
           {Array.from({ length: 14 }, (_, i) => (
             <span key={i} className="mb-6 flex h-14 w-32 shrink-0 items-center justify-center rounded-xl border-2 border-[var(--brand)] font-mono text-xs text-[var(--brand)]" />
           ))}
         </div>
-        <div className="relative mx-auto max-w-5xl px-4 pb-32 pt-36 md:pt-28">
+        <div className="relative mx-auto max-w-5xl px-4 pb-32 pt-8 md:pt-28">
           <p className="inline-flex items-center gap-2 rounded-full bg-[var(--brand)] px-3 py-1 text-sm font-bold text-[#14152B]"><Link2 aria-hidden className="size-4" /> Public log</p>
           <h1 className="mt-4 text-balance text-5xl leading-[1.02] md:text-7xl">Nothing here can be quietly changed.</h1>
           <p className="mt-4 max-w-2xl text-lg text-white/75">

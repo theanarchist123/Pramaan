@@ -201,3 +201,41 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, ht
   ::-webkit-scrollbar-thumb:hover { background: var(--brand); background-clip: content-box; }
   ::-webkit-scrollbar-corner { background: transparent; }
 }
+
+
+/* ------------------------------------------------------------------------------------------------------------------------------------------
+   Phones and the Android app (below md). The page sits BETWEEN a top app bar and a bottom navigation bar (nav/mobile-shell.tsx), nothing floats
+   over it, and touch behaves like an app: no tap flash, no double-tap zoom delay, 48px targets, 16px inputs (so Android never zooms a field),
+   and nothing may push the page sideways whatever the system font size is.
+   ------------------------------------------------------------------------------------------------------------------------------------------ */
+@media (max-width: 767px) {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overscroll-behavior-y: none;           /* no pull-to-refresh bounce inside the app shell */
+  }
+  body { overflow-x: clip; }               /* a backstop: one stray wide element must never make the whole page slide */
+  .app-main { padding-bottom: calc(4rem + max(env(safe-area-inset-bottom), var(--safe-area-inset-bottom, 0px))); }
+  html[data-bnav="0"] .app-main { padding-bottom: max(env(safe-area-inset-bottom), var(--safe-area-inset-bottom, 0px)); }
+  body:has([data-auth-page]) .app-main { padding-top: 0; }
+  a, button, [role="button"], summary, label, select { touch-action: manipulation; }
+  input, textarea, select { font-size: 16px; }
+  img, svg, video, canvas { max-width: 100%; }
+  main h1 { font-size: clamp(1.85rem, 9vw, 2.6rem); line-height: 1.06; }
+  main { overflow-wrap: anywhere; }        /* long codes, emails and names wrap instead of overflowing */
+  main table { display: block; overflow-x: auto; }
+  main pre { overflow-x: auto; }
+  /* A press looks pressed (the platform's ripple stand-in). */
+  main a:active, main button:active { opacity: 0.85; }
+}
+
+/* A grid with no column template of its own sizes its one column to the widest unbreakable thing inside it, which on a narrow screen (or with a big system font)
+   is wider than the screen. On phones every such grid gets one shrinkable column, and grid items may shrink. Utilities still win (grid-cols-2, sm:grid-cols-3 ...)
+   because this is in the base layer. */
+@layer base {
+  @media (max-width: 767px) {
+    .grid { grid-template-columns: minmax(0, 1fr); }
+    .grid > * { min-width: 0; }
+  }
+}

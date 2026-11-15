@@ -60,9 +60,9 @@ export default function Developers() {
   };
 
   return (
-    <div className="-mt-28 md:-mt-16">
+    <div className="md:-mt-16">
       <section className="bg-[var(--tile5)] text-[var(--tile5i)]">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-14 pt-36 md:pt-28 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-14 pt-8 md:pt-28 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div>
             <h1 className="text-balance text-5xl leading-[1.02] md:text-7xl">Build on Pramaan.</h1>
             <p className="mt-4 max-w-xl text-lg">
