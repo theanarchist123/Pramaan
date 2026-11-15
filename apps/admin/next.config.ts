@@ -24,6 +24,14 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, "../../"),
   transpilePackages: ["@pramaan/ui"],
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  // The console lives under /staff (that is what lets it share the member site's address locally), but nobody should have to type it:
+  // the bare address of the staff site goes straight to the sign-in screen.
+  async redirects() {
+    return [
+      { source: "/", destination: "/staff", permanent: false, basePath: false },
+      { source: "/login", destination: "/staff/login", permanent: false, basePath: false },
+    ];
+  },
   async headers() {
     return [{
       source: "/:path*",

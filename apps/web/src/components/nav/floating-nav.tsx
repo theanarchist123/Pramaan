@@ -140,7 +140,7 @@ export function FloatingNav() {
               <DropdownMenuItem render={<Link href="/auth?mode=login" />}><UserRound /> {t("nav.signin")}</DropdownMenuItem>
             )}
             {user?.role === "admin" && (
-              <DropdownMenuItem render={<a href="/staff" />}><ShieldCheck /> {t("menu.staff")}</DropdownMenuItem>
+              <DropdownMenuItem render={<a href={process.env.NEXT_PUBLIC_STAFF_URL || "/staff"} />}><ShieldCheck /> {t("menu.staff")}</DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setLang(lang === "en" ? "hi" : "en")} lang={lang === "en" ? "hi" : "en"}>

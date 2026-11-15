@@ -44,4 +44,10 @@ assert.equal(calls[0].init.headers.get("origin"), "https://staff.example.test");
 assert.equal(calls[0].init.headers.get("cookie"), "a=b");
 assert.equal(calls[0].init.headers.get("authorization"), null, "no Authorization header is passed on");
 assert.match(r.headers.getSetCookie()[0], /^__Host-pramaan_admin=abc/);
+// 4. the bare address of the staff site opens the sign-in screen (nobody has to type /staff)
+const cfgJs = compile("next.config.ts");
+const cfg = run(cfgJs, {}).default;
+const reds = await cfg.redirects();
+assert.ok(reds.some((x) => x.source === "/" && x.destination === "/staff" && x.basePath === false), "/ goes to /staff");
+assert.ok(reds.some((x) => x.source === "/login" && x.destination === "/staff/login" && x.basePath === false), "/login goes to /staff/login");
 console.log("staff proxy: all checks passed");

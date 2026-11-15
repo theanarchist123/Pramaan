@@ -38,7 +38,9 @@ Vercel runs short serverless functions. This API needs a long-lived server: a he
 3. Note the console's Vercel address, e.g. `https://pramaan-staff.vercel.app`. The console lives at `https://pramaan-staff.vercel.app/staff`.
 4. **Render (API)**: set `ADMIN_BASE_URL` = that console address (just the origin, `https://pramaan-staff.vercel.app`) and let it redeploy. The API only accepts staff state-changing requests whose Origin matches it. Leave `PUBLIC_BASE_URL` as your member site.
 5. **First staff account.** Register normally on the member site, then in Supabase -> SQL editor: `update users set role = 'admin' where email = 'you@example.com';`. Open `https://pramaan-staff.vercel.app/staff/login`, sign in, and set up the authenticator (see below). Change or delete the demo admin (`admin@pramaan.demo`) now.
-6. **Check:** wrong password shows an error; after a good sign-in the Review page loads and stays signed in after a refresh; `/staff/security` shows the QR code; sign out works.
+6. **Member site link.** In the MEMBER site's Vercel project add `NEXT_PUBLIC_STAFF_URL` = `https://<your-staff-site>.vercel.app/staff` and redeploy, so the "Staff console" item in an admin's account menu opens the staff site. The bare staff address (`https://<your-staff-site>.vercel.app/`) also goes straight to the sign-in screen.
+7. **Demo admin.** `admin@pramaan.demo` has a public password. After your own account is admin, run in Supabase SQL: `update users set role = 'person' where email = 'admin@pramaan.demo';`
+8. **Check:** wrong password shows an error; after a good sign-in the Review page loads and stays signed in after a refresh; `/staff/security` shows the QR code; sign out works.
 
 **Authenticator.** Any authenticator app works (Google Authenticator, Microsoft Authenticator, Authy, 1Password, Aegis). You do not sign in to Google or anyone else: the app just stores a key and shows 6 digits. Scan the QR code on the Security page, or type the key by hand. Save the recovery codes it shows once.
 

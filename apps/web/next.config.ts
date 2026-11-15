@@ -41,7 +41,10 @@ const nextConfig: NextConfig = {
   // the browser never leaves this origin or port. Next proxies /staff to the console's server (ADMIN_INTERNAL_URL, default http://localhost:3001).
   // The old /admin pages in this app signed in as a member, which the API refuses (401), so they send people to /staff instead.
   async rewrites() {
-    const internal = (process.env.ADMIN_INTERNAL_URL || "http://localhost:3001").replace(/\/$/, "");
+    // Locally the console runs on :3001 and /staff here proxies to it. On the internet the staff site has its own address (NEXT_PUBLIC_STAFF_URL), so
+    // nothing is forwarded unless ADMIN_INTERNAL_URL is set: a proxy to a server that is not there would only produce errors.
+    const internal = (process.env.ADMIN_INTERNAL_URL || (process.env.NODE_ENV !== "production" ? "http://localhost:3001" : "")).replace(/\/$/, "");
+    if (!internal) return [];
     return [
       { source: "/staff", destination: `${internal}/staff` },
       { source: "/staff/:path*", destination: `${internal}/staff/:path*` },
