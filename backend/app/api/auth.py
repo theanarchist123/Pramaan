@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.core.ratelimit import ip_limit, login_failed, login_locked, login_ok
+from app.core.rbac import staff_roles
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db import get_session
 from app.deps import SESSION_COOKIE, Principal, get_principal
@@ -108,6 +109,10 @@ async def login(body: LoginIn, response: Response, session: AsyncSession = Depen
     if user is None or not verify_password(body.password, user.password_hash):
         await login_failed(email)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect email or password")
+    # Staff are not members: their accounts sign in at the staff console (its own page, its own short session, an authenticator code). Refusing here, only AFTER
+    # the password was right, means this reveals nothing to someone who does not already hold the account, and no member session is ever issued to staff.
+    if user.role == "admin" or await staff_roles(session, user.id):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "This is a staff account. Staff sign in at the staff console, not here.")
     await login_ok(email)
     return _token_out(user, response)
 

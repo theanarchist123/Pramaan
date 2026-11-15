@@ -39,11 +39,35 @@ async def test_admin_login_sets_a_strict_httponly_cookie_that_only_works_on_staf
     assert (await cookie_client.get("/v1/auth/me")).status_code == 401  # the staff session does not log you into the member site
 
 
-async def test_a_member_session_is_useless_on_the_staff_api_even_for_a_staff_member(cookie_client):
-    email = await register(cookie_client, staff=True)
+async def test_a_member_session_is_useless_on_the_staff_api(cookie_client):
+    email = await register(cookie_client, staff=False)
     await cookie_client.post("/v1/auth/login", json={"email": email, "password": PASSWORD})  # the MEMBER login
     assert (await cookie_client.get("/v1/auth/me")).status_code == 200
     assert (await cookie_client.get("/v1/admin/me/permissions")).status_code == 401  # a stolen member cookie gets nothing here
+
+
+async def test_staff_accounts_cannot_sign_in_as_members(cookie_client):
+    """Staff sign in at the staff console only: the member login refuses them and issues no session, whether they are a legacy admin or hold a granted role."""
+    email = await register(cookie_client, staff=True)
+    r = await cookie_client.post("/v1/auth/login", json={"email": email, "password": PASSWORD})
+    assert r.status_code == 403 and "staff console" in r.json()["detail"]
+    assert "set-cookie" not in r.headers and "access_token" not in r.text
+    assert (await cookie_client.get("/v1/auth/me")).status_code == 401
+    wrong = await cookie_client.post("/v1/auth/login", json={"email": email, "password": "nope-nope-nope"})
+    assert wrong.status_code == 401  # a wrong password still looks like any other: nothing about staff is revealed without the password
+
+    from sqlalchemy import select, update
+
+    from app.db import get_sessionmaker
+    from app.models import User, UserRole
+
+    member = await register(cookie_client, staff=False)
+    assert (await cookie_client.post("/v1/auth/login", json={"email": member, "password": PASSWORD})).status_code == 200  # ordinary members are unaffected
+    async with get_sessionmaker()() as s:  # role-based staff: an ordinary account that was granted a staff role
+        uid = (await s.execute(select(User.id).where(User.email == member))).scalar_one()
+        s.add(UserRole(user_id=uid, role_key="reviewer"))
+        await s.commit()
+    assert (await cookie_client.post("/v1/auth/login", json={"email": member, "password": PASSWORD})).status_code == 403
 
 
 async def test_only_staff_can_sign_in_and_every_failure_looks_the_same(cookie_client):
