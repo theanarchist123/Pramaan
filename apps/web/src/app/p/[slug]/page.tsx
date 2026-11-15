@@ -60,11 +60,11 @@ export default async function PublicProfile({ params }: { params: Promise<{ slug
   const tile = tileOf(p.full_name);
   const verifiedTotal = sum.confirmed;
   return (
-    <div className="-mt-28 md:-mt-16">
+    <div className="md:-mt-16">
       {/* Cover: this person's own colour, a big avatar and their name set large. */}
       <section className="relative overflow-hidden" style={{ background: `var(--tile${tile})`, color: `var(--tile${tile}i)` }}>
         <span aria-hidden className="pointer-events-none absolute -right-6 -top-10 select-none font-display text-[22rem] font-extrabold leading-none opacity-[0.12]">{initialsOf(p.full_name).slice(0, 1)}</span>
-        <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-36 md:pt-28">
+        <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-8 md:pt-28">
           <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-1 text-sm font-semibold">
             <Link href="/directory" className="hover:underline">Registry</Link>
             <ChevronRight className="size-3.5" /> <span>{p.full_name}</span>

@@ -35,3 +35,23 @@ export function haptic(kind: "light" | "medium" | "heavy" | "success" = "light")
     /* a missing plugin must never break the screen */
   }
 }
+
+function toHex(rgb: string): string | null {
+  const m = rgb.match(/\d+(\.\d+)?/g);
+  if (!m || m.length < 3) return null;
+  return "#" + m.slice(0, 3).map((x) => Math.round(Number(x)).toString(16).padStart(2, "0")).join("");
+}
+
+/** Make the Android status bar match the top app bar (its colour and light/dark icons) so the two read as one piece. Does nothing in a browser or if the plugin is absent. */
+export function syncSystemBars(dark: boolean): void {
+  if (!isNativeApp()) return;
+  try {
+    const bar = cap()?.Plugins?.StatusBar;
+    if (!bar) return;
+    const hex = toHex(getComputedStyle(document.body).backgroundColor);
+    if (hex) void bar.setBackgroundColor?.({ color: hex }).catch(() => {});
+    void bar.setStyle?.({ style: dark ? "DARK" : "LIGHT" }).catch(() => {}); // DARK = light icons for a dark bar; LIGHT = dark icons for a light bar
+  } catch {
+    /* never break the screen */
+  }
+}

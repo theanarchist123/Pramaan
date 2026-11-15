@@ -38,7 +38,7 @@ function AuthForm() {
   }
 
   return (
-    <div className="-mt-28 grid min-h-dvh md:-mt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+    <div data-auth-page className="grid min-h-dvh md:-mt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <aside data-nav-tone="on-light" className="relative hidden overflow-hidden bg-[var(--brand)] p-12 pt-10 text-[var(--on-brand)] lg:flex lg:flex-col lg:justify-between">
         <span aria-hidden className="pointer-events-none absolute -bottom-24 -right-10 select-none font-display text-[26rem] font-extrabold leading-none opacity-[0.1]">P</span>
         <div className="relative">

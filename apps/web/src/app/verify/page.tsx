@@ -45,9 +45,9 @@ export default function VerifyLookup() {
   const hint = suggestions(`PRM-${value}`);
 
   return (
-    <div className="-mt-28 md:-mt-16">
+    <div className="md:-mt-16">
       <section className="bg-[var(--tile1)] text-[var(--tile1i)]">
-        <div className="mx-auto max-w-6xl px-4 pb-28 pt-36 md:pt-28">
+        <div className="mx-auto max-w-6xl px-4 pb-28 pt-8 md:pt-28">
           <p className="inline-flex items-center gap-2 rounded-full border-2 border-current px-3 py-1 text-sm font-bold">
             <ShieldCheck aria-hidden className="size-4" /> No account needed
           </p>

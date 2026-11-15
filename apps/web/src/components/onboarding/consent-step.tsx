@@ -21,9 +21,9 @@ export function ConsentStep({ busy, onStart }: { busy: boolean; onStart: (c: Con
   const [webResearch, setWebResearch] = useState(true);
 
   return (
-    <div className="-mt-28 md:-mt-16">
+    <div className="md:-mt-16">
       <section data-nav-tone="on-light" className="bg-[var(--brand)] text-[var(--on-brand)]">
-        <div className="mx-auto max-w-5xl px-4 pb-24 pt-36 md:pt-28">
+        <div className="mx-auto max-w-5xl px-4 pb-24 pt-8 md:pt-28">
           <span className="inline-flex size-12 items-center justify-center rounded-2xl bg-[#14152B] text-[var(--brand)]"><Sparkles /></span>
           <h1 className="mt-4 max-w-3xl text-balance text-5xl leading-[1.02] md:text-7xl">{t("consent.title")}</h1>
           <p className="mt-4 max-w-2xl text-lg text-[#3B2E00]">{t("consent.sub")}</p>

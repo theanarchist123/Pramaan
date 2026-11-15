@@ -31,7 +31,7 @@ export function Hero() {
 
   return (
     <section data-nav-tone="on-light" className="relative overflow-hidden bg-[var(--brand)] text-[var(--on-brand)]">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-16 pt-36 md:pb-20 md:pt-24 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+      <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-16 pt-8 md:pb-20 md:pt-24 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <div className="min-w-0">
           <h1 className="text-balance text-5xl leading-[1.02] md:text-6xl xl:text-7xl">
             {t("h2.h1a")} <HandUnderline>{t("h2.h1b")}</HandUnderline>
