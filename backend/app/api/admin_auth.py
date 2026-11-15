@@ -19,11 +19,25 @@ from app.db import get_session
 from app.deps import Principal, admin_cookie_name, get_principal
 from app.models import User
 from app.schemas import LoginIn, UserOut
+import logging
 from datetime import datetime, timedelta, timezone
 
 from pydantic import Field
 
 router = APIRouter(prefix="/v1/admin/auth", tags=["staff-auth"])
+log = logging.getLogger("pramaan.staff_auth")
+
+
+def mask_email(email: str) -> str:
+    """Enough to recognise your own account in a log ("ni***@gmail.com"), not enough to collect addresses from it."""
+    local, at, domain = (email or "").partition("@")
+    return f"{local[:2]}***@{domain}" if at and local and domain else "***"
+
+
+def _refused(email: str, reason: str) -> None:
+    # The public answer is the same for every failure (so the form cannot reveal who is staff). The operator still needs the real reason, or a wrong
+    # password looks exactly like a broken deployment: it goes to the server log, with the email masked and never the password.
+    log.warning("staff sign-in refused for %s: %s", mask_email(email), reason)
 
 
 class AdminLoginIn(LoginIn):
@@ -54,12 +68,21 @@ async def admin_login(body: AdminLoginIn, response: Response, session: AsyncSess
     email = body.email.lower().strip()
     key = f"admin:{email}"
     if await login_locked(key):
+        _refused(email, "locked for 15 minutes after repeated failures")
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many failed attempts - try again in 15 minutes")
     user = (await session.execute(select(User).where(User.email == email))).scalar_one_or_none()
-    # One message for every failure, so the form cannot be used to discover who is staff.
-    if user is None or not verify_password(body.password, user.password_hash) or not (
-        user.role == "admin" or await staff_roles(session, user.id)
-    ):
+    # One message for every failure, so the form cannot be used to discover who is staff. The real reason is logged for the operator.
+    reason = ""
+    if user is None:
+        reason = "no account with this email in this database"
+    elif not user.password_hash:
+        reason = "the account has no password set"
+    elif not verify_password(body.password, user.password_hash):
+        reason = "wrong password"
+    elif not (user.role == "admin" or await staff_roles(session, user.id)):
+        reason = "the account exists but is not staff (no staff role)"
+    if reason:
+        _refused(email, reason)
         await login_failed(key)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect email or password")
     if user.mfa_enrolled_at is not None:
@@ -68,6 +91,7 @@ async def admin_login(body: AdminLoginIn, response: Response, session: AsyncSess
         if not body.code.strip():
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "mfa_code_required", "message": "Enter the code from your authenticator app"})
         if not await _second_factor_ok(session, user, body.code):
+            _refused(email, "wrong authenticator or recovery code")
             await login_failed(key)
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect email, password or code")
         # Having just proved presence, sensitive actions are unlocked for the usual step-up window.

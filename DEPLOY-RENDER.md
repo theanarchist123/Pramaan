@@ -45,3 +45,14 @@ Vercel runs short serverless functions. This API needs a long-lived server: a he
 **Authenticator.** Any authenticator app works (Google Authenticator, Microsoft Authenticator, Authy, 1Password, Aegis). You do not sign in to Google or anyone else: the app just stores a key and shows 6 digits. Scan the QR code on the Security page, or type the key by hand. Save the recovery codes it shows once.
 
 **Not tried on a live host.** The proxy is covered by a config test, not yet by a real Vercel + Render run. If the Vercel build or the sign-in fails, send the build log or the exact error. A custom domain (console, API and site under one registrable domain) also works and avoids the proxy; then set `NEXT_PUBLIC_API_URL` to the API address and `COOKIE_SAMESITE=lax`.
+
+## Staff sign-in says "Incorrect email or password" (401)
+The staff sign-in gives the same answer for every failure on purpose, so the form cannot be used to find out who is staff. To find the real reason:
+1. **Render -> your API -> Logs.** Each refused sign-in is logged as `staff sign-in refused for ni***@gmail.com: <reason>`. The reason is one of: no account with this email in this database, the account has no password set, wrong password, the account exists but is not staff, wrong authenticator or recovery code, or locked for 15 minutes after repeated failures. The password is never logged.
+2. **From your machine** (uses the DATABASE_URL in your `.env`, and prints which database it is looking at):
+   - `cd backend` then `.venv\Scripts\python scripts\staff_doctor.py --list` lists every account that can use the staff console.
+   - `.venv\Scripts\python scripts\staff_doctor.py you@example.com` explains why that account cannot sign in (it can test a password at a hidden prompt).
+   - `.venv\Scripts\python scripts\staff_doctor.py you@example.com --grant super_admin` makes an existing account staff.
+   - `.venv\Scripts\python scripts\set_password.py you@example.com` sets a new password (hidden prompt).
+3. In the browser console, one 401 on `/auth/login` right before the authenticator box appears is normal: it is the server asking for the 6-digit code.
+4. After 5 failures the account is locked for 15 minutes (the page then says "Too many failed attempts"). Wait, or restart the API service to clear the lock.
