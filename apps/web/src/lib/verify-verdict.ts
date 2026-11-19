@@ -1,11 +1,13 @@
 import type { VerifyResult } from "@/hooks/use-certificate";
 
 /** The five outcomes of checking a certificate (spec 6.4). The verdict comes from what the registry returned, never from guesswork. */
-export type Verdict = "valid" | "replaced" | "revoked" | "altered" | "not_found";
+export type Verdict = "valid" | "replaced" | "revoked" | "altered" | "unconfirmed" | "not_found";
 
 export function verdictOf(v: VerifyResult | null, notFound: boolean): Verdict {
   if (notFound || !v) return "not_found";
   if (v.revoked) return "revoked";
+  // the registry lost a key: say so honestly instead of calling a genuine certificate edited
+  if (!v.valid && v.reason?.startsWith("Signed with a key this registry no longer publishes")) return "unconfirmed";
   if (!v.valid) return "altered";
   if (v.superseded_by) return "replaced";
   return "valid";
@@ -20,6 +22,11 @@ export const VERDICT_COPY: Record<Verdict, { title: string; sentence: (v?: Verif
   },
   revoked: { title: "Revoked", sentence: () => "The registry revoked this certificate. Do not rely on it.", tone: "seal" },
   altered: { title: "Does not match its signature", sentence: () => "This content differs from what was signed. It may have been edited.", tone: "seal" },
+  unconfirmed: {
+    title: "Cannot be confirmed right now",
+    sentence: () => "The registry cannot check this signature at the moment. This is our problem, not a sign the certificate was edited. Please try again later.",
+    tone: "caution",
+  },
   not_found: { title: "Not found", sentence: () => "We have no certificate with this code. Treat the document as unverified.", tone: "neutral" },
 };
 

@@ -51,7 +51,7 @@ export function HowAndDoors() {
       <section className="border-t border-border">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-6 px-4 py-12">
           <span className="flex size-20 items-center justify-center rounded-2xl border-2 border-foreground"><QrCode aria-hidden className="size-10" /></span>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-[1_1_16rem]">
             <h3 className="text-2xl md:text-3xl">{t("h2.trustH")}</h3>
             <p className="mt-1 max-w-2xl text-muted-foreground">{t("h2.trustP")}</p>
           </div>

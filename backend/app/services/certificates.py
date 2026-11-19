@@ -171,6 +171,16 @@ async def get_certificate(session: AsyncSession, code: str) -> Certificate | Non
     ).scalar_one_or_none()
 
 
+async def unknown_signing_keys(session: AsyncSession) -> dict[str, int]:
+    """kid -> number of unrevoked certificates signed by a key the server cannot check any more. Anything here means real certificates
+    are failing verification right now; the fix is to restore the key or publish its public half (docs/security/key-rotation.md)."""
+    ring = public_keyring()
+    rows = (await session.execute(
+        select(Certificate.key_id, func.count()).where(Certificate.revoked_at.is_(None)).group_by(Certificate.key_id)
+    )).all()
+    return {kid: n for kid, n in rows if kid not in ring}
+
+
 async def verify_certificate(session: AsyncSession, code: str) -> VerifyOut:
     cert = await get_certificate(session, code)
     if cert is None:
@@ -226,6 +236,10 @@ async def verify_certificate(session: AsyncSession, code: str) -> VerifyOut:
         reason = "This certificate was revoked by the registry."
     elif untrusted_key:
         reason = "The signing key was later reported as compromised, and this certificate was logged after the report: do not rely on it."
+    elif not cert_pub:
+        # Not evidence of tampering: the registry no longer has this key's public half (a rotation that skipped SIGNING_RETIRED_PUBLIC_KEYS).
+        reason = ("Signed with a key this registry no longer publishes, so it cannot be confirmed right now. "
+                  "This is a problem on the registry's side, not a sign that the certificate was edited.")
     elif not sig_ok:
         reason = "Stored certificate content no longer matches its signature."
     elif not chain_ok:

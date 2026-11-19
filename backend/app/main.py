@@ -49,6 +49,22 @@ def _warn_if_degraded() -> None:
         log.warning("WIKIMEDIA_CONTACT is empty: Wikipedia may refuse lookups (set an email or project URL)")
 
 
+async def _warn_if_certificates_unverifiable() -> None:
+    """A changed SIGNING_KEY_B64 makes every earlier certificate fail its check. Say so loudly at start-up instead of letting visitors find out."""
+    from app.db import get_sessionmaker
+    from app.services.certificates import unknown_signing_keys
+
+    try:
+        async with get_sessionmaker()() as s:
+            unknown = await unknown_signing_keys(s)
+    except Exception:  # noqa: BLE001 - a start-up check must never stop the server
+        log.exception("could not check certificate signing keys")
+        return
+    for kid, n in unknown.items():
+        log.error("SIGNING KEY PROBLEM: %d certificate(s) were signed with key %s, which this server does not have. They all FAIL verification. "
+                  "Restore that SIGNING_KEY_B64, or add its public key to SIGNING_RETIRED_PUBLIC_KEYS (docs/security/key-rotation.md).", n, kid)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await init_db()
@@ -61,6 +77,7 @@ async def lifespan(_: FastAPI):
     await jobs.start()
     relay = asyncio.create_task(relay_from_redis())
     get_signer()  # create/load the signing key at boot so failures surface early
+    await _warn_if_certificates_unverifiable()
     if get_settings().plugins_enabled:
         from app.plugins_loader import load_all
 

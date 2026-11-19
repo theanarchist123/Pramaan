@@ -26,7 +26,7 @@ const TONE: Record<"verified" | "caution" | "seal" | "neutral", { bg: string; fg
   seal: { bg: "bg-destructive/10", fg: "text-destructive" },
   neutral: { bg: "bg-muted", fg: "text-muted-foreground" },
 };
-const ICON: Record<Verdict, typeof BadgeCheck> = { valid: BadgeCheck, replaced: Layers, revoked: ShieldAlert, altered: ShieldAlert, not_found: ShieldQuestion };
+const ICON: Record<Verdict, typeof BadgeCheck> = { valid: BadgeCheck, replaced: Layers, revoked: ShieldAlert, altered: ShieldAlert, unconfirmed: ShieldQuestion, not_found: ShieldQuestion };
 
 export default function VerifyCode({ params }: { params: Promise<{ code: string }> }) {
   const { code: raw } = use(params);
@@ -62,7 +62,7 @@ function Banner({ verdict, verify }: { verdict: Verdict; verify?: VerifyResult |
         <SealLanding ring={verdict === "valid"}>
           <Icon className="size-20 md:size-24" aria-hidden />
         </SealLanding>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-[1_1_16rem]">
           <h1 className="text-balance text-4xl leading-[1.05] md:text-6xl">{copy.title}</h1>
           <p className="mt-2 max-w-2xl text-lg opacity-90">{copy.sentence(verify)}</p>
           {verdict === "replaced" && verify?.superseded_by && (
