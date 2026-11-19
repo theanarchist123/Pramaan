@@ -107,12 +107,13 @@ async def proof_stats(session: AsyncSession = Depends(get_session)):
 
     month = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     real = (Profile.status == "approved") & (Profile.is_demo.is_(False))
-    people = (await session.execute(select(func.count()).select_from(Profile).where(real))).scalar_one()
-    joined = (await session.execute(select(func.count()).select_from(Profile).where(real, Profile.created_at >= month))).scalar_one()
-    certs = (await session.execute(
+    # One round trip for all three numbers (each trip to the database is slow on the hosted setup).
+    people, joined, certs = (await session.execute(select(
+        select(func.count()).select_from(Profile).where(real).scalar_subquery(),
+        select(func.count()).select_from(Profile).where(real, Profile.created_at >= month).scalar_subquery(),
         select(func.count()).select_from(Certificate).join(Profile, Profile.id == Certificate.profile_id)
-        .where(real, Certificate.revoked_at.is_(None))
-    )).scalar_one()
+        .where(real, Certificate.revoked_at.is_(None)).scalar_subquery(),
+    ))).one()
     return {"real_people": people, "real_certificates": certs, "joined_this_month": joined}
 
 
