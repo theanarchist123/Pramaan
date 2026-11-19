@@ -130,6 +130,7 @@ class ProfileSummary(ORM):
     city: str
     photo_url: str
     status: str
+    is_demo: bool = False  # the directory labels invented people from this
 
 
 class StatusChangeIn(BaseModel):

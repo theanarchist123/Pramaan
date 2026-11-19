@@ -39,7 +39,7 @@ export function PhotoUpload({ profile, onDone }: { profile: Profile; onDone: () 
         <p className="font-semibold">Your photo</p>
         <p className="text-sm text-muted-foreground">A clear face photo helps people trust the page. JPG, PNG or WebP, up to 6 MB.</p>
       </div>
-      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" aria-label="Choose a photo" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); e.target.value = ""; }} />
+      <input id="photo-input" ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" aria-label="Choose a photo" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); e.target.value = ""; }} />
       <Button variant="outline" disabled={busy} onClick={() => input.current?.click()}><Camera /> {busy ? "Uploading…" : profile.photo_url ? "Change" : "Add photo"}</Button>
     </div>
   );

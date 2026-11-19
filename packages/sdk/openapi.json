@@ -1456,6 +1456,36 @@
         "title": "MigrationRequestIn",
         "type": "object"
       },
+      "NominationIn": {
+        "properties": {
+          "email": {
+            "maxLength": 255,
+            "minLength": 3,
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "title": "Email",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "description": "Why this person should be listed. Links, addresses and phone numbers are removed.",
+            "maxLength": 300,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ],
+        "title": "NominationIn",
+        "type": "object"
+      },
       "OtpVerifyIn": {
         "properties": {
           "code": {
@@ -1811,6 +1841,11 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "is_demo": {
+            "default": false,
+            "title": "Is Demo",
+            "type": "boolean"
           },
           "photo_url": {
             "title": "Photo Url",
@@ -2190,10 +2225,10 @@
           "city",
           "photo_url",
           "status",
+          "is_demo",
           "score",
           "reasons",
-          "claims",
-          "is_demo"
+          "claims"
         ],
         "title": "SearchHit",
         "type": "object"
@@ -4835,6 +4870,70 @@
         "summary": "Consents",
         "tags": [
           "registry"
+        ]
+      }
+    },
+    "/v1/admin/email/test": {
+      "post": {
+        "description": "Send a test email to YOUR OWN address using the server's real email setup, and say what happened. It runs on the server, so it tests the real deployment\n(a host that blocks SMTP shows up here as network_blocked). Only ever to the signed-in staff member's own address.",
+        "operationId": "email_test_v1_admin_email_test_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-api-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Email Test",
+        "tags": [
+          "admin"
         ]
       }
     },
@@ -10259,6 +10358,79 @@
         ]
       }
     },
+    "/v1/nominations": {
+      "post": {
+        "operationId": "nominate_v1_nominations_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-api-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NominationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Nominate",
+        "tags": [
+          "nominations"
+        ]
+      }
+    },
     "/v1/oauth/authorize": {
       "get": {
         "description": "What the consent screen shows. Anything wrong with the app or redirect is an error here, never a redirect.",
@@ -13447,6 +13619,26 @@
           }
         },
         "summary": "Map Stats",
+        "tags": [
+          "directory"
+        ]
+      }
+    },
+    "/v1/stats/proof": {
+      "get": {
+        "description": "Three honest numbers for the home page. Counts only: real members (never the fictional demos), their unrevoked certificates, and how many joined this month.",
+        "operationId": "proof_stats_v1_stats_proof_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Proof Stats",
         "tags": [
           "directory"
         ]

@@ -10,7 +10,7 @@ import { useInstall } from "@/components/install-button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
-import { useI18n } from "@/lib/i18n";
+import { HINDI_UI_ENABLED, useI18n } from "@/lib/i18n";
 import { restoreLargeText, toggleLargeText } from "@/lib/large-text";
 import { useMotionPreference } from "@/lib/motion-preference";
 import { haptic, isNativeApp, syncSystemBars } from "@/lib/native";
@@ -180,7 +180,7 @@ export function MobileShell() {
         <SheetContent side="bottom" showCloseButton={false} className="max-h-[88dvh] gap-0 overflow-y-auto rounded-t-3xl p-0 pb-[max(env(safe-area-inset-bottom),var(--safe-area-inset-bottom,0px))]">
           <div aria-hidden className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-border" />
           <SheetTitle className="sr-only">{t("nav.more")}</SheetTitle>
-          <SheetDescription className="sr-only">Account, language and settings</SheetDescription>
+          <SheetDescription className="sr-only">Account and settings</SheetDescription>
           <div className="px-3 pb-3 pt-2">
             <div className="flex items-center gap-3 px-3 py-3">
               <span aria-hidden className="inline-flex size-12 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">{user ? initials : <UserRound className="size-6" />}</span>
@@ -200,7 +200,7 @@ export function MobileShell() {
             </nav>
 
             <div className="mt-2 border-t border-border pt-2">
-              <Row icon={Languages} label={lang === "en" ? "हिन्दी" : "English"} onClick={() => setLang(lang === "en" ? "hi" : "en")} />
+              {HINDI_UI_ENABLED && <Row icon={Languages} label={lang === "en" ? "हिन्दी" : "English"} onClick={() => setLang(lang === "en" ? "hi" : "en")} />}
               <Row icon={Moon} label={t("menu.dark")} onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")} trailing={<Switch aria-label={t("menu.dark")} checked={mounted && resolvedTheme === "dark"} />} />
               <Row icon={Type} label={t("menu.largeText")} onClick={() => setLarge(toggleLargeText())} trailing={<Switch aria-label={t("menu.largeText")} checked={large} />} />
               <Row icon={Waves} label={t("menu.reduceMotion")} onClick={() => setReduced(!reduced)} trailing={<Switch aria-label={t("menu.reduceMotion")} checked={reduced} />} />

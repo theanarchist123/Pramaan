@@ -1167,6 +1167,38 @@
       }
     },
     {
+      "name": "POST /v1/nominations",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/nominations",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "nominations"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Nominate"
+      }
+    },
+    {
       "name": "GET /v1/oauth/authorize",
       "request": {
         "method": "GET",
@@ -2484,6 +2516,31 @@
           ]
         },
         "description": "Map Stats"
+      }
+    },
+    {
+      "name": "GET /v1/stats/proof",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/v1/stats/proof",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "stats",
+            "proof"
+          ]
+        },
+        "description": "Proof Stats"
       }
     },
     {

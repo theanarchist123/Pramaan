@@ -1,6 +1,7 @@
 "use client";
 
 import { Hero } from "@/components/landing/hero";
+import { ProofStrip } from "@/components/landing/proof-strip";
 import { PeopleAndFields } from "@/components/landing/people-and-fields";
 import { HowAndDoors } from "@/components/landing/how-and-doors";
 
@@ -10,6 +11,7 @@ export default function Home() {
   return (
     <div className="md:-mt-16">
       <Hero />
+      <ProofStrip />
       <PeopleAndFields />
       <HowAndDoors />
     </div>

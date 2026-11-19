@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Eye } from "lucide-react";
 import { Journey } from "@/components/onboarding/journey";
+import { PhotoUpload } from "@/components/onboarding/photo-upload";
 import { MyPulse } from "@/components/profile/my-pulse";
 import { Avatar } from "@/components/profile/avatar";
 import { ShareRow } from "@/components/share-row";
@@ -88,6 +89,13 @@ export default function MyPage() {
                   </Link>
                 )}
               </div>
+
+              {!p.photo_url && (
+                <div className="mt-5 rounded-2xl border border-dashed border-border p-4">
+                  <p className="mb-3 text-sm font-medium">Add a photo of your face. Profiles with a photo are trusted and found more often.</p>
+                  <PhotoUpload profile={p} onDone={() => window.location.reload()} />
+                </div>
+              )}
 
               <div className="mt-5"><Journey profile={p} certCode={code ?? null} /></div>
 

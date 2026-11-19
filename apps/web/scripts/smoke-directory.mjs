@@ -47,7 +47,8 @@ await step("India map: states render and clicking filters", async () => {
 
 await step("public profile page shows verified claims with evidence", async () => {
   await page.goto(`${BASE}/directory?q=${encodeURIComponent("Ananya Rekhi")}`);
-  await page.getByText("Ananya Rekhi").first().click();
+  // the person's link, not the first text that says her name (while searching, the page also says "Searching for Ananya Rekhi")
+  await page.getByRole("link", { name: /Ananya Rekhi/ }).first().click();
   await page.waitForURL(/\/p\/demo-/);
   // the registry's wording is "confirmed" (a public-source claim is never counted as verified): smoke-pages checks the negative
   await page.locator("#main").getByText(/claims confirmed/).waitFor();

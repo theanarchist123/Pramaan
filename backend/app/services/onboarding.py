@@ -192,10 +192,24 @@ def literal_name(message: str, proposed: str) -> str:
     return ""
 
 
+_GENDERED = re.compile(r"\b(he|she|him|her|his|hers|himself|herself)\b", re.IGNORECASE)
+_STATED = re.compile(r"\bpronouns?\b|\b(he|she|they)\s*/\s*(him|her|them)\b", re.IGNORECASE)
+
+
+def bio_without_guessed_gender(bio: str, said: str = "") -> str:
+    """The bio, or "" when it uses he/she/his/her and the person did not say which pronouns they use. A name tells us nothing about
+    someone's gender, so a guessed pronoun is dropped and the bio is written again (by name, or with "they")."""
+    if not bio or not _GENDERED.search(bio):
+        return bio
+    return bio if _STATED.search(said or "") else ""
+
+
 def apply_turn(profile: Profile, turn: SaathiTurn, defs=(), message: str = "") -> list[Claim]:
     if message and turn.profile_delta.full_name:
         # A name is recorded only as the person wrote it (their script, their spelling). Anything else is dropped and they are asked again.
         turn.profile_delta.full_name = literal_name(message, turn.profile_delta.full_name) or None
+    if turn.profile_delta.bio:
+        turn.profile_delta.bio = bio_without_guessed_gender(turn.profile_delta.bio, message) or None
     apply_delta(profile, turn.profile_delta, defs)
     # The chat evidence for each new claim is the person's own words when the model pointed at a real stretch of their message.
     return add_claims(profile, turn.new_claims, quotes=[literal_span(message, c.source_quote) for c in turn.new_claims])

@@ -50,6 +50,15 @@ for (const size of SIZES) {
         if (inScroller) continue;
         if (r.right > vw + 1 || r.left < -1) bad.push(`${el.tagName.toLowerCase()}.${String(el.className).split(" ").slice(0, 3).join(".")} [${Math.round(r.left)}..${Math.round(r.right)}] "${(el.textContent || "").trim().slice(0, 30)}"`);
       }
+      // Text squeezed into a sliver: a paragraph or heading with plenty of words in a box under 120px wide wraps to one word per line (the home trust strip and the
+      // verify banner did this on phones and nothing overflowed, so the check above missed it).
+      for (const el of document.querySelectorAll("main p, main h1, main h2, main h3, main li")) {
+        const r = el.getBoundingClientRect();
+        const text = (el.textContent || "").trim();
+        if (r.width === 0 || r.height === 0 || getComputedStyle(el).display === "none") continue;
+        if (el.closest(".sr-only")) continue; // text for screen readers is meant to be 1px wide
+        if (r.width < 120 && text.length > 24 && text.split(/\s+/).length > 3) bad.push(`${el.tagName.toLowerCase()} squeezed to ${Math.round(r.width)}px "${text.slice(0, 30)}"`);
+      }
       return { scrollW: doc.scrollWidth, vw, sideways: doc.scrollWidth > vw + 1, bad: bad.slice(0, 6), badCount: bad.length };
     }, size.width);
     const flag = report.sideways || report.badCount > 0;

@@ -12,6 +12,7 @@ export interface PersonSummary {
   city: string;
   photo_url?: string;
   status?: string;
+  is_demo?: boolean;
 }
 
 /** A person as a card: initials avatar (tick only when the server says approved), name, headline, field and place. */
@@ -35,7 +36,10 @@ export function PersonCard({ p, className }: { p: PersonSummary; className?: str
         </div>
       </div>
       <p className="line-clamp-2 text-sm font-medium">{p.headline || p.sector}</p>
-      <span className="mt-auto inline-flex w-fit rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold">{p.sector}</span>
+      <span className="mt-auto flex flex-wrap gap-1.5">
+        <span className="inline-flex w-fit rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold">{p.sector}</span>
+        {p.is_demo && <span className="inline-flex w-fit rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground">Fictional demo</span>}
+      </span>
     </Link>
   );
 }

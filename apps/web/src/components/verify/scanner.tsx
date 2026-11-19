@@ -68,7 +68,7 @@ export function Scanner({ onCode }: { onCode: (code: string) => void }) {
   }
 
   if (!supported) {
-    return <p className="text-sm text-muted-foreground">This browser cannot scan QR codes. Type the code printed under the QR instead.</p>;
+    return <p className="text-sm text-muted-foreground">This computer cannot scan the QR. Scan it with your phone camera, or type the code printed under it.</p>;
   }
   const corners = [
     "left-0 top-0 border-l-2 border-t-2",

@@ -18,7 +18,7 @@ export function ConsentStep({ busy, onStart }: { busy: boolean; onStart: (c: Con
   const { t } = useI18n();
   const [name, setName] = useState("");
   const [publicListing, setPublicListing] = useState(false);
-  const [webResearch, setWebResearch] = useState(true);
+  const [webResearch, setWebResearch] = useState(false); // opt-in: nothing is looked up about a person until they say so
 
   return (
     <div className="md:-mt-16">
@@ -71,9 +71,12 @@ export function ConsentStep({ busy, onStart }: { busy: boolean; onStart: (c: Con
             </label>
           </fieldset>
 
-          <Button type="submit" disabled={!publicListing || busy} size="lg" className="w-full">
+          <Button type="submit" disabled={!publicListing || busy} aria-describedby={!publicListing ? "start-why" : undefined} size="lg" className="w-full">
             {busy ? t("consent.starting") : t("consent.start")}
           </Button>
+          {!publicListing && (
+            <p id="start-why" className="-mt-3 text-center text-sm text-muted-foreground">Tick the first box to start. Nothing is shown publicly until you submit and we check it.</p>
+          )}
         </form>
 
         <aside aria-label="What happens next" className="space-y-3 lg:pt-6">
