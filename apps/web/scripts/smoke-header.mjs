@@ -20,16 +20,14 @@ const d = await newPage(1280, 800);
 await d.goto(`${WEB}/directory`);
 await d.getByRole("link", { name: "Find people" }).first().waitFor();
 
-await step("the tabs offer Find people, Get listed, Check and a More menu; the current place is marked", async () => {
+await step("the tabs offer Find people, Get listed and Check, with no empty More menu; the current place is marked", async () => {
   const dock = d.getByRole("navigation", { name: "Primary" }).first();
   const names = (await dock.getByRole("link").allTextContents()).map((x) => x.trim());
   assert.deepEqual(names, ["Find people", "Get listed", "Check"]);
   assert.equal(await dock.getByRole("link", { name: "Find people" }).getAttribute("aria-current"), "page");
   assert.equal(await dock.getByText("Mission Control").count(), 0);
-  await dock.getByRole("button", { name: "More" }).click();
-  // the retired pages and Developers are not in the menu (Developers lives in the footer of the home page)
-  for (const gone of ["Transparency", "How we check", "Developers"]) assert.equal(await d.getByRole("menuitem", { name: gone }).count(), 0, `${gone} is not in the More menu`);
-  await d.keyboard.press("Escape");
+  // the three-dots menu was removed: it held only pages that were retired or moved to the footer, so it opened as an empty line
+  assert.equal(await dock.getByRole("button", { name: "More" }).count(), 0, "no More button on the desktop bar");
 });
 
 await step("there is no bar: the floating pieces have no background fill", async () => {

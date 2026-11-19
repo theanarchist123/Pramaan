@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
-import { Download, Languages, LogOut, MoreHorizontal, Search, ScanLine, ShieldCheck, Sparkles, UserRound, Users } from "lucide-react";
+import { Download, Languages, LogOut, Search, ScanLine, ShieldCheck, Sparkles, UserRound, Users } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { CommandPalette } from "@/components/command-palette";
 import { useInstall } from "@/components/install-button";
@@ -83,15 +83,6 @@ export function FloatingNav() {
           </Link>
         </li>
       ))}
-      <li>
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<button type="button" aria-label={t("nav.more")} className={cn(chip, "px-3")} />}>
-            <MoreHorizontal aria-hidden className="size-5" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </li>
     </ul>
   );
 
