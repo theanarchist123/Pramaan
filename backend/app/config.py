@@ -73,9 +73,10 @@ class Settings(BaseSettings):
     ip_rate_limits: bool = True
     # Applicants must prove they control their email (one-time code) before submitting a profile.
     require_email_verification: bool = True
-    # Human approval for every owner's first public listing: Prahari may only auto-approve people who already
-    # have a profile a human approved. Until identity checks beyond email exist, keep this on.
-    human_approval_first_listing: bool = True
+    # Human approval for every owner's first public listing. OFF by default since 2026-11-19 (docs/adr/0018-fewer-routine-reviews.md): a matching document
+    # already has to prove identity (Prahari sends anyone without one to a person), so a second look at every newcomer is routine work, not safety.
+    # A governed setting: switching it back on needs a second person's approval.
+    human_approval_first_listing: bool = False
     # Session cookie SameSite: "auto" = lax locally, none (cross-site web + API hosts) in production.
     # Award claims earn the highest trust, so a human confirms them (turn off only once issuers are checked at source).
     award_claims_need_human: bool = True

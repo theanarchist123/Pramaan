@@ -55,7 +55,7 @@ flowchart LR
 2. **Evidence.** Pariksha looks for public evidence; a *verbatim-quote check* rejects hallucinated citations. Web evidence is capped at 0.9, a matching identity document at 0.97.
 3. **Auditor gate.** Prahari (fixed rules; a model only checks the bio) auto-approves only at ≥ 0.95 *with* a matching document from a recognised issuer. Every owner's first listing, every award claim, common names without a second identifying detail, and any edit to an approved profile go to a human. The fail-safe is to escalate. Public evidence comes from Wikipedia and Wikidata (crowd-edited, not official registries); DigiLocker/PAN/Aadhaar checks are not implemented.
 4. **Seal.** The verified claims are canonicalised → SHA-256 → **Ed25519** signature. The public key is published at `/.well-known/pramaan-keys.json`.
-5. **Transparency.** Each issuance is appended to a public hash chain (`/transparency`); tampering with history breaks every later link.
+5. **Transparency.** Each issuance is appended to a public hash chain (each certificate page shows its place in the log; the raw log is `GET /v1/transparency`); tampering with history breaks every later link.
 6. **Verify anywhere.** The QR on the certificate opens `/verify/<code>`. The *Try to tamper* page edits a field and shows exactly which one breaks the signature.
 
 ### Shilpkar — features written by AI, safely

@@ -27,8 +27,8 @@ await step("the tabs offer Find people, Get listed, Check and a More menu; the c
   assert.equal(await dock.getByRole("link", { name: "Find people" }).getAttribute("aria-current"), "page");
   assert.equal(await dock.getByText("Mission Control").count(), 0);
   await dock.getByRole("button", { name: "More" }).click();
-  await d.getByRole("menuitem", { name: "Transparency" }).waitFor();
-  await d.getByRole("menuitem", { name: "Developers" }).waitFor();
+  // the retired pages and Developers are not in the menu (Developers lives in the footer of the home page)
+  for (const gone of ["Transparency", "How we check", "Developers"]) assert.equal(await d.getByRole("menuitem", { name: gone }).count(), 0, `${gone} is not in the More menu`);
   await d.keyboard.press("Escape");
 });
 
@@ -120,8 +120,8 @@ await step("phone: the content ends above the bottom bar", async () => {
 });
 
 await step("phone: an inner screen shows a back arrow and its name; the bar of a root screen shows the mark", async () => {
-  await m.goto(`${WEB}/transparency`);
-  await m.getByRole("heading", { name: "Public log" }).first().waitFor();
+  await m.goto(`${WEB}/developers`);
+  await m.locator("[data-mobile-shell] header").getByText("Developers").waitFor();
   await m.locator("[data-mobile-shell] header").getByRole("button", { name: "Back" }).waitFor();
   await m.goto(`${WEB}/verify`);
   assert.equal(await m.locator("[data-mobile-shell] header").getByRole("button", { name: "Back" }).count(), 0);
@@ -132,7 +132,7 @@ await step("phone: More opens a bottom sheet with the other pages and the settin
   await m.getByRole("button", { name: "More" }).click();
   const sheet = m.getByRole("dialog");
   await sheet.waitFor();
-  for (const t of ["How we check", "Transparency", "Developers"]) await sheet.getByRole("link", { name: t }).waitFor();
+  for (const gone of ["How we check", "Transparency", "Developers"]) assert.equal(await sheet.getByRole("link", { name: gone }).count(), 0, `${gone} is not in the sheet`);
   await sheet.getByRole("button", { name: "Larger text" }).click();
   await m.waitForFunction(() => document.documentElement.dataset.largeText === "true");
   await sheet.getByRole("button", { name: "Dark mode" }).click();

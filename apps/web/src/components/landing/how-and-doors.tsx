@@ -62,8 +62,6 @@ export function HowAndDoors() {
       <footer className="mx-auto flex max-w-7xl flex-wrap justify-between gap-3 px-4 pb-10 text-sm text-muted-foreground">
         <span>{t("h2.footer")}</span>
         <span className="flex gap-4">
-          <Link href="/how-we-check" className="hover:text-foreground">How we check</Link>
-          <Link href="/transparency" className="hover:text-foreground">{t("nav.transparency")}</Link>
           <Link href="/developers" className="hover:text-foreground">{t("nav.developers")}</Link>
         </span>
       </footer>

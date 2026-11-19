@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { ArrowLeft, BadgeCheck, BookOpen, Code2, Download, Home, Languages, LogOut, Moon, ScanLine, Search, ShieldCheck, Sparkles, Type, UserRound, Users, Waves, MoreHorizontal, ListChecks } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Download, Home, Languages, LogOut, Moon, ScanLine, Search, ShieldCheck, Sparkles, Type, UserRound, Users, Waves, MoreHorizontal } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useInstall } from "@/components/install-button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
@@ -30,9 +30,7 @@ const TITLES: [RegExp, string][] = [
   [/^\/verify\/.+/, "Certificate check"],
   [/^\/verify/, "Check a certificate"],
   [/^\/p\//, "Profile"],
-  [/^\/transparency/, "Public log"],
   [/^\/developers/, "Developers"],
-  [/^\/how-we-check/, "How we check"],
   [/^\/onboard/, "Get listed"],
   [/^\/me/, "My page"],
   [/^\/oauth/, "Allow an app"],
@@ -192,9 +190,6 @@ export function MobileShell() {
             </div>
 
             <nav aria-label="More pages" className="mt-1 border-t border-border pt-2">
-              <Row icon={BookOpen} label="How we check" href="/how-we-check" onClick={() => setSheet(false)} />
-              <Row icon={ListChecks} label={t("nav.transparency")} href="/transparency" onClick={() => setSheet(false)} />
-              <Row icon={Code2} label={t("nav.developers")} href="/developers" onClick={() => setSheet(false)} />
               {user && <Row icon={UserRound} label={t("nav.myPage")} href="/me" onClick={() => setSheet(false)} />}
               {user?.role === "admin" && <Row icon={ShieldCheck} label={t("menu.staff")} href={process.env.NEXT_PUBLIC_STAFF_URL || "/staff"} onClick={() => setSheet(false)} />}
             </nav>

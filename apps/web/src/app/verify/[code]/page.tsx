@@ -313,7 +313,7 @@ console.log(await crypto.subtle.verify({ name: "Ed25519" }, key, b64("${verify.s
       <p className="mt-1 max-w-3xl text-muted-foreground">
         Nothing above is secret. Redo it with the registry&apos;s{" "}
         <a className="text-primary underline" href={`${API_URL}/.well-known/pramaan-keys.json`} target="_blank" rel="noreferrer">published public key</a>
-        , and audit the <Link className="text-primary underline" href="/transparency">public transparency log</Link>.
+        , and audit the <a className="text-primary underline" href={`${API_URL}/v1/transparency`} target="_blank" rel="noreferrer">public log</a>.
       </p>
       <div role="tablist" aria-label="Language" className="mt-4 flex gap-1">
         {(["python", "javascript"] as const).map((l) => (

@@ -117,7 +117,7 @@ await step("offline navigation falls back to the bilingual offline page", async 
 });
 
 // ------------------------------------------------------------------------------------------ accessibility
-const AUDIT = ["/", "/verify", "/directory", "/developers", "/onboard", "/transparency", "/mission-control", "/auth", "/how-we-check", "/this-page-does-not-exist"];
+const AUDIT = ["/", "/verify", "/directory", "/developers", "/onboard", "/mission-control", "/auth", "/this-page-does-not-exist"];
 // Data-driven pages: find a real public profile (and its certificate) through the API, if there is one.
 try {
   const API = process.env.API_URL ?? "http://localhost:8000";
