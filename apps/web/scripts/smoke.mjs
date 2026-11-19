@@ -150,13 +150,10 @@ await step("try to forge: edit an award → forgery detected", async () => {
   await page.getByText("Nothing changed yet").waitFor();
 });
 
-await step("a made-up code is rejected; transparency log is intact", async () => {
+await step("a made-up code is rejected", async () => {
   await page.goto(`${BASE}/verify/PRM-FAKEFAKE12`);
   await page.getByRole("heading", { name: "Not found" }).waitFor();
-  await page.goto(`${BASE}/transparency`);
-  await page.getByRole("button", { name: "Verify the whole chain in your browser" }).click(); // checks only when asked
-  await page.getByText(/Chain intact/).waitFor();
-  await page.screenshot({ path: `${OUT}/09-transparency.png` });
+  await page.screenshot({ path: `${OUT}/09-not-found.png` });
 });
 
 await step("dark mode", async () => {

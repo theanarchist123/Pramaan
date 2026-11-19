@@ -139,3 +139,13 @@ async def test_a_reviewer_cannot_approve_a_settings_request_either(client, make_
     reviewer, _ = await staff(make_user, "reviewer")
     filed = await client.post("/v1/admin/settings/award_claims_need_human", headers=admin_a, json={"value": False, "reason": REASON})
     assert (await client.post(f"/v1/admin/approvals/{filed.json()['approval_id']}/approve", headers=reviewer)).status_code == 403
+
+
+def test_a_first_listing_no_longer_needs_a_person_by_default_but_award_claims_still_do():
+    """Owner decision 2026-11-19 (docs/adr/0018-fewer-routine-reviews.md): a person is not sent every first listing any more (a matching document already has to prove
+    identity). Award claims keep a person until issuers are checked at the source."""
+    from app.config import Settings
+
+    # The test environment overrides both through environment variables (conftest), so read the declared defaults, not a live Settings().
+    assert Settings.model_fields["human_approval_first_listing"].default is False
+    assert Settings.model_fields["award_claims_need_human"].default is True

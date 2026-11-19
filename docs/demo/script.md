@@ -27,7 +27,7 @@ For showing Pramaan to someone who knows products, not code. Rehearse it twice o
 ## 2:00 to 2:45. The certificate and the check
 - Open an existing certificate. Say: "Each one has a QR code and is written into a public log."
 - **Scan the QR with the phone camera.** It opens the check page: **Authentic**, five checks ticked.
-- Open **Transparency**: "This list is public. If anyone, including us, changed an old entry, this button would fail." Press **Verify the whole chain**.
+- Scroll to **How we checked** on the certificate page: five checks, ending with its place in the public log. Say: "Every certificate is written into a public log. If anyone, including us, changed an old one, this check would fail."
 
 ## 2:45 to 3:00. The edited copy (the moment that lands)
 - Drop the **edited copy** into the file box on /verify. It fails the check.
@@ -42,7 +42,7 @@ For showing Pramaan to someone who knows products, not code. Rehearse it twice o
 ## If something goes wrong
 | What you see | What to do |
 |---|---|
-| "Waking up the server" for more than a minute | Say "the free server is waking up", open /transparency in another tab, and try again. |
+| "Waking up the server" for more than a minute | Say "the free server is waking up", open the Find people page in another tab, and try again. |
 | "Cannot be confirmed right now" on a certificate | The server lost a signing key. Do not demo that certificate; use another one and tell the developer. |
 | The email code does not arrive | The error on the page names the reason (for example network_blocked or sender_not_verified). For the demo, use a profile that is already signed in. |
 | Search returns nothing | Try one of the example questions on the page. |

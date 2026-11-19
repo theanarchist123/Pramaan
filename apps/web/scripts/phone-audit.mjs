@@ -20,7 +20,7 @@ const SIZES = [
 
 const profiles = await (await fetch(`${API}/v1/profiles?limit=3`).catch(() => ({ json: async () => [] }))).json().catch(() => []);
 const slug = profiles[0]?.slug;
-const ROUTES = ["/", "/directory", "/verify", "/transparency", "/developers", "/how-we-check", "/onboard", "/auth?mode=login", "/auth?mode=register", "/me", ...(slug ? [`/p/${slug}`] : [])];
+const ROUTES = ["/", "/directory", "/verify", "/developers", "/onboard", "/auth?mode=login", "/auth?mode=register", "/me", ...(slug ? [`/p/${slug}`] : [])];
 
 const browser = await chromium.launch();
 let problems = 0;

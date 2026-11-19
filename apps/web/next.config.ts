@@ -52,6 +52,9 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Retired pages (2026-11-19): old links land somewhere useful instead of a 404. The public log itself is unchanged and still checkable from every certificate.
+      { source: "/transparency", destination: "/verify", permanent: false },
+      { source: "/how-we-check", destination: "/", permanent: false },
       { source: "/admin", destination: "/staff", permanent: false },
       { source: "/admin/builder", destination: "/staff/builder", permanent: false },
       { source: "/admin/outreach", destination: "/staff/followups", permanent: false },

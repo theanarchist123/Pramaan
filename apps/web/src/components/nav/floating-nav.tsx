@@ -89,9 +89,6 @@ export function FloatingNav() {
             <MoreHorizontal aria-hidden className="size-5" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuItem render={<Link href="/how-we-check" />}>How we check</DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/transparency" />}>{t("nav.transparency")}</DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/developers" />}>{t("nav.developers")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </li>

@@ -1,4 +1,4 @@
-// Browser smoke test of the Phase 1 pages other than Verify: Home, Directory, Profile, Transparency, Developers, Agent Floor.
+// Browser smoke test of the Phase 1 pages other than Verify: Home, Directory, Profile, Developers, Agent Floor.
 // Needs a RUNNING API + web app and the local docker database.  node scripts/smoke-pages.mjs [webUrl] [apiUrl]
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
@@ -150,24 +150,11 @@ await step("PROFILE BIO PROOF: 'Show what's proven' marks only the sentence that
   assert.equal(await page.locator("p span.bg-verified-soft").count(), 0, "off again");
   await shot("profile-bio-proof");
 });
-await step("TRANSPARENCY: chain is re-computed in the browser; altering an entry breaks it; undo restores", async () => {
+await step("RETIRED PAGES: old links to /transparency and /how-we-check still land somewhere useful", async () => {
   await page.goto(`${WEB}/transparency`);
-  const entries = await (await fetch(`${API}/v1/transparency?limit=500`)).json();
-  if (entries.length === 0) { await page.getByText("No certificates issued yet.").waitFor(); return; }
-  // nothing is checked until the person asks; then THIS browser re-computes every link
-  await page.getByText(/Not checked on this device yet/).waitFor({ timeout: 20000 });
-  assert.equal(await page.getByText(/Chain intact/).count(), 0, "no verdict before the button is pressed");
-  await page.getByRole("button", { name: "Verify the whole chain in your browser" }).click();
-  await page.getByText(/Chain intact/).waitFor({ timeout: 20000 });
-  await shot("transparency-intact");
-  if (entries.length > 1) {
-    await page.getByRole("button", { name: /Alter an entry/ }).click();
-    await page.getByText(/Chain broken at entry/).waitFor();
-    await page.getByText("First mismatch").waitFor();
-    await shot("transparency-broken");
-    await page.getByRole("button", { name: "Undo the alteration" }).click();
-    await page.getByText(/Chain intact/).waitFor();
-  }
+  await page.waitForURL(/\/verify$/);
+  await page.goto(`${WEB}/how-we-check`);
+  await page.waitForFunction(() => location.pathname === "/");
 });
 await step("DEVELOPERS: sections deep-link and tabs follow arrow keys", async () => {
   await page.goto(`${WEB}/developers#play`);
@@ -204,7 +191,7 @@ await step("AGENT FLOOR: pipeline lists the five agents in order, each with a te
   await shot("agent-floor");
 });
 await step("RESPONSIVE: no page scrolls sideways at 360, 390, 768, 1024 or 1280 px", async () => {
-  const paths = ["/", "/directory", slug ? `/p/${slug}` : "/directory", "/transparency", "/developers", "/mission-control", "/verify", "/how-we-check", "/auth"];
+  const paths = ["/", "/directory", slug ? `/p/${slug}` : "/directory", "/developers", "/mission-control", "/verify", "/auth"];
   const bad = [];
   for (const w of [360, 390, 768, 1024, 1280]) {
     await page.setViewportSize({ width: w, height: 800 });
