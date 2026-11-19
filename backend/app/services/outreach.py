@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents import doot
+from app.services import mailer
 from app.agents.events import RunContext
 from app.config import get_settings
 from app.db import get_sessionmaker
@@ -107,15 +108,8 @@ def invite_message(name: str, note: str, base_url: str) -> tuple[str, str]:
 
 
 def _smtp_send(to: str, subject: str, body: str) -> None:
-    s = get_settings()
-    msg = EmailMessage()
-    msg["From"], msg["To"], msg["Subject"] = s.smtp_from, to, subject
-    msg.set_content(body)
-    with smtplib.SMTP(s.smtp_host, s.smtp_port, timeout=20) as smtp:
-        smtp.starttls()
-        if s.smtp_user:
-            smtp.login(s.smtp_user, s.smtp_password)
-        smtp.send_message(msg)
+    """Kept under its old name (tests and callers replace it). Sends with whichever provider is configured: see services/mailer.py."""
+    mailer.send_sync(to, subject, body)
 
 
 # ---- safeguards (AGT-09): enforced in send(), the one place every email passes, so no route (immediate, scheduled, retried) can skip them -------
@@ -185,14 +179,14 @@ async def send(session: AsyncSession, msg: OutboxMessage) -> OutboxMessage:
     if await _recent_sent(session, msg.to_email) >= FREQUENCY_CAP:
         msg.status, msg.error = "draft", f"frequency cap: already {FREQUENCY_CAP} emails to this address in {FREQUENCY_WINDOW_DAYS} days; a person decides"
         return msg
-    if not get_settings().smtp_host:
-        msg.status, msg.sent_at, msg.error = "sent", _now(), "dry-run: SMTP not configured, nothing was emailed"
+    if not mailer.configured():
+        msg.status, msg.sent_at, msg.error = "sent", _now(), "dry-run: no email provider configured, nothing was emailed"
         return msg
     try:
         await asyncio.to_thread(_smtp_send, msg.to_email, msg.subject, _with_unsubscribe(msg.body, msg.to_email))
         msg.status, msg.sent_at, msg.error = "sent", _now(), ""
     except Exception as exc:  # noqa: BLE001
-        msg.status, msg.error = "draft", f"send failed: {type(exc).__name__}"  # back to draft; a human decides
+        msg.status, msg.error = "draft", f"send failed: {getattr(exc, 'reason', type(exc).__name__)}"  # back to draft; a human decides
         log.warning("outreach send failed: %s", exc)
     return msg
 

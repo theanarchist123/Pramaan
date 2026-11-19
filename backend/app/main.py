@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import os
 import uuid
 from contextlib import asynccontextmanager
 
@@ -51,6 +53,11 @@ def _warn_if_degraded() -> None:
 async def lifespan(_: FastAPI):
     await init_db()
     _warn_if_degraded()
+    from app.services import mailer
+
+    logging.getLogger("pramaan.mail").warning("email: provider=%s", mailer.provider())
+    if (w := mailer.deployment_warning(dict(os.environ))):
+        logging.getLogger("pramaan.mail").warning(w)
     await jobs.start()
     relay = asyncio.create_task(relay_from_redis())
     get_signer()  # create/load the signing key at boot so failures surface early

@@ -480,3 +480,24 @@ async def incident_status(incident_id: uuid.UUID, body: IncidentStatusIn, princi
     inc.resolved_at = datetime.now(timezone.utc) if body.status != "open" else None
     await session.commit()
     return {"id": inc.id, "status": inc.status}
+
+
+@router.post("/email/test")
+async def email_test(principal: Principal = Depends(require_permission("audit.read"))):
+    """Send a test email to YOUR OWN address using the server's real email setup, and say what happened. It runs on the server, so it tests the real deployment
+    (a host that blocks SMTP shows up here as network_blocked). Only ever to the signed-in staff member's own address."""
+    import asyncio
+
+    from app.services import mailer
+    from app.services.outreach import _smtp_send
+
+    out = {"ok": False, "provider": mailer.provider(), "sent_to": mailer.mask(principal.user.email), "reason": "", "detail": ""}
+    if not mailer.configured():
+        out.update(reason="not_configured", detail="Set BREVO_API_KEY (works on Render's free plan) or SMTP_HOST on the API service.")
+        return out
+    try:
+        await asyncio.to_thread(_smtp_send, principal.user.email, "Pramaan test email", "This is a test email from your Pramaan server. If you can read it, email works.")
+        out["ok"] = True
+    except Exception as exc:  # noqa: BLE001
+        out.update(reason=getattr(exc, "reason", "other"), detail=getattr(exc, "detail", type(exc).__name__)[:200])
+    return out
