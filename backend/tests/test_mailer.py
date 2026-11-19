@@ -159,3 +159,20 @@ def test_user_message_names_the_reason_and_never_leaks_detail():
     m = mailer.user_message(e)
     assert m.startswith("Could not send the email right now (auth_failed:") and "SECRET" not in m and "401" not in m
     assert "see the server log" in mailer.user_message(RuntimeError("boom"))
+
+
+async def test_a_code_that_could_not_be_sent_does_not_use_up_the_hourly_allowance(client, make_user, cfg, monkeypatch):
+    cfg(smtp_host="smtp.example.org")
+    person, _ = await make_user()
+
+    def fail(to, subject, body):
+        raise mailer.MailError("network_blocked", "TimeoutError")
+
+    monkeypatch.setattr(outreach, "_smtp_send", fail)
+    for _ in range(8):  # more than the 5-per-hour limit: failures must never lock the person out
+        r = await client.post("/v1/auth/otp/request", headers=person)
+        assert r.status_code == 502
+    sent = []
+    monkeypatch.setattr(outreach, "_smtp_send", lambda to, subject, body: sent.append(body))
+    ok = await client.post("/v1/auth/otp/request", headers=person)
+    assert ok.status_code == 200 and sent and "Your code is" in sent[0]  # once email works, the very next request goes through

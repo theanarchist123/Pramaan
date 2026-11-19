@@ -165,8 +165,8 @@ async def otp_request(principal: Principal = Depends(get_principal), session: As
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Email delivery is not configured on this server")
 
     code = f"{secrets.randbelow(10**6):06d}"
-    session.add(EmailOtp(user_id=user.id, code_hash=_otp_hash(user.id, code),
-                         expires_at=datetime.now(timezone.utc) + timedelta(minutes=OTP_MINUTES)))
+    otp_row = EmailOtp(user_id=user.id, code_hash=_otp_hash(user.id, code), expires_at=datetime.now(timezone.utc) + timedelta(minutes=OTP_MINUTES))
+    session.add(otp_row)
     await session.commit()
 
     out: dict = {"sent": True, "expires_in_minutes": OTP_MINUTES}
@@ -182,6 +182,9 @@ async def otp_request(principal: Principal = Depends(get_principal), session: As
             )
         except Exception as exc:  # noqa: BLE001
             log.warning("OTP email to %s failed: %s", mailer.mask(user.email), getattr(exc, "reason", type(exc).__name__))
+            # A code that never reached the person must not count against their hourly allowance (it used to: five failed sends locked them out for an hour).
+            await session.delete(otp_row)
+            await session.commit()
             raise HTTPException(status.HTTP_502_BAD_GATEWAY, mailer.user_message(exc)) from exc
     else:  # local development without SMTP: show it where the developer can find it
         log.warning("DEV ONLY - email code for %s: %s", user.email, code)
