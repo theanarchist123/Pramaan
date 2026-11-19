@@ -7,6 +7,7 @@ import uuid
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy import or_, select
+from sqlalchemy.orm import noload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
@@ -93,7 +94,8 @@ async def list_profiles(
     session: AsyncSession = Depends(get_session),
 ):
     """Public directory: only approved profiles."""
-    stmt = select(Profile).where(Profile.status == "approved")
+    # The cards need no claims or evidence: do not load them (each person would cost extra database round trips).
+    stmt = select(Profile).options(noload(Profile.claims)).where(Profile.status == "approved")
     if sector:
         stmt = stmt.where(Profile.sector.ilike(sector))
     if state:
