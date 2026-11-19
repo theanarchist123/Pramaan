@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     smtp_user: str = ""
     smtp_password: str = ""
     smtp_from: str = "Pramaan <no-reply@pramaan.local>"
+    # Email over HTTPS (Brevo's transactional API). Use this where the host blocks outbound SMTP (Render's free plan does). Verify the sender address in Brevo, then set
+    # SMTP_FROM to it. When set it is used instead of SMTP.
+    brevo_api_key: str = ""
     outreach_scheduler: bool = True
     # Background work (webhook retries, scheduled email, AI-code sandbox) runs in a worker loop. By default the
     # API runs it too (WORKER_INLINE=true); in production run `python -m app.worker` separately and set it false.

@@ -56,3 +56,16 @@ The staff sign-in gives the same answer for every failure on purpose, so the for
    - `.venv\Scripts\python scripts\set_password.py you@example.com` sets a new password (hidden prompt).
 3. In the browser console, one 401 on `/auth/login` right before the authenticator box appears is normal: it is the server asking for the 6-digit code.
 4. After 5 failures the account is locked for 15 minutes (the page then says "Too many failed attempts"). Wait, or restart the API service to clear the lock.
+
+
+## "Could not send the email right now" (502) when asking for a code
+**Why it happens.** Render's free web services block outbound SMTP ports (25, 465, 587), so Gmail's SMTP (or any SMTP) times out from there even when the same login works on your own computer. The API reports this as a 502. (Render's current policy is on their site; if you are on a paid instance this block does not apply.)
+
+**The fix that needs no domain and no payment: send mail over HTTPS with Brevo (free, 300 emails a day).**
+1. Create a free account at brevo.com. In **Senders, domains & dedicated IPs -> Senders**, add the address you want mail to come from (your Gmail works) and click the confirmation link Brevo emails you.
+2. In Brevo: **SMTP & API -> API keys -> Generate a new API key**. Copy it.
+3. In the Render service for the API, add `BREVO_API_KEY` = that key, and set `SMTP_FROM` = `Pramaan <the-address-you-verified@gmail.com>`. Save; Render redeploys. (You can leave the old `SMTP_*` values; when `BREVO_API_KEY` is set it is used instead.)
+4. **Check it.** Sign in to the staff console and open the review queue: press **Send test email**. It sends to your own address using the real server and says what happened, for example `sender_not_verified` (step 1 not finished), `auth_failed` (wrong key) or `network_blocked`. Also see Render -> Logs: each failure is logged as `email to ab***@gmail.com failed via brevo: <reason>`, and at start-up `email: provider=brevo`.
+5. Then press **Email me a code** on the onboarding page again.
+
+Gmail-only note: if a test email lands in spam the first time, mark it "not spam"; mail sent "from" a Gmail address through Brevo may be filtered until you add your own domain's records. A domain you own, with Brevo's SPF/DKIM records, is the long-term fix.

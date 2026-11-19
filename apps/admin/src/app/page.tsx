@@ -62,6 +62,23 @@ export default function QueuePage() {
     }
   }
 
+  async function testEmail() {
+    setError("");
+    try {
+      const r = await api<{ ok: boolean; provider: string; sent_to: string; reason: string; detail: string }>("/v1/admin/email/test", { method: "POST" });
+      const why: Record<string, string> = {
+        not_configured: "No email service is set up on the server.",
+        network_blocked: "The server cannot reach the mail service (free hosts such as Render block SMTP: use BREVO_API_KEY).",
+        auth_failed: "The mail service refused the login or API key.",
+        sender_not_verified: "The sender address is not verified with the mail service.",
+        recipient_refused: "The receiving server refused the address.",
+      };
+      setError(r.ok ? `Test email sent to ${r.sent_to} using ${r.provider}. Check your inbox (and spam).` : `Test email failed (${r.provider}): ${why[r.reason] ?? "unknown problem"} ${r.detail}`.trim());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Test email failed");
+    }
+  }
+
   async function reindex() {
     setError("");
     try {
@@ -103,7 +120,7 @@ export default function QueuePage() {
         eyebrow={today || undefined}
         title="Review"
         lead={ov ? (ov.queue.open === 0 ? "Nothing is waiting for a person right now." : `${ov.queue.open} ${ov.queue.open === 1 ? "case needs" : "cases need"} a person to look at the evidence.`) : "Cases that need a person to look at the evidence."}
-        actions={<button className="secondary" onClick={reindex}>Reindex search</button>}
+        actions={<><button className="secondary" onClick={testEmail}>Send test email</button> <button className="secondary" onClick={reindex}>Reindex search</button></>}
       />
       {error && <p className="alert" role="alert"><Icon name="alert" size={18} /><span>{error}</span></p>}
 

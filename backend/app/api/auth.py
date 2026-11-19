@@ -17,6 +17,7 @@ from app.db import get_session
 from app.deps import SESSION_COOKIE, Principal, get_principal
 from app.models import EmailOtp, User
 from app.schemas import LoginIn, RegisterIn, TokenOut, UserOut
+from app.services import mailer
 from app.services.guests import is_guest_email, new_guest_email
 
 log = logging.getLogger("pramaan.auth")
@@ -160,7 +161,7 @@ async def otp_request(principal: Principal = Depends(get_principal), session: As
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many codes requested - try again later")
 
     s = get_settings()
-    if not s.smtp_host and not s.is_local:
+    if not mailer.configured() and not s.is_local:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Email delivery is not configured on this server")
 
     code = f"{secrets.randbelow(10**6):06d}"
@@ -169,7 +170,7 @@ async def otp_request(principal: Principal = Depends(get_principal), session: As
     await session.commit()
 
     out: dict = {"sent": True, "expires_in_minutes": OTP_MINUTES}
-    if s.smtp_host:
+    if mailer.configured():
         import asyncio
 
         from app.services.outreach import _smtp_send
@@ -180,7 +181,7 @@ async def otp_request(principal: Principal = Depends(get_principal), session: As
                 f"Your code is {code}. It expires in {OTP_MINUTES} minutes.\n\nIf you did not ask for it, ignore this email.",
             )
         except Exception as exc:  # noqa: BLE001
-            log.warning("OTP email failed: %s", type(exc).__name__)
+            log.warning("OTP email to %s failed: %s", mailer.mask(user.email), getattr(exc, "reason", type(exc).__name__))
             raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Could not send the email right now") from exc
     else:  # local development without SMTP: show it where the developer can find it
         log.warning("DEV ONLY - email code for %s: %s", user.email, code)

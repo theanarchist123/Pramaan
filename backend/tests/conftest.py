@@ -54,6 +54,7 @@ def _never_send_real_email(monkeypatch):
         raise AssertionError("a test tried to send a real email: replace outreach._smtp_send in that test")
 
     monkeypatch.setattr(get_settings(), "smtp_host", "")
+    monkeypatch.setattr(get_settings(), "brevo_api_key", "")
     monkeypatch.setattr(outreach, "_smtp_send", boom)
 
 

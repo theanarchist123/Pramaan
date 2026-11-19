@@ -12,13 +12,16 @@ from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import logging
+
 from app.config import get_settings
 from app.core.ratelimit import ip_limit
 from app.db import get_session
 from app.deps import Principal, get_principal
 from app.models import IdentityBinding, Profile
-from app.services import identity
+from app.services import identity, mailer
 
+log = logging.getLogger("pramaan.identity")
 router = APIRouter(prefix="/v1/profiles", tags=["identity"])
 CODE_MINUTES = 15
 MAX_ATTEMPTS = 5
@@ -79,7 +82,7 @@ async def start_email(profile_id: uuid.UUID, body: EmailIn, principal: Principal
     if await _recent(session, profile_id, "domain_email") >= MAX_PER_HOUR:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many codes requested - try again later")
     s = get_settings()
-    if not s.smtp_host and not s.is_local:
+    if not mailer.configured() and not s.is_local:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Email delivery is not configured on this server")
 
     await session.execute(delete(IdentityBinding).where(IdentityBinding.profile_id == profile_id, IdentityBinding.kind == "domain_email", IdentityBinding.status == "pending"))
@@ -92,7 +95,7 @@ async def start_email(profile_id: uuid.UUID, body: EmailIn, principal: Principal
     await session.commit()
 
     out: dict = {"sent": True, "domain": domain, "expires_in_minutes": CODE_MINUTES}
-    if s.smtp_host:
+    if mailer.configured():
         import asyncio
 
         from app.services.outreach import _smtp_send
@@ -100,6 +103,7 @@ async def start_email(profile_id: uuid.UUID, body: EmailIn, principal: Principal
         try:
             await asyncio.to_thread(_smtp_send, body.email.strip(), "Your Pramaan identity code", f"Your code is {code}. It expires in {CODE_MINUTES} minutes.\n\nIf you did not ask for it, ignore this email.")
         except Exception as exc:  # noqa: BLE001
+            log.warning("identity code email failed: %s", getattr(exc, "reason", type(exc).__name__))
             raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Could not send the email right now") from exc
     else:  # local development without SMTP: show it where the developer can find it
         out["dev_code"] = code
