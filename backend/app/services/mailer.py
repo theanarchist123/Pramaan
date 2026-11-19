@@ -118,6 +118,22 @@ def send_sync(to: str, subject: str, body: str) -> None:
         raise
 
 
+HINTS = {
+    "network_blocked": "the server cannot reach the mail service: free hosts such as Render block SMTP, so the server needs BREVO_API_KEY",
+    "auth_failed": "the mail service refused the server's login or API key",
+    "sender_not_verified": "the sender address is not verified with the mail service",
+    "recipient_refused": "the receiving mail server refused this address",
+    "rejected": "the mail service rejected the message",
+    "not_configured": "no email service is set up on the server",
+}
+
+
+def user_message(exc: BaseException) -> str:
+    """What the person sees when a code email could not be sent. The reason code is not sensitive and tells the site owner (who is usually the one testing) what to fix."""
+    reason = getattr(exc, "reason", "other")
+    return f"Could not send the email right now ({reason}: {HINTS.get(reason, 'an unexpected error; see the server log')})"
+
+
 def deployment_warning(env: dict[str, str]) -> str | None:
     """A message to print at start-up when the configuration is known not to work where it is running."""
     if env.get("RENDER") == "true" and provider() == "smtp":
