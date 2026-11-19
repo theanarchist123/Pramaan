@@ -104,6 +104,8 @@ async def start_email(profile_id: uuid.UUID, body: EmailIn, principal: Principal
             await asyncio.to_thread(_smtp_send, body.email.strip(), "Your Pramaan identity code", f"Your code is {code}. It expires in {CODE_MINUTES} minutes.\n\nIf you did not ask for it, ignore this email.")
         except Exception as exc:  # noqa: BLE001
             log.warning("identity code email failed: %s", getattr(exc, "reason", type(exc).__name__))
+            await session.delete(binding)  # an unsent code must not count against the hourly allowance
+            await session.commit()
             raise HTTPException(status.HTTP_502_BAD_GATEWAY, mailer.user_message(exc)) from exc
     else:  # local development without SMTP: show it where the developer can find it
         out["dev_code"] = code
