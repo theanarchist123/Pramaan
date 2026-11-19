@@ -66,3 +66,18 @@ async def test_forgetting_the_old_public_key_is_what_breaks_old_certificates(cli
     rotated(keep_old_public_key=False)  # the mistake the runbook warns about
     broken = (await client.get(f"/v1/verify/{old_cert['code']}")).json()
     assert broken["valid"] is False  # an old certificate can no longer be shown to be genuine
+    # ...but the visitor is told the truth: the registry lost track of a key; nothing says the certificate was edited (seen in production, 2026-11-19)
+    assert broken["reason"].startswith("Signed with a key this registry no longer publishes") and "no longer matches" not in broken["reason"]
+
+
+async def test_certificates_signed_by_an_unknown_key_are_counted_so_staff_see_it_at_once(client, make_user, rotated):
+    from app.db import get_sessionmaker
+    from app.services.certificates import unknown_signing_keys
+
+    _, _, _, old_cert = await _approved_profile_with_cert(client, make_user)
+    async with get_sessionmaker()() as s:
+        assert get_signer().key_id not in await unknown_signing_keys(s)  # the current key is always known (other tests may leave throwaway keys behind)
+    old_kid, _ = rotated(keep_old_public_key=False)
+    async with get_sessionmaker()() as s:
+        unknown = await unknown_signing_keys(s)
+    assert unknown.get(old_kid, 0) >= 1  # the server can say at start-up: N certificates can no longer be shown to be genuine
