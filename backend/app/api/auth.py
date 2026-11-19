@@ -182,7 +182,7 @@ async def otp_request(principal: Principal = Depends(get_principal), session: As
             )
         except Exception as exc:  # noqa: BLE001
             log.warning("OTP email to %s failed: %s", mailer.mask(user.email), getattr(exc, "reason", type(exc).__name__))
-            raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Could not send the email right now") from exc
+            raise HTTPException(status.HTTP_502_BAD_GATEWAY, mailer.user_message(exc)) from exc
     else:  # local development without SMTP: show it where the developer can find it
         log.warning("DEV ONLY - email code for %s: %s", user.email, code)
         out["dev_code"] = code

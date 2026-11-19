@@ -129,7 +129,7 @@ async def test_the_code_email_failure_logs_the_reason_without_the_code_or_the_ad
     monkeypatch.setattr(outreach, "_smtp_send", fail)
     caplog.set_level(logging.WARNING)
     r = await client.post("/v1/auth/otp/request", headers=person)
-    assert r.status_code == 502 and r.json()["detail"] == "Could not send the email right now"
+    assert r.status_code == 502 and r.json()["detail"].startswith("Could not send the email right now (network_blocked:") and "BREVO_API_KEY" in r.json()["detail"]
     text = " ".join(rec.getMessage() for rec in caplog.records)
     assert "network_blocked" in text and me["email"] not in text
 
@@ -152,3 +152,10 @@ async def test_staff_can_send_themselves_a_test_email_and_nobody_else_can(client
     person, _ = await make_user()
     assert (await client.post("/v1/admin/email/test", headers=person)).status_code == 403
     assert (await client.post("/v1/admin/email/test")).status_code == 401
+
+
+def test_user_message_names_the_reason_and_never_leaks_detail():
+    e = mailer.MailError("auth_failed", "Brevo said 401: key xkeysib-SECRET refused")
+    m = mailer.user_message(e)
+    assert m.startswith("Could not send the email right now (auth_failed:") and "SECRET" not in m and "401" not in m
+    assert "see the server log" in mailer.user_message(RuntimeError("boom"))
