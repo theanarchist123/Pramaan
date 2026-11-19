@@ -20,6 +20,7 @@ export default function Transparency() {
   const [result, setResult] = useState<ChainResult | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [everChecked, setEverChecked] = useState(false);
+  const [techOpen, setTechOpen] = useState(false);
   const [visible, setVisible] = useState(25); // the tape shows the newest entries; the CHECK always covers the whole chain
 
   useEffect(() => {
@@ -54,19 +55,14 @@ export default function Transparency() {
   return (
     <div className="md:-mt-16">
       <section data-nav-tone="on-dark" className="relative overflow-hidden bg-[#14152B] text-white">
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 flex gap-2 overflow-hidden px-4 opacity-25">
-          {Array.from({ length: 14 }, (_, i) => (
-            <span key={i} className="mb-6 flex h-14 w-32 shrink-0 items-center justify-center rounded-xl border-2 border-[var(--brand)] font-mono text-xs text-[var(--brand)]" />
-          ))}
-        </div>
         <div className="relative mx-auto max-w-5xl px-4 pb-32 pt-8 md:pt-28">
           <p className="inline-flex items-center gap-2 rounded-full bg-[var(--brand)] px-3 py-1 text-sm font-bold text-[#14152B]"><Link2 aria-hidden className="size-4" /> Public log</p>
           <h1 className="mt-4 text-balance text-5xl leading-[1.02] md:text-7xl">Nothing here can be quietly changed.</h1>
           <p className="mt-4 max-w-2xl text-lg text-white/75">
-            Every certificate ever issued is added here with the fingerprint of the entry before it. Rewrite or delete history and every later entry
-            stops matching. It stores only fingerprints, never personal data.
+            In plain words: every certificate we issue is written into this public list, once. If anyone, including us, changed or deleted an old one, the check below
+            would fail. It holds only fingerprints, never personal details.
           </p>
-          <p className="mt-6 font-display text-6xl font-extrabold tabular-nums text-[var(--brand)]">{total}<span className="ml-3 text-xl font-bold text-white/70">entries and counting</span></p>
+          <p className="mt-6 font-display text-6xl font-extrabold tabular-nums text-[var(--brand)]">{total}<span className="ml-3 text-xl font-bold text-white/70">{total === 1 ? "certificate published" : "certificates published"}</span></p>
         </div>
       </section>
       <div className="mx-auto max-w-5xl px-4 py-10">
@@ -120,6 +116,13 @@ export default function Transparency() {
         )}
       </section>
 
+      <details
+        className="mt-8"
+        open={techOpen || bad !== null}
+        onToggle={(e) => setTechOpen((e.currentTarget as HTMLDetailsElement).open)}
+      >
+        <summary className="cursor-pointer text-lg font-bold">Technical log: every entry and its fingerprints</summary>
+        <p className="mt-1 text-sm text-muted-foreground">For developers and auditors. Opens by itself if a broken link is found.</p>
       {!shown ? (
         <Skeleton className="mt-6 h-64 rounded-2xl" />
       ) : shown.length === 0 ? (
@@ -166,6 +169,7 @@ export default function Transparency() {
           <p className="text-sm text-muted-foreground tabular-nums">Showing the newest {shownCount} of {total}. The check above covers all {total}.</p>
         </div>
       )}
+      </details>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import time
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.events import start_run
@@ -98,6 +98,22 @@ async def graph(session: AsyncSession = Depends(get_session)):
 @router.get("/stats/map")
 async def map_stats(session: AsyncSession = Depends(get_session)):
     return await svc.counts(session)
+
+
+@router.get("/stats/proof")
+async def proof_stats(session: AsyncSession = Depends(get_session)):
+    """Three honest numbers for the home page. Counts only: real members (never the fictional demos), their unrevoked certificates, and how many joined this month."""
+    from datetime import datetime, timezone
+
+    month = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    real = (Profile.status == "approved") & (Profile.is_demo.is_(False))
+    people = (await session.execute(select(func.count()).select_from(Profile).where(real))).scalar_one()
+    joined = (await session.execute(select(func.count()).select_from(Profile).where(real, Profile.created_at >= month))).scalar_one()
+    certs = (await session.execute(
+        select(func.count()).select_from(Certificate).join(Profile, Profile.id == Certificate.profile_id)
+        .where(real, Certificate.revoked_at.is_(None))
+    )).scalar_one()
+    return {"real_people": people, "real_certificates": certs, "joined_this_month": joined}
 
 
 @router.get("/public/{slug}/certificates")

@@ -13,7 +13,7 @@ import {
   DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth";
-import { useI18n } from "@/lib/i18n";
+import { HINDI_UI_ENABLED, useI18n } from "@/lib/i18n";
 import { restoreLargeText, toggleLargeText } from "@/lib/large-text";
 import { useMotionPreference } from "@/lib/motion-preference";
 import { cn } from "@/lib/utils";
@@ -149,9 +149,11 @@ export function FloatingNav() {
               <DropdownMenuItem render={<a href={process.env.NEXT_PUBLIC_STAFF_URL || "/staff"} />}><ShieldCheck /> {t("menu.staff")}</DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setLang(lang === "en" ? "hi" : "en")} lang={lang === "en" ? "hi" : "en"}>
-              <Languages /> {lang === "en" ? "हिन्दी" : "English"}
-            </DropdownMenuItem>
+            {HINDI_UI_ENABLED && (
+              <DropdownMenuItem onClick={() => setLang(lang === "en" ? "hi" : "en")} lang={lang === "en" ? "hi" : "en"}>
+                <Languages /> {lang === "en" ? "हिन्दी" : "English"}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuCheckboxItem checked={mounted && resolvedTheme === "dark"} onCheckedChange={(on) => setTheme(on ? "dark" : "light")}>
               {t("menu.dark")}
             </DropdownMenuCheckboxItem>

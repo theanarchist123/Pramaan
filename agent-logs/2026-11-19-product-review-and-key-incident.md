@@ -19,3 +19,16 @@
 
 ## Review
 Brutally honest product review delivered in chat (member site + staff console, against the blueprint and the Wildcatter deck).
+
+## Demo-readiness plan, member side built the same day (docs/plans/2026-11-19-demo-readiness.md)
+Owner asked for everything in one day, then said: do not implement or fix anything for the admin console, finish the member side only.
+- Committed: member-site tasks (see the plan's status section). Tests added: test_directory (is_demo in list, proof counts), test_bio_pronouns, test_nominations
+  (I-5, I-7), test_sanitize (I-7: phone numbers and bare domains), test_key_rotation (start-up check, unknown key).
+- Found: `doot.sanitize` removed links and emails but not phone numbers or bare domains although `invite_message` promised it did; fixed.
+- Found and fixed: the start-up key check I added earlier used an undefined logger and would have crashed the server at boot exactly when a key was missing.
+- Found: my earlier claim "no live profile has is_demo set" was wrong. The database flag was set; `ProfileSummary` just did not return it.
+- Test change, with reason: `apps/web/scripts/smoke-directory.mjs` now clicks the person's link instead of the first text with her name, because the new "Searching for ..." line
+  also contains the name. The product behaviour was right; the locator was ambiguous.
+- Left uncommitted, in `git stash`: all admin-console work (Registry page, document viewer, confidence and clear cases, nav, Settings, Traction) and its backend
+  (`review.py`, `admin.py`, `review_triage.py` and their tests). Those touch always-human-review paths, so they need review before they are used.
+- No migration was added (nominations reuse the outbox). `packages/sdk` and the Postman collection were regenerated from the member-side backend only.

@@ -40,7 +40,7 @@ The full plan is `PRAMAAN_V2_OVERHAUL_SPEC.md`. Work one phase at a time; stop a
   (marigold + ink, Bricolage Grotesque, floating transparent navigation; supersedes Seal & Ink).
 - Unsplash API images are hotlinked with attribution and never self-hosted. Certificates use only frozen local images.
   Never use stock photos of people.
-- Status is always icon + text + colour. Hindi copy is written natively and reviewed.
+- Status is always icon + text + colour. Screens are English only for now (`docs/adr/0016-english-only-screens.md`); any Hindi screen copy must be written natively and reviewed before `HINDI_UI_ENABLED` is turned on.
 
 ## Commands
 

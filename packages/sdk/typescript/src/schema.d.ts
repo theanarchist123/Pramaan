@@ -508,6 +508,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/email/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Email Test
+         * @description Send a test email to YOUR OWN address using the server's real email setup, and say what happened. It runs on the server, so it tests the real deployment
+         *     (a host that blocks SMTP shows up here as network_blocked). Only ever to the signed-in staff member's own address.
+         */
+        post: operations["email_test_v1_admin_email_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/fields": {
         parameters: {
             query?: never;
@@ -791,6 +812,27 @@ export interface paths {
         put?: never;
         /** Send Now */
         post: operations["send_now_v1_admin_outbox__msg_id__send_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/outreach/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Invite
+         * @description Invite a specific person to get listed. Creates a DRAFT in the outbox; a person sends it (and the send cap, the opt-out list and the
+         *     unsubscribe link apply). People who already have an account, or who opted out, are refused.
+         */
+        post: operations["invite_v1_admin_outreach_invite_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1465,6 +1507,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/guest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Guest
+         * @description A visitor starts talking to Saathi without an account. The guest has no password and can never be listed, verified or certified:
+         *     those steps need a verified e-mail address. `/v1/auth/upgrade` turns the same user into a normal account and keeps the draft.
+         */
+        post: operations["start_guest_v1_auth_guest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/login": {
         parameters: {
             query?: never;
@@ -1687,6 +1750,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/upgrade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upgrade Guest
+         * @description Create an account from a guest. The user, and everything they started, stays; only the address, name and password are set.
+         */
+        post: operations["upgrade_guest_v1_auth_upgrade_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/badge/certificate/{code}.svg": {
         parameters: {
             query?: never;
@@ -1863,6 +1946,60 @@ export interface paths {
         get: operations["sector_images_v1_images_sector__sector__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/intros/incoming": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Incoming
+         * @description Requests to the profiles I own. Shows the sender's name and note only, never their e-mail.
+         */
+        get: operations["incoming_v1_intros_incoming_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/intros/{intro_id}/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Respond */
+        post: operations["respond_v1_intros__intro_id__respond_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/nominations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Nominate */
+        post: operations["nominate_v1_nominations_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2060,6 +2197,26 @@ export interface paths {
         put?: never;
         /** Upload Document */
         post: operations["upload_document_v1_onboarding__profile_id__documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/onboarding/{profile_id}/eligibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Eligibility
+         * @description What is still missing for a public listing, by fixed rules (services/eligibility.py). Informational: it approves nobody.
+         */
+        get: operations["eligibility_v1_onboarding__profile_id__eligibility_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2413,6 +2570,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/profiles/{profile_id}/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Insights
+         * @description Owner-only: page views and certificate checks (counts per day, no visitor data), plus waiting introduction requests.
+         */
+        get: operations["insights_v1_profiles__profile_id__insights_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/profiles/{profile_id}/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Photo
+         * @description The person's own photo. It is decoded and re-encoded (so nothing hidden in the file survives), shrunk, and stored under a server-chosen name.
+         *     On an approved profile it counts as a public edit: the profile goes back for review before the new photo is shown to anyone.
+         */
+        post: operations["upload_photo_v1_profiles__profile_id__photo_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/profiles/{profile_id}/submit": {
         parameters: {
             query?: never;
@@ -2439,6 +2637,40 @@ export interface paths {
         };
         /** Get Profile */
         get: operations["get_profile_v1_profiles__slug__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/profiles/{slug}/intro": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request Intro */
+        post: operations["request_intro_v1_profiles__slug__intro_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/profiles/{slug}/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Photo */
+        get: operations["get_photo_v1_profiles__slug__photo_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2510,6 +2742,26 @@ export interface paths {
         };
         /** Map Stats */
         get: operations["map_stats_v1_stats_map_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/stats/proof": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Proof Stats
+         * @description Three honest numbers for the home page. Counts only: real members (never the fictional demos), their unrevoked certificates, and how many joined this month.
+         */
+        get: operations["proof_stats_v1_stats_proof_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3045,6 +3297,11 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_upload_photo_v1_profiles__profile_id__photo_post */
+        Body_upload_photo_v1_profiles__profile_id__photo_post: {
+            /** File */
+            file: string;
+        };
         /** CertificateOut */
         CertificateOut: {
             /** Art Seed */
@@ -3391,6 +3648,23 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** IntroIn */
+        IntroIn: {
+            /** Message */
+            message: string;
+        };
+        /** InviteIn */
+        InviteIn: {
+            /** Email */
+            email: string;
+            /** Name */
+            name: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
         /** LoginIn */
         LoginIn: {
             /** Email */
@@ -3443,6 +3717,19 @@ export interface components {
         MigrationRequestIn: {
             /** Request */
             request: string;
+        };
+        /** NominationIn */
+        NominationIn: {
+            /** Email */
+            email: string;
+            /** Name */
+            name: string;
+            /**
+             * Note
+             * @description Why this person should be listed. Links, addresses and phone numbers are removed.
+             * @default
+             */
+            note: string;
         };
         /** OtpVerifyIn */
         OtpVerifyIn: {
@@ -3603,6 +3890,11 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /**
+             * Is Demo
+             * @default false
+             */
+            is_demo: boolean;
             /** Photo Url */
             photo_url: string;
             /** Sector */
@@ -3654,6 +3946,11 @@ export interface components {
              * @default
              */
             note: string;
+        };
+        /** RespondIn */
+        RespondIn: {
+            /** Accept */
+            accept: boolean;
         };
         /** RevealIn */
         RevealIn: {
@@ -3922,6 +4219,11 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /**
+             * Is Guest
+             * @default false
+             */
+            is_guest: boolean;
             /** Name */
             name: string;
             /** Role */
@@ -5071,6 +5373,38 @@ export interface operations {
             };
         };
     };
+    email_test_v1_admin_email_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-api-key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     all_fields_v1_admin_fields_get: {
         parameters: {
             query?: never;
@@ -5639,6 +5973,42 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    invite_v1_admin_outreach_invite_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-api-key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -6945,6 +7315,26 @@ export interface operations {
             };
         };
     };
+    start_guest_v1_auth_guest_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenOut"];
+                };
+            };
+        };
+    };
     login_v1_auth_login_post: {
         parameters: {
             query?: never;
@@ -7345,6 +7735,42 @@ export interface operations {
             };
         };
     };
+    upgrade_guest_v1_auth_upgrade_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-api-key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     certificate_badge_v1_badge_certificate__code__svg_get: {
         parameters: {
             query?: never;
@@ -7617,6 +8043,112 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    incoming_v1_intros_incoming_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-api-key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    respond_v1_intros__intro_id__respond_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-api-key"?: string | null;
+            };
+            path: {
+                intro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RespondIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    nominate_v1_nominations_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-api-key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NominationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8043,6 +8575,40 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    eligibility_v1_onboarding__profile_id__eligibility_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-api-key"?: string | null;
+            };
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8802,6 +9368,78 @@ export interface operations {
             };
         };
     };
+    insights_v1_profiles__profile_id__insights_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-api-key"?: string | null;
+            };
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_photo_v1_profiles__profile_id__photo_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-api-key"?: string | null;
+            };
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_photo_v1_profiles__profile_id__photo_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     submit_for_review_v1_profiles__profile_id__submit_post: {
         parameters: {
             query?: never;
@@ -8857,6 +9495,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProfileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_intro_v1_profiles__slug__intro_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-api-key"?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntroIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_photo_v1_profiles__slug__photo_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-api-key"?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -8955,6 +9665,26 @@ export interface operations {
         };
     };
     map_stats_v1_stats_map_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    proof_stats_v1_stats_proof_get: {
         parameters: {
             query?: never;
             header?: never;

@@ -81,3 +81,17 @@ async def test_certificates_signed_by_an_unknown_key_are_counted_so_staff_see_it
     async with get_sessionmaker()() as s:
         unknown = await unknown_signing_keys(s)
     assert unknown.get(old_kid, 0) >= 1  # the server can say at start-up: N certificates can no longer be shown to be genuine
+
+
+async def test_start_up_reports_certificates_it_can_no_longer_verify_instead_of_crashing(client, make_user, rotated, caplog):
+    """The start-up check once referred to a logger that did not exist, so a server with an unknown signing key crashed at boot instead of saying why."""
+    import logging
+
+    from app.main import _warn_if_certificates_unverifiable
+
+    _, _, _, old_cert = await _approved_profile_with_cert(client, make_user)
+    old_kid, _ = rotated(keep_old_public_key=False)
+    caplog.set_level(logging.ERROR)
+    await _warn_if_certificates_unverifiable()  # must not raise
+    text = " ".join(r.getMessage() for r in caplog.records)
+    assert "SIGNING KEY PROBLEM" in text and old_kid in text and "SIGNING_RETIRED_PUBLIC_KEYS" in text

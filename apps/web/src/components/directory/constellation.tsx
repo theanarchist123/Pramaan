@@ -7,7 +7,7 @@ import { paletteFor } from "@/lib/certificate-art";
 import type { GraphLink, GraphNode } from "@/lib/directory-types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-type GraphHandle = { zoomToFit: (ms?: number, padding?: number) => void; d3Force: (name: string) => any };
+type GraphHandle = { zoomToFit: (ms?: number, padding?: number, nodeFilter?: (n: any) => boolean) => void; d3Force: (name: string) => any };
 
 // Canvas library: browser-only. next/dynamic doesn't forward refs, so a thin wrapper hands the
 // graph handle back through `fgRef` (needed to zoom-to-fit) and tightens the layout.
@@ -52,7 +52,12 @@ export function Constellation({
   const [size, setSize] = useState({ w: 800, h: 560 });
   const [hover, setHover] = useState<string | null>(null);
   const fgRef = useRef<GraphHandle | null>(null);
-  const fit = () => fgRef.current?.zoomToFit(500, 90);
+  // People with no connections drift far from everyone else; fitting the view to them would shrink the real network into a corner. Fit to the connected people.
+  const connected = useRef<Set<string>>(new Set());
+  const fit = () => {
+    const ok = connected.current;
+    fgRef.current?.zoomToFit(500, 60, ok.size >= 3 ? (n: any) => ok.has(n.id) : undefined);
+  };
 
   useEffect(() => {
     const el = box.current;
@@ -71,6 +76,7 @@ export function Constellation({
       (m.get(l.source) ?? m.set(l.source, new Set()).get(l.source)!).add(l.target);
       (m.get(l.target) ?? m.set(l.target, new Set()).get(l.target)!).add(l.source);
     }
+    connected.current = new Set(m.keys());
     return m;
   }, [links]);
 

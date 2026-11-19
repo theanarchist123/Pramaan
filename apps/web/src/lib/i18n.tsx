@@ -226,6 +226,10 @@ interface I18n {
   setLang: (l: Lang) => void;
   t: (key: Key) => string;
 }
+/** Screens are English only until a native Hindi reader signs off docs/review/hindi-copy-review.md (docs/adr/0012-english-only-ui.md).
+ *  Typing or speaking Hindi to search and to Saathi is unaffected: that is the model understanding the person, not translated screens. */
+export const HINDI_UI_ENABLED = false;
+
 const Ctx = createContext<I18n | null>(null);
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
@@ -238,6 +242,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* storage blocked: fall back to the browser's language */
     }
+    if (!HINDI_UI_ENABLED) return; // stays "en", whatever an earlier visit saved
     setLangState(saved === "hi" || saved === "en" ? saved : navigator.language?.toLowerCase().startsWith("hi") ? "hi" : "en");
   }, []);
 

@@ -1,0 +1,30 @@
+name: keep-warm
+
+# The API runs on a free Render instance that falls asleep after a quiet spell; the next visitor then waits ~20-50 s.
+# A request every ~10 minutes keeps it awake. A paid instance removes the need for this file (docs/adr/0017-keep-the-api-awake.md).
+# GitHub's scheduler can run late or skip a run, so this narrows the sleeping windows rather than guaranteeing none.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ask the API if it is awake
+        env:
+          API_URL: ${{ vars.API_URL }}
+        run: |
+          if [ -z "$API_URL" ]; then echo "Set the repository variable API_URL (Settings > Variables), e.g. https://pramaan-api-u4ag.onrender.com"; exit 1; fi
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$API_URL/healthz" || echo 000)
+            echo "attempt $i: HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 10
+          done
+          echo "The API did not answer 200 after 3 tries"; exit 1

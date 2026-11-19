@@ -283,6 +283,7 @@ export default function OnboardPage() {
             onIssue={issue}
             onTalk={() => document.getElementById("chat-input")?.focus()}
             onDocs={() => focusSection("sec-documents")}
+            onPhoto={() => { focusSection("sec-profile"); document.getElementById("photo-input")?.click(); }}
           />
         </div>
         <Journey profile={profile} certCode={certCode} />

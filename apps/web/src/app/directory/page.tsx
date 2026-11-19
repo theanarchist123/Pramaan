@@ -148,7 +148,7 @@ export default function Directory() {
               className="min-w-0 flex-1 bg-transparent px-3 py-3 text-base text-[#14152B] placeholder:text-[#5E6280] focus:outline-none"
               aria-label={t("dir.search")}
             />
-            <button type="submit" disabled={searching || !query.trim()} className="inline-flex min-w-28 items-center justify-center rounded-full bg-[#14152B] px-6 text-base font-semibold text-white disabled:opacity-50">
+            <button type="submit" disabled={searching || !query.trim()} aria-busy={searching} className={`inline-flex min-w-28 items-center justify-center rounded-full bg-[#14152B] px-6 text-base font-semibold text-white ${searching ? "" : "disabled:opacity-50"}`}>
               {searching ? <Loader2 className="animate-spin" /> : t("dir.searchBtn")}
             </button>
           </form>
@@ -250,8 +250,11 @@ export default function Directory() {
       <div className="mt-6">
         {view === "people" && (
           everyone === null || searching ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-44 rounded-2xl" />)}
+            <div>
+              {searching && <p role="status" className="mb-4 flex items-center gap-2 text-sm font-medium" data-testid="searching"><Loader2 aria-hidden className="size-4 animate-spin motion-reduce:animate-none" /> Searching for “{query.trim()}”</p>}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-44 rounded-2xl" />)}
+              </div>
             </div>
           ) : shown.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">

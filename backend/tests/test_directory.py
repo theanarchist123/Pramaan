@@ -126,3 +126,45 @@ async def test_review_queue_gives_the_reviewer_context(client, make_user):
     item = next(i for i in (await client.get("/v1/admin/review", headers=admin)).json() if i["profile_id"] == p["id"])
     assert item["profile"]["full_name"] == "Review Context"
     assert item["profile"]["claims"][0]["value"] == "Some award"
+
+
+async def test_the_profile_list_says_which_people_are_fictional_demos(client, make_user):
+    """The directory labels invented people from this flag. It was missing from the list, so every demo person looked real (2026-11-19)."""
+    import uuid
+
+    from sqlalchemy import update
+
+    from app.db import get_sessionmaker
+    from app.models import Profile
+
+    admin, _ = await make_user(promote_to_admin=True)
+    real = await _approved(client, make_user, admin, name="Real Person Listwala", sector="Law", state="Goa", claim="Goa Bar Association award")
+    demo = await _approved(client, make_user, admin, name="Demo Person Listwala", sector="Law", state="Goa", claim="Goa Bar Association medal")
+    async with get_sessionmaker()() as s:
+        await s.execute(update(Profile).where(Profile.id == uuid.UUID(demo["id"])).values(is_demo=True))
+        await s.commit()
+    rows = {p["id"]: p for p in (await client.get("/v1/profiles?q=Listwala&limit=100")).json()}
+    assert rows[demo["id"]]["is_demo"] is True and rows[real["id"]]["is_demo"] is False
+
+
+async def test_proof_counts_only_real_members_never_the_fictional_demos(client, make_user):
+    """The home page's 'N people verified' must not be padded with invented people."""
+    import uuid
+
+    from sqlalchemy import update
+
+    from app.db import get_sessionmaker
+    from app.models import Profile
+
+    admin, _ = await make_user(promote_to_admin=True)
+    before = (await client.get("/v1/stats/proof")).json()
+    real = await _approved(client, make_user, admin, name="Proof Real Prooftwala", sector="Law", state="Goa", claim="Goa Bar Council citation")
+    demo = await _approved(client, make_user, admin, name="Proof Demo Prooftwala", sector="Law", state="Goa", claim="Goa Bar Council plaque")
+    async with get_sessionmaker()() as s:
+        await s.execute(update(Profile).where(Profile.id == uuid.UUID(demo["id"])).values(is_demo=True))
+        await s.commit()
+    after = (await client.get("/v1/stats/proof")).json()
+    assert after["real_people"] == before["real_people"] + 1  # the demo person added nothing
+    assert after["joined_this_month"] == before["joined_this_month"] + 1
+    assert set(after) == {"real_people", "real_certificates", "joined_this_month"}  # counts only: no names, no personal data
+    assert real["id"] != demo["id"]
