@@ -1,71 +1,183 @@
-# Pramaan — *Don't claim it. Prove it.*
+<div align="center">
 
-An AI-native **Who's Who of India**. People are interviewed by an AI (voice or text, in their language), every claim
-is fact-checked against evidence, and what survives is sealed into a **cryptographically signed certificate** that
-anyone can verify — without trusting us.
+<br/>
 
-Most registries ask you to *say* who you are. Pramaan makes the registry itself the proof: each claim is badged
-**self-declared / web-evidenced / document-verified**, the certificate carries an Ed25519 signature, and every
-issuance is appended to a public, hash-chained transparency log.
+# Pramaan
 
-|                       |                                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------------------------ |
-| **Web app**     | Next.js 15 · Tailwind 4 · shadcn/ui · English + हिन्दी · installable PWA · light/dark |
-| **Desktop app** | Electron shell with tray, global shortcut `Ctrl+Shift+P`, `pramaan://` deep links            |
-| **Public API**  | FastAPI, OpenAPI at `/docs`, API keys with scopes + rate limits, signed webhooks               |
-| **Build on it** | Python + TypeScript SDKs, MCP server for other AI agents, embeddable badge, Telegram bot example |
-| **Agents**      | 10 named agents orchestrated with LangGraph, watchable live in *Mission Control*               |
+### *Don't claim it. Prove it.*
+
+**India's verified registry of achievers.**<br/>
+Anyone can say they won an award. Pramaan is where the claim comes with proof, and anyone can check it in seconds.
+
+<br/>
+
+[![Live demo](https://img.shields.io/badge/LIVE_DEMO-open_the_site-FFB81C?style=for-the-badge&labelColor=14152B)](https://pramaan-rose-chi.vercel.app)
+[![Backend tests](https://img.shields.io/badge/backend_tests-700%2B_passing-2EA043?style=for-the-badge&labelColor=14152B)](backend/tests)
+[![Signed with Ed25519](https://img.shields.io/badge/certificates-Ed25519_signed-FFB81C?style=for-the-badge&labelColor=14152B)](docs/adr)
+
+<br/>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://skillicons.dev/icons?i=python,fastapi,postgres,redis,nextjs,react,ts,tailwind,electron,androidstudio,docker,vercel,supabase,githubactions&theme=dark&perline=14">
+  <img alt="Python, FastAPI, Postgres, Redis, Next.js, React, TypeScript, Tailwind, Electron, Android, Docker, Vercel, Supabase, GitHub Actions" src="https://skillicons.dev/icons?i=python,fastapi,postgres,redis,nextjs,react,ts,tailwind,electron,androidstudio,docker,vercel,supabase,githubactions&theme=light&perline=14">
+</picture>
+
+</div>
+
+<br/>
+
+---
+
+## Why this exists
+
+Most "who's who" lists are a pile of things people said about themselves. Fake degrees, borrowed awards and padded bios are easy to write and hard to catch.
+
+**Pramaan flips it.** You do not fill in a form and wait. You *talk* to an assistant for a few minutes, and every achievement you mention is checked against evidence. What survives is sealed into a **certificate with a QR code**. Anyone can scan it and see, without trusting us, whether it is genuine and unchanged.
+
+> A certificate you can check is worth more than one you have to trust.
+
+---
+
+## See it in 60 seconds
+
+**[pramaan-rose-chi.vercel.app](https://pramaan-rose-chi.vercel.app)**
+
+| Try this | What you will see |
+| --- | --- |
+| **Find people**: type *"women scientists in Kerala"* | Plain-language search. No filters to learn, and each result says *why* it matched. Typing in Hindi works too. |
+| Open any profile | Each achievement carries a label showing **how it was proven**: self-declared, found in public sources, document checked, or confirmed by a reviewer. |
+| **Get listed** | A chat, not a form. Your profile builds on the screen as you talk. Nothing is public until you agree. |
+| **Check** a certificate | Scan the QR or paste the code. Five checks run and the verdict comes from the server, never from guesswork. |
+| Check an **edited** certificate file | It fails. Change one word in the downloaded certificate and the signature breaks. |
+
+*Demo people on the site are fictional and are labelled "Fictional demo".*
+
+---
+
+## How a claim becomes proof
+
+```mermaid
+flowchart LR
+  A([You chat<br/>text or voice]) --> B[Claims<br/>each one labelled]
+  B --> C{Evidence}
+  C -->|public sources| D[Found online]
+  C -->|your document| E[Document checked]
+  D & E --> F{Fixed rules<br/>not an AI}
+  F -->|clear| G[Approved]
+  F -->|doubtful or any error| H[A person decides]
+  H --> G
+  G --> I[Signed certificate<br/>+ QR code]
+  I --> J[(Public hash-chained log)]
+  J --> K([Anyone can check it])
+```
+
+**Who decides?** Fixed rules, never the AI. The AI helps read documents, suggests wording and finds evidence, but it does not make the final call. Anything doubtful, and every error, goes to a person. Nothing is approved or published because something failed.
+
+**What goes to a person:** anyone without a matching document, award claims, documents that look edited, names that do not match, common names with no second detail, and any edit to an approved profile.
+
+**What is not done yet, on purpose:** we do not check government ID databases (DigiLocker, PAN, Aadhaar). Public evidence comes from Wikipedia and Wikidata, which are crowd-edited, not official registries. The site says so rather than hiding it.
+
+---
+
+## What makes it different
+
+| | Typical registry | **Pramaan** |
+| --- | --- | --- |
+| How you join | A long form, then a wait | A 3-minute chat |
+| What a badge means | "Verified" (by whom?) | Each claim shows **how** it was checked |
+| Can you check a certificate? | Trust the page | Scan it. It is signed and written to a public log |
+| Can anyone quietly change history? | Possible | Rewriting an entry breaks every later one |
+| Who has the final say? | Often an opaque model | Fixed rules, then a person for the doubtful |
+| Your data | Kept | Consent first, export and delete any time |
+
+---
+
+## What is in the box
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**For members**
+- **Website**: Next.js 15, installable as an app, light and dark
+- **Android app**: the same site in a native shell (Capacitor) with a bottom bar and back arrow, like an app and not a shrunken page
+- **Desktop app**: Electron, with offline certificate checking and `pramaan://` links
+
+</td>
+<td width="50%" valign="top">
+
+**For builders**
+- **Public API**: FastAPI, OpenAPI at `/docs`, scoped API keys, rate limits
+- **Signed webhooks** with retries and a delivery log
+- **SDKs** for Python and TypeScript, an **MCP server** so other AI agents can search and verify, and an **embeddable badge**
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+**For the registry team**
+- A staff console with a review queue for the doubtful cases
+- Role-based access, a tamper-evident audit log, and approvals that need two people for the risky actions
+
+</td>
+<td valign="top">
+
+**For trust**
+- Ed25519 signatures with published public keys (`/.well-known/pramaan-keys.json`)
+- Key-rotation and compromise handling, tested
+- Certificates can be re-checked on the device, with nothing uploaded
+
+</td>
+</tr>
+</table>
+
+### The agents
+
+A team of named AI agents, orchestrated with LangGraph by **Sutradhar**. Each has one narrow job.
+
+| Agent | Job |
+| --- | --- |
+| **Saathi** | Interviews you, in your own words |
+| **Khoji-Pehle** | "Is this you?" discovery from public sources |
+| **Pariksha** | Fact-checker. Rejects citations that are not really in the source |
+| **Lipik** | Reads uploaded documents and flags forgeries |
+| **Prahari** | The auditor. Fixed rules decide, the model only checks the bio |
+| **Setu** | Builds the relationship graph (plain code) |
+| **Khoji** | Meaning-based search over people |
+| **Doot** | Writes invitations in fixed wording, with no model-added links |
+| **Chitrakar** | Draws each certificate's artwork (deterministic, plain code) |
+| **Shilpkar** | Proposes new features as code, which is only ever run after a guard, a sandbox, tests and a person's approval |
+
+---
 
 ## Architecture
 
 ```mermaid
 flowchart LR
   subgraph Clients
-    W[Web app / PWA]
+    W[Website / PWA]
+    P[Android app]
     D[Desktop app]
-    T[Telegram bot]
-    M[MCP clients<br/>other AI agents]
-    X[Your app<br/>via SDK + API key]
+    X[Your app<br/>SDK + API key]
+    M[AI agents<br/>via MCP]
   end
-  W & D & T & M & X --> API[FastAPI /v1<br/>auth · API keys · rate limits]
+  W & P & D & X & M --> API[FastAPI /v1<br/>auth · scopes · rate limits]
 
-  API --> ORCH{{LangGraph orchestrator<br/>events → SSE}}
-  ORCH --> A1[Saathi<br/>interviewer]
-  ORCH --> A2[Khoji-Pehle<br/>"is this you?" discovery]
-  ORCH --> A3[Pariksha<br/>fact-checker]
-  ORCH --> A4[Lipik<br/>document reader]
-  ORCH --> A5[Prahari<br/>auditor]
-  ORCH --> A6[Setu<br/>graph builder · plain code]
-  ORCH --> A7[Khoji<br/>semantic search]
-  ORCH --> A8[Doot<br/>outreach]
-  ORCH --> A9[Shilpkar<br/>builder]
-  ORCH --> A10[Chitrakar<br/>deterministic art · plain code]
+  API --> ORCH{{LangGraph<br/>Sutradhar}}
+  ORCH --> AG[Saathi · Pariksha · Lipik<br/>Prahari · Khoji · Doot …]
+  AG --> LLM[(LLM layer<br/>with an offline mock)]
 
-  A1 & A2 & A3 & A4 & A5 & A7 --> LLM[(LLM layer<br/>Gemini fallback chain<br/>· offline mock)]
-  A9 --> GUARD[AST code guard] --> SBX[Docker sandbox<br/>no network · read-only] --> HUMAN{{Human approves}} --> PLUG[Hot-loaded plugin]
-
-  API --> DB[(Postgres + pgvector<br/>profiles · claims · edges · embeddings)]
-  A10 --> SIGN[Ed25519 signing<br/>+ hash-chained log] --> DB
+  API --> DB[(Postgres + pgvector<br/>profiles · claims · embeddings)]
+  AG --> SIGN[Ed25519 signing<br/>+ hash-chained log] --> DB
   API --> WH[Signed webhooks]
 ```
 
-### How trust works
+---
 
-1. **Claims, not facts.** Every statement is a claim with a status and confidence. Self-declared claims stay labelled as such.
-2. **Evidence.** Pariksha looks for public evidence; a *verbatim-quote check* rejects hallucinated citations. Web evidence is capped at 0.9, a matching identity document at 0.97.
-3. **Auditor gate.** Prahari (fixed rules; a model only checks the bio) auto-approves only at ≥ 0.95 *with* a matching document from a recognised issuer. Every owner's first listing, every award claim, common names without a second identifying detail, and any edit to an approved profile go to a human. The fail-safe is to escalate. Public evidence comes from Wikipedia and Wikidata (crowd-edited, not official registries); DigiLocker/PAN/Aadhaar checks are not implemented.
-4. **Seal.** The verified claims are canonicalised → SHA-256 → **Ed25519** signature. The public key is published at `/.well-known/pramaan-keys.json`.
-5. **Transparency.** Each issuance is appended to a public hash chain (each certificate page shows its place in the log; the raw log is `GET /v1/transparency`); tampering with history breaks every later link.
-6. **Verify anywhere.** The QR on the certificate opens `/verify/<code>`. The *Try to tamper* page edits a field and shows exactly which one breaks the signature.
+## Run it yourself
 
-### Shilpkar — features written by AI, safely
-
-Ask for a capability ("add a patents field", "an endpoint for city statistics"). Shilpkar writes a plugin, then:
-**AST allow-list guard** (read-only, no reflection) → **Docker sandbox** (`--network none --read-only --cap-drop ALL`, 512 MB, 128 pids, non-root) → bounded **self-repair loop** (2 attempts) → **human approval** → hot-load under `/v1/plugins/<slug>`. No code runs in the API without a person saying yes.
-
-## Quick start
-
-Requirements: Docker. (For local development: Python 3.12 with [uv](https://docs.astral.sh/uv/), Node 22+, pnpm.)
+You need Docker. For local development: Python 3.12 with [uv](https://docs.astral.sh/uv/), Node 22+ and pnpm.
 
 ### One command
 
@@ -74,11 +186,11 @@ cp .env.example .env          # add GEMINI_API_KEY, or leave LLM_MODE=mock to ru
 docker compose up --build
 ```
 
-Web [http://localhost:3000](http://localhost:3000) · API docs [http://localhost:8000/docs](http://localhost:8000/docs)
+Website <http://localhost:3000> · API docs <http://localhost:8000/docs>
 
-`LLM_MODE=mock` is a deterministic offline mode: the whole product, every agent included, works with no API key — handy for demos on bad Wi-Fi.
+`LLM_MODE=mock` is a deterministic offline mode. The whole product works with no API key, which is handy for demos on bad Wi-Fi.
 
-### Local development
+### For development
 
 ```bash
 docker compose up -d db                                   # Postgres + pgvector
@@ -86,66 +198,62 @@ docker compose up -d db                                   # Postgres + pgvector
 # API
 cd backend
 uv venv --python 3.12 && uv pip install -e ".[dev]"
-.venv/Scripts/python scripts/seed_demo.py                 # 37 clearly-fictional demo profiles + demo admin
-.venv/Scripts/python -m uvicorn app.main:app --port 8000  # (Linux/macOS: .venv/bin/python)
+.venv/Scripts/python scripts/seed_demo.py                 # clearly fictional demo profiles (Linux/macOS: .venv/bin/python)
+.venv/Scripts/python -m uvicorn app.main:app --port 8000
 
-# Web
+# Website
 cd apps/web
-pnpm install && pnpm build && pnpm start --port 3100      # or: pnpm dev
+pnpm install && pnpm dev
 ```
 
-Demo admin (review queue, dashboard): `admin@pramaan.demo` / `pramaan-demo-1` — **change before any real deployment**.
+The seed script also creates a demo staff account for local use. **Never deploy with it.** Its details are in `backend/scripts/seed_demo.py`.
 
-### Desktop app
+### Tests
 
 ```bash
-cd apps/desktop
-pnpm install
-node node_modules/electron/install.js    # pnpm 11 skips install scripts
-pnpm start                               # dev;  PRAMAAN_URL=https://your-server to point elsewhere
-pnpm package                             # electron-builder → dist/ installer for the OS you run it on (Windows NSIS, macOS dmg, Linux AppImage/deb)
-pnpm test                                # offline-verifier vectors (signed by the Python backend) + 11 security/behaviour checks against the real app
+cd backend  && .venv/Scripts/python -m pytest -q        # 700+ tests: API, agents, signing, sandbox guard, webhooks (LLM mocked)
+cd apps/web && pnpm lint && pnpm build                  # website
+cd apps/web && node scripts/smoke-pages.mjs            # browser smoke tests (Playwright), against a running site
+cd apps/desktop && pnpm test                            # desktop app and offline verifier
 ```
 
-Releases, signing and auto-update: push a tag `desktop-vX.Y.Z` and `.github/workflows/desktop-release.yml` builds Windows, macOS and Linux installers on their own runners, signs them when the certificate secrets are set (`WIN_CSC_LINK`/`WIN_CSC_KEY_PASSWORD`, `CSC_LINK`/`CSC_KEY_PASSWORD` + `APPLE_ID`/`APPLE_APP_SPECIFIC_PASSWORD`/`APPLE_TEAM_ID`), and publishes them to the GitHub Release. The installed app checks that release every 6 hours (`electron-updater` verifies the signed manifest), downloads quietly and installs when the user next quits. Unsigned builds work but trigger SmartScreen/Gatekeeper warnings; get certificates before shipping. To point an installed app at your server without rebuilding, put `{"url": "https://your-server"}` in `config.json` inside the app's user-data folder (survives updates).
-
-**Offline verification:** *Pramaan → Verify a certificate file (offline)…* (Ctrl+O) checks a certificate's `.json` (the verify page's *JSON (offline check)* button) with no network: it re-hashes the payload and checks the Ed25519 signature against registry keys the app cached earlier (only cached keys are trusted, never one inside the file). It cannot see revocations; open the certificate online for that. Set `apiUrl` in the desktop `config.json` if your API is not on localhost:8000.
-
-Hardened by default: context isolation + sandbox, no Node in the page, window locked to the app's origin, every permission denied, single instance, and `pramaan://verify/<code>` · `profile/<slug>` · `onboard` · `directory` deep links that are strictly validated.
-
-## Build on Pramaan
-
-|                |                                                                                                                                                                |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| REST API       | `http://localhost:8000/docs` — create a key under *Developers* in the web app                                                                             |
-| Python SDK     | `packages/sdk/python` — `pip install -e packages/sdk/python`                                                                                              |
-| TypeScript SDK | `packages/sdk/typescript` — typed from the OpenAPI schema                                                                                                   |
-| Webhooks       | HMAC-signed (`X-Pramaan-Signature: t=…,v1=…`), retried, delivery log, SSRF-checked                                                                         |
-| Badge          | `/v1/badge/profile/<slug>.svg` and `/v1/badge/certificate/<code>.svg` — embed anywhere                                                                    |
-| MCP server     | `mcp/server.py` — gives Claude/other agents `search_registry`, `get_profile`, `verify_certificate`, `check_document_content`, `registry_overview` |
-| Example app    | `examples/telegram-bot` — built **only** on the public API + SDK                                                                                      |
-
-## Tests
-
-```bash
-cd backend && .venv/Scripts/python -m pytest      # API, agents, signing, sandbox guard, webhooks … (LLM mocked)
-cd apps/web && node scripts/smoke.mjs             # Playwright smoke tests (also smoke-directory/-developers/-builder)
-cd apps/desktop && pnpm test
-python scripts/ai_stats.py                        # how much of this repo was written by AI (needs git history)
-```
+---
 
 ## Project layout
 
 ```text
-apps/web         Next.js app (UI, i18n, PWA)          packages/sdk   Python + TypeScript SDKs
-apps/desktop     Electron shell                       mcp            MCP server
-backend          FastAPI, agents, signing, services   examples       third-party apps built on the API
-sandbox          Dockerfile for Shilpkar's test runs  scripts        repo-level tooling (AI authorship ledger)
+apps/web        Website (Next.js)            packages/sdk         Python + TypeScript SDKs
+apps/admin      Staff console                packages/ui          shared design tokens
+apps/mobile     Android shell (Capacitor)    packages/verify-js   offline certificate checker
+apps/desktop    Desktop app (Electron)       mcp                  MCP server for AI agents
+backend         FastAPI, agents, signing     examples             apps built only on the public API
+docs            decisions (adr/), plans, security notes, runbooks
 ```
+
+---
+
+## Decisions are written down
+
+Why a design is the way it is lives in [`docs/adr`](docs/adr): one page per decision, with the date and the reason.
+A few worth reading first:
+
+- **Why not a blockchain?** A blockchain proves a record has not changed since it was written. Certificates already have that (signed, in a hash-chained public log). It cannot show a claim was true when written, so it does not replace evidence.
+- **Screens are English only for now** ([ADR 0016](docs/adr/0016-english-only-screens.md)). Typing or speaking Hindi still works; translated screens wait for a native reader's review.
+- **Fewer routine reviews** ([ADR 0018](docs/adr/0018-fewer-routine-reviews.md)). A person is not sent every first listing any more. Missing evidence, award claims and anything suspicious still go to one.
+
+---
 
 ## Honest notes
 
-- **Demo data is fictional** and labelled *Demo*. Pre-fill uses public sources only, is marked *suggested, unverified*, and never issues a certificate for a person who hasn't consented.
-- Wikipedia lookups need `WIKIMEDIA_CONTACT` (an email or URL — Wikimedia's bot policy). Without it, lookups are refused and profiles simply go to human review.
-- `PLUGINS_ENABLED` and `WEBHOOK_ALLOW_PRIVATE` default to `false` (the Docker image forces them off). They exist for local development only.
-- Authenticated personal data follows the spirit of India's DPDP Act: explicit consent ledger, export-my-data, delete-my-data.
+- **Demo data is fictional** and labelled. Pre-filled facts come from public sources only, are marked *suggested, unverified*, and never produce a certificate for someone who has not agreed.
+- Personal data follows the spirit of India's DPDP Act: an explicit consent ledger, export-my-data and delete-my-data.
+- `PLUGINS_ENABLED` and `WEBHOOK_ALLOW_PRIVATE` default to `false` and are for local development only.
+- The free hosting the demo runs on sleeps when idle, so the first visit can take a few seconds to wake up.
+
+<div align="center">
+
+<br/>
+
+**Pramaan** · proof, not claims.
+
+</div>
