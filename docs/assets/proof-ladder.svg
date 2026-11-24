@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 360" width="1280" height="360" role="img" aria-labelledby="t d">
+  <title id="t">How each achievement is labelled</title>
+  <desc id="d">Four labels, from least to most proven: self-declared, found in public sources, document checked, confirmed by a reviewer.</desc>
+  <defs>
+    <style>
+      text { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+      .t { font-size: 25px; font-weight: 800; }
+      .s { font-size: 16px; }
+      @keyframes rise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+      .bar { transform-box: fill-box; transform-origin: bottom; animation: rise .9s cubic-bezier(.2,.8,.2,1) both; }
+      .b2 { animation-delay: .15s; } .b3 { animation-delay: .3s; } .b4 { animation-delay: .45s; }
+      @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+    </style>
+  </defs>
+
+  <rect width="1280" height="360" rx="28" fill="#FFF6DD"/>
+  <!-- ground line -->
+  <path d="M10 330 H1270" stroke="#14152B" stroke-opacity=".3" stroke-width="2"/>
+
+  <!-- 1 -->
+  <rect class="bar" x="20" y="200" width="290" height="130" rx="18" fill="#8B8FA8"/>
+  <text class="t" x="44" y="248" fill="#14152B">Self-declared</text>
+  <text class="s" x="44" y="276" fill="#14152B">Said, not yet checked.</text>
+
+  <!-- 2 -->
+  <rect class="bar b2" x="340" y="150" width="290" height="180" rx="18" fill="#7FB3FF"/>
+  <text class="t" x="364" y="198" fill="#0B1B3A">Public sources</text>
+  <text class="s" x="364" y="226" fill="#0B1B3A">Found in Wikipedia or</text>
+  <text class="s" x="364" y="248" fill="#0B1B3A">Wikidata. Quote verified.</text>
+
+  <!-- 3 -->
+  <rect class="bar b3" x="660" y="100" width="290" height="230" rx="18" fill="#2FBF9B"/>
+  <text class="t" x="684" y="148" fill="#04261D">Document checked</text>
+  <text class="s" x="684" y="176" fill="#04261D">Their upload matches their name,</text>
+  <text class="s" x="684" y="198" fill="#04261D">from an issuer we recognise.</text>
+
+  <!-- 4 -->
+  <rect class="bar b4" x="980" y="50" width="280" height="280" rx="18" fill="#FFB81C"/>
+  <text class="t" x="1004" y="98" fill="#14152B">Reviewer confirmed</text>
+  <text class="s" x="1004" y="126" fill="#14152B">A reviewer looked at the</text>
+  <text class="s" x="1004" y="148" fill="#14152B">evidence and signed it off.</text>
+  <path d="M1012 222 l22 22 l44 -52" fill="none" stroke="#14152B" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <text x="20" y="30" font-size="15" font-weight="700" fill="#14152B" fill-opacity=".6">LESS PROVEN</text>
+  <text x="1260" y="30" text-anchor="end" font-size="15" font-weight="700" fill="#14152B" fill-opacity=".6">MORE PROVEN</text>
+</svg>
